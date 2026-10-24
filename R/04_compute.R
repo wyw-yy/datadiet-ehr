@@ -60,9 +60,11 @@ tab$acc <- round(mapply(function(mt, r) acc[mt, as.character(r)], tab$method, ta
 write.csv(tab, file.path(RESULTS, "compute_table.csv"), row.names = FALSE)
 
 # ---------------- 图 ----------------
-pal <- c(random = "grey55", nait = "#0072B2", nait_dedup = "#009E73")
-ms  <- intersect(c("random", "nait", "nait_dedup"), unique(tab$method))
-labs <- c("random", "nait", "nait + dedup")[match(ms, c("random", "nait", "nait_dedup"))]
+pal <- c(random = "grey55", rand_len = "#CC79A7", nait = "#0072B2", nait_dedup = "#009E73")
+ord <- c("random", "rand_len", "nait", "nait_dedup")
+lab <- c("random", "rand_len", "nait", "nait + dedup")
+ms  <- intersect(ord, unique(tab$method))
+labs <- lab[match(ms, ord)]
 
 png(file.path(FIG, "fig05_compute.png"), width = 1750, height = 1000, res = 150)
 par(mar = c(3.6, 4.6, 2.8, 4.2), oma = c(0, 0, 2.0, 0), mgp = c(2.7, 0.8, 0), las = 1)

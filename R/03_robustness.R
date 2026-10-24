@@ -47,9 +47,11 @@ res <- do.call(rbind, rows)
 write.csv(res, file.path(RESULTS, "robust.csv"), row.names = FALSE)
 
 # ---- 图：点 + 区间，按科室分组 ----
-pal <- c(random = "grey55", nait = "#0072B2", nait_dedup = "#009E73")
-ms  <- intersect(c("random", "nait", "nait_dedup"), SUBS)
-labs <- c("random 30%", "nait 30%", "nait+dedup 30%")[match(ms, c("random", "nait", "nait_dedup"))]
+pal <- c(random = "grey55", rand_len = "#CC79A7", nait = "#0072B2", nait_dedup = "#009E73")
+ord <- c("random", "rand_len", "nait", "nait_dedup")
+lab <- c("random 30%", "rand_len 30%", "nait 30%", "nait+dedup 30%")
+ms  <- intersect(ord, SUBS)
+labs <- lab[match(ms, ord)]
 
 png(file.path(FIG, "fig04_dept.png"), width = 2100, height = 950, res = 150)
 par(mfrow = c(1, 2), mar = c(3.2, 4.4, 2.8, 0.8), oma = c(2.8, 0, 0, 0),

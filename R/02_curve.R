@@ -65,8 +65,10 @@ draw <- function(mode, file) {
   # 图例单独铺在图底，不压任何曲线
   par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
   plot.new()
-  keep <- intersect(c("random", "nait", "nait_dedup"), unique(agg$method))
-  labs <- c("random", "nait", "nait + dedup")[seq_along(keep)]
+  ord  <- c("random", "rand_len", "nait", "nait_dedup")
+  lab  <- c("random", "rand_len (length-matched)", "nait", "nait + dedup")
+  keep <- intersect(ord, unique(agg$method))
+  labs <- lab[match(keep, ord)]
   cols <- PAL[keep]
   ltys <- rep(1, length(keep)); pchs <- rep(19, length(keep))
   labs <- c(labs, "open marker = single seed"); cols <- c(cols, "grey40")
