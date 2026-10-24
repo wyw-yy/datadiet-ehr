@@ -1,0 +1,11 @@
+[
+  {"url": "https://hf-mirror.com/datasets/lavita/ChatDoctor-HealthCareMagic-100k/resolve/main/data/train-00000-of-00001-5e7cb295b9cff0bf.parquet",
+   "dest": "C:/Users/yang'yu/Desktop/codetest/datadiet-ehr/data/raw/healthcaremagic/hcm-100k.parquet",
+   "size": 70518148},
+  {"url": "https://hf-mirror.com/datasets/openlifescienceai/medmcqa/resolve/main/data/validation-00000-of-00001.parquet",
+   "dest": "C:/Users/yang'yu/Desktop/codetest/datadiet-ehr/data/raw/medmcqa/validation.parquet",
+   "size": 1476104},
+  {"url": "https://hf-mirror.com/datasets/openlifescienceai/medmcqa/resolve/main/data/test-00000-of-00001.parquet",
+   "dest": "C:/Users/yang'yu/Desktop/codetest/datadiet-ehr/data/raw/medmcqa/test.parquet",
+   "size": 936358}
+]

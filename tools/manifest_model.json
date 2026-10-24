@@ -1,0 +1,11 @@
+[
+  {"url": "https://modelscope.cn/models/qwen/Qwen2.5-3B-Instruct/resolve/master/config.json", "dest": "models/Qwen2.5-3B-Instruct/config.json"},
+  {"url": "https://modelscope.cn/models/qwen/Qwen2.5-3B-Instruct/resolve/master/generation_config.json", "dest": "models/Qwen2.5-3B-Instruct/generation_config.json"},
+  {"url": "https://modelscope.cn/models/qwen/Qwen2.5-3B-Instruct/resolve/master/merges.txt", "dest": "models/Qwen2.5-3B-Instruct/merges.txt"},
+  {"url": "https://modelscope.cn/models/qwen/Qwen2.5-3B-Instruct/resolve/master/model.safetensors.index.json", "dest": "models/Qwen2.5-3B-Instruct/model.safetensors.index.json"},
+  {"url": "https://modelscope.cn/models/qwen/Qwen2.5-3B-Instruct/resolve/master/tokenizer.json", "dest": "models/Qwen2.5-3B-Instruct/tokenizer.json"},
+  {"url": "https://modelscope.cn/models/qwen/Qwen2.5-3B-Instruct/resolve/master/tokenizer_config.json", "dest": "models/Qwen2.5-3B-Instruct/tokenizer_config.json"},
+  {"url": "https://modelscope.cn/models/qwen/Qwen2.5-3B-Instruct/resolve/master/vocab.json", "dest": "models/Qwen2.5-3B-Instruct/vocab.json"},
+  {"url": "https://modelscope.cn/models/qwen/Qwen2.5-3B-Instruct/resolve/master/model-00001-of-00002.safetensors", "dest": "models/Qwen2.5-3B-Instruct/model-00001-of-00002.safetensors"},
+  {"url": "https://modelscope.cn/models/qwen/Qwen2.5-3B-Instruct/resolve/master/model-00002-of-00002.safetensors", "dest": "models/Qwen2.5-3B-Instruct/model-00002-of-00002.safetensors"}
+]

@@ -1,0 +1,4 @@
+WARNING: The repository located at pypi.tuna.tsinghua.edu.cn is not a trusted or secure host and is being ignored. If this repository is available via HTTPS we recommend you use HTTPS instead, otherwise you may silence this warning and allow it anyway with '--trusted-host pypi.tuna.tsinghua.edu.cn'.
+ERROR: Could not find a version that satisfies the requirement numpy (from versions: none)
+WARNING: The repository located at pypi.tuna.tsinghua.edu.cn is not a trusted or secure host and is being ignored. If this repository is available via HTTPS we recommend you use HTTPS instead, otherwise you may silence this warning and allow it anyway with '--trusted-host pypi.tuna.tsinghua.edu.cn'.
+ERROR: No matching distribution found for numpy

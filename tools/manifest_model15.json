@@ -1,0 +1,47 @@
+[
+  {
+    "url": "https://modelscope.cn/api/v1/models/qwen/Qwen2.5-1.5B-Instruct/repo?Revision=master&FilePath=LICENSE",
+    "dest": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\Qwen2.5-1.5B-Instruct\\LICENSE",
+    "size": 11343
+  },
+  {
+    "url": "https://modelscope.cn/api/v1/models/qwen/Qwen2.5-1.5B-Instruct/repo?Revision=master&FilePath=config.json",
+    "dest": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\Qwen2.5-1.5B-Instruct\\config.json",
+    "size": 660
+  },
+  {
+    "url": "https://modelscope.cn/api/v1/models/qwen/Qwen2.5-1.5B-Instruct/repo?Revision=master&FilePath=configuration.json",
+    "dest": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\Qwen2.5-1.5B-Instruct\\configuration.json",
+    "size": 2
+  },
+  {
+    "url": "https://modelscope.cn/api/v1/models/qwen/Qwen2.5-1.5B-Instruct/repo?Revision=master&FilePath=generation_config.json",
+    "dest": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\Qwen2.5-1.5B-Instruct\\generation_config.json",
+    "size": 242
+  },
+  {
+    "url": "https://modelscope.cn/api/v1/models/qwen/Qwen2.5-1.5B-Instruct/repo?Revision=master&FilePath=merges.txt",
+    "dest": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\Qwen2.5-1.5B-Instruct\\merges.txt",
+    "size": 1671839
+  },
+  {
+    "url": "https://modelscope.cn/api/v1/models/qwen/Qwen2.5-1.5B-Instruct/repo?Revision=master&FilePath=model.safetensors",
+    "dest": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\Qwen2.5-1.5B-Instruct\\model.safetensors",
+    "size": 3087467144
+  },
+  {
+    "url": "https://modelscope.cn/api/v1/models/qwen/Qwen2.5-1.5B-Instruct/repo?Revision=master&FilePath=tokenizer.json",
+    "dest": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\Qwen2.5-1.5B-Instruct\\tokenizer.json",
+    "size": 7031645
+  },
+  {
+    "url": "https://modelscope.cn/api/v1/models/qwen/Qwen2.5-1.5B-Instruct/repo?Revision=master&FilePath=tokenizer_config.json",
+    "dest": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\Qwen2.5-1.5B-Instruct\\tokenizer_config.json",
+    "size": 7305
+  },
+  {
+    "url": "https://modelscope.cn/api/v1/models/qwen/Qwen2.5-1.5B-Instruct/repo?Revision=master&FilePath=vocab.json",
+    "dest": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\Qwen2.5-1.5B-Instruct\\vocab.json",
+    "size": 2776833
+  }
+]

@@ -1,0 +1,33 @@
+# ---- 环境与依赖（都可重建，不进仓库） ----
+.venv/
+__pycache__/
+*.pyc
+*.whl
+
+# ---- 模型权重（9 GB，来自 ModelScope，不进仓库） ----
+models/
+
+# ---- 原始数据（可从公开地址重新下载，不进仓库） ----
+data/raw/
+
+# ---- 运行时缓存（激活、分词缓存，几百 MB，脚本可重建） ----
+cache/
+data/cache/
+*.parts/
+
+# ---- 日志与临时文件 ----
+*.log
+nohup.out
+tools/progress_*.json
+
+# ---- 系统 ----
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 注意：以下内容**要**进仓库，它们是可复现的最小证据集
+#   data/processed/   统一后的 JSONL（约 14 MB）
+#   data/subsets/     选中的 id 列表（几百 KB）
+#   results/          逐题预测、指标表、审计 JSON（几十 MB）
+#   paper/            图与表
+#   audit/            哈希清单与选择日志

@@ -1,0 +1,16 @@
+{
+  "exp_id": "full_s99",
+  "method": "full",
+  "ratio": 1.0,
+  "seed": 99,
+  "epochs": 1.0,
+  "n_samples": 2000,
+  "steps": 250,
+  "max_len": 512,
+  "bs": 4,
+  "grad_accum": 2,
+  "train_seconds": 306.4,
+  "loss_last": 1.9428,
+  "adapter": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\adapters\\full_s99",
+  "pool_size": 12000
+}

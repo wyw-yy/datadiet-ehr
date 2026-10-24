@@ -1,0 +1,6 @@
+exp_id,method,ratio,seed,gpu_hours,select_overhead_h,train_seconds,eval_seconds
+full_s1,full,1.0,1,0.8797,0.0,2939.9,227.1
+nait_r30_s1,nait,0.3,1,0.1984,0.1333,507.9,206.5
+random_r30_s1,random,0.3,1,0.2143,0.0,566.7,204.7
+nait_r10_s1,nait,0.1,1,0.1124,0.1333,192.0,212.6
+random_r10_s1,random,0.1,1,0.1402,0.0,242.4,262.3

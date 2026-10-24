@@ -1,0 +1,3 @@
+exp_id,method,ratio,seed,task,value,n_items,split
+full_s1,full,1.0,1,medqa,0.44,100,smoke
+full_s1,full,1.0,1,medmcqa,0.42,100,smoke

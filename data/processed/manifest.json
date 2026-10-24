@@ -1,0 +1,22 @@
+{
+  "pool": "domain",
+  "n_train": 12000,
+  "n_probe": 2000,
+  "dept_train": {
+    "other": 6836,
+    "onco": 988,
+    "resp": 952,
+    "neuro": 1356,
+    "cardio": 1144,
+    "endo": 724
+  },
+  "dept_probe": {
+    "onco": 171,
+    "endo": 115,
+    "other": 1128,
+    "resp": 158,
+    "cardio": 181,
+    "neuro": 247
+  },
+  "sha_train": "e94283f5be523f79"
+}

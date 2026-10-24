@@ -1,0 +1,52 @@
+{
+  "measured_at": "2026-10-22 20:43:02",
+  "host": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64"
+  },
+  "python": "3.12.8",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 5070 Laptop GPU",
+    "capability": [
+      12,
+      0
+    ],
+    "sm_count": 36,
+    "total_memory_gib": 7.96
+  },
+  "nvidia_smi": {
+    "clocks_max_sm_mhz": "3090 MHz",
+    "clocks_sm_mhz_idle": "225 MHz",
+    "power_draw_w_idle": "30.80 W"
+  },
+  "power_limits": {
+    "Current Power Limit": "97.23 W",
+    "Default Power Limit": "50.00 W",
+    "Max Power Limit": "115.00 W"
+  },
+  "matmul_tflops": {
+    "bf16": 7.7,
+    "fp16": 7.0,
+    "fp32": 3.5
+  },
+  "training_throughput_samples_per_s": {
+    "Qwen2.5-3B-Instruct": {
+      "bs": 1,
+      "len": 512,
+      "value": 0.65,
+      "source": "tools/bench_bs.py, peak 7.30 GiB"
+    },
+    "Qwen2.5-1.5B-Instruct": {
+      "bs": 4,
+      "len": 512,
+      "value": 1.11,
+      "source": "tools/bench_bs.py, peak 7.34 GiB"
+    }
+  },
+  "notes": [
+    "bf16 and fp16 land at the same throughput, and only ~2.7x fp32: on this chip the tensor-core path is not what limits us - the GPU draws 31 W of a 97 W cap at 1425 MHz while idle clock is ~200 MHz, i.e. it is held in a low-power state by the platform (vendor power mode / Dynamic Boost).",
+    "3B peaks above the 8.15 GiB of physical VRAM (7.3-9.5 GiB allocated), so Windows pages it and clocks collapse to ~200 MHz: 3B is not usable here."
+  ]
+}
