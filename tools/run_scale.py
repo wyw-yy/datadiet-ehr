@@ -19,10 +19,12 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,17 +47,47 @@ def show(cmd: list[str]) -> str:
     return " ".join(str(c) for c in cmd)
 
 
-def run(cmd: list[str], env: dict[str, str], dry: bool, title: str) -> None:
+def run(cmd: list[str], env: dict[str, str], dry: bool, title: str) -> float:
+    """跑一步；返回实际耗时秒数（dry-run 返回 0）。失败即停。"""
     print("\n" + "=" * 70)
     print(f"  {title}")
     print("=" * 70)
     print("  $ " + show(cmd))
     if dry:
-        return
+        return 0.0
+    t0 = time.perf_counter()
     r = subprocess.run([str(c) for c in cmd], cwd=ROOT, env=env)
+    dt = time.perf_counter() - t0
     if r.returncode != 0:
         print(f"\n[X] 这一步失败（exit={r.returncode}），停在这里。")
         sys.exit(r.returncode)
+    print(f"  用时 {dt:.0f}s")
+    return dt
+
+
+def write_overhead(seconds: float, dry: bool) -> None:
+    """把这一轮的"选择前向"实测开销写成 results/select_overhead.json。
+
+    为什么必须写：归档会把上一轮的 results/ 整个搬走，里面就有这个文件；
+    而 run_one.py 读不到它时**静默返回 0.0**，算力净账会被虚高成 ~70%，
+    是那种不会报错、但结论直接错的坑。
+    """
+    h = round(seconds / 3600.0, 4)
+    body = {
+        "nait": h, "nait_dedup": h, "el2n": h,
+        "random": 0.0, "rand_len": 0.0, "full": 0.0,
+        "_note": (f"measured on this round: acts train + acts probe + scoring = "
+                  f"{seconds:.0f}s = {h} GPU-h. random/rand_len pay nothing: they never look at the model."),
+    }
+    print("\n" + "=" * 70)
+    print("  [4b] 记录选择前向开销 -> results/select_overhead.json")
+    print("=" * 70)
+    print(f"  {body}")
+    if dry:
+        return
+    out = ROOT / "results" / "select_overhead.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(body, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def archive(dry: bool) -> None:
@@ -100,9 +132,11 @@ def main() -> None:
 
     run([PY, "prepare_data.py", "--pool", "domain", "--seed", "42"], env, a.dry_run,
         "[1/6] 重建训练池（N_TRAIN=%d）" % a.pool)
-    run([PY, "collect_acts.py", "--split", "train"], env, a.dry_run, "[2/6] 采训练池激活")
-    run([PY, "collect_acts.py", "--split", "probe"], env, a.dry_run, "[3/6] 采 probe 激活")
-    run([PY, "select_subset.py"], env, a.dry_run, "[4/6] 打分 + 分层选子集")
+    sel_seconds = 0.0
+    sel_seconds += run([PY, "collect_acts.py", "--split", "train"], env, a.dry_run, "[2/6] 采训练池激活")
+    sel_seconds += run([PY, "collect_acts.py", "--split", "probe"], env, a.dry_run, "[3/6] 采 probe 激活")
+    sel_seconds += run([PY, "select_subset.py"], env, a.dry_run, "[4/6] 打分 + 分层选子集")
+    write_overhead(sel_seconds, a.dry_run)
     run([PY, "tools/make_randlen.py"], env, a.dry_run, "[5/6] 生成长度匹配对照臂")
     run([PY, "tools/night_queue.py", "--plan", "scale"], env, a.dry_run,
         "[6/6] 队列：12 个 run（full×3 + 3 臂 @30% ×3）")
