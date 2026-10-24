@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-24T14:41:35+0800",
+  "generated_at": "2026-10-24T14:55:24+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 58,
+  "n_files": 60,
   "files": [
     {
       "path": "check_env.bat",
@@ -33,6 +33,12 @@
       "sha256": "b434bbbf314cc72c5875b32a76e7558aa3eede19de0a9b2ca0d2c3fbc1b4642c",
       "size": 15172,
       "mtime": "2026-10-23T18:36:51"
+    },
+    {
+      "path": "prepare_mimic.py",
+      "sha256": "db0351e6c5d0eee498c92f7a30ecb26a696941d43e7def3399403d69d8f47f5c",
+      "size": 13082,
+      "mtime": "2026-10-24T14:52:44"
     },
     {
       "path": "R/00_setup.R",
@@ -221,6 +227,12 @@
       "mtime": "2026-10-24T14:26:44"
     },
     {
+      "path": "tools/make_table1.py",
+      "sha256": "bdf60b3c25cf10e9216d85a6e00a8c669fa8abfa362cc8badf921107188f4264",
+      "size": 5484,
+      "mtime": "2026-10-24T14:50:29"
+    },
+    {
       "path": "tools/manifest_data.json",
       "sha256": "7d5c08259e4ea47047348319603796626d810540c17a6daeadb57d07d0ad1594",
       "size": 742,
@@ -246,9 +258,9 @@
     },
     {
       "path": "tools/night_queue.py",
-      "sha256": "9111154284111adc8c3a0187ba350794eaa7a574008c4ad7ad3726b618fa3f4c",
-      "size": 4093,
-      "mtime": "2026-10-23T18:57:16"
+      "sha256": "4c09d1388bfc1a90f785161812a66979ede1023e1ae346093c22410d4cc1d7b6",
+      "size": 4869,
+      "mtime": "2026-10-24T14:45:38"
     },
     {
       "path": "tools/paired_stats.py",
@@ -353,5 +365,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "339e1857ef0b7c6e9e1381ce3faa93e5a2bf0a069f52cc120f4280a896745c6d"
+  "manifest_sha256": "d9e5267f1a84f9cd1cec2407870bad415bcbffe74849bb37d19ded2d2ccfe6bc"
 }

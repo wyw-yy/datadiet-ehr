@@ -10,6 +10,10 @@ models/
 # ---- 原始数据（可从公开地址重新下载，不进仓库） ----
 data/raw/
 
+# ---- MIMIC 派生文本：含病历原文，按 DUA **禁止**入库 ----
+data/processed_mimic/
+data/raw/mimic*/
+
 # ---- 运行时缓存（激活、分词缓存，几百 MB，脚本可重建） ----
 cache/
 data/cache/

@@ -1,167 +1,106 @@
 # 从这里开始（DataDiet-EHR）
 
-项目位置：`C:\Users\yang'yu\Desktop\codetest\datadiet-ehr`
+一句话：**用神经元激活挑出 30% 的临床训练数据，证明微调效果不降、算力净省。**
 
----
+当前状态：主实验已跑完一轮（19 run / 3 seeds），正在补到 6 seeds；代码、统计、审计链都已闭环。
+所有数字可在 `RESULTS.md` 查到，所有命令都在下面。
 
-## 📍 进度（2026-10-22 20:50 更新）
+## 📍 进度（2026-10-24 15:00）
 
-| # | 步骤 | 状态 | 证据 |
+| # | 阶段 | 状态 | 产物 |
 |---|---|---|---|
-| 1 | 环境（venv + torch cu128 + ML 栈） | ✅ 完成 | `torch 2.11.0+cu128`、`capability=(12,0)`、bf16 显存实测通过；transformers 5.20.2 / peft / trl / datasets 全 import 通过 |
-| 2 | 模型权重 | ✅ 完成 | `models/Qwen2.5-3B-Instruct/` 6.19 GB（备用，需 ≥12 GB 显存）；`models/Qwen2.5-1.5B-Instruct/` 3.09 GB（**主用**） |
-| 3 | 数据下载 | ✅ 完成 | HCM 112,165 行、MedQA 1,273 题、MedMCQA 4,183 题（已剔 `cop=-1`）；`data/raw` 只剩 4 个合法输入 |
-| 4 | 数据统一 | ✅ 完成 | `data/processed/{train,probe,medqa,medmcqa}.jsonl` = 12,000 / 2,000 / 1,273 / 4,183 行；科室分布 other 49.6% / neuro / cardio / endo / resp / onco |
-| 5 | 五个 Python 脚本 + `run_one.py` | ✅ 完成 | `prepare_data.py` `collect_acts.py` `select_subset.py` `train.py` `eval.py` `run_one.py`，另有 `tools/` 下 10 个探针与工具 |
-| 6 | 冒烟测试 | ✅ 通过 | `step 25/25 loss 2.4543 200 samples 4.34 samp/s`；eval 带 adapter 跑通 medqa 0.44 / medmcqa 0.42（100 题，只证明链路，不是结果）；`metrics_long.csv` 已有 2 行 |
-| 7 | 全量基线（full） | ⬜ 待跑 | 与 STEP 8 的 3 个 pilot 一起跑，第一个就是 full |
-| 8 | 激活采集 + 子集选择 | ✅ 完成 | `acts_train.npz` (12000, 5, 1536)、`acts_probe.npz` (2000, 5, 1536)；`subsets.json` 五档齐（30% = 3,600 条），审计数据在 `results/select_stats.json` |
-| 9 | 主实验矩阵 | 🟡 **3 个 pilot 正在跑** | `full`(12k) → `nait@30%`(3.6k) → `random@30%`(3.6k)，各约 50/15/15 分钟 |
-| 10 | R 出结论 | 🟡 管线就绪 | `R/run_all.R` 已用**假数据**跑通全部图与检验；把 `R/00_setup.R` 的 `RESULTS` 指向 `results/` 即切真实数据 |
+| 1 | 环境（venv + torch cu128 + ML 栈） | ✅ | `.venv/`、`check_env.bat` 一键体检 |
+| 2 | 公开数据（MedMCQA / MedQA） | ✅ | `data/raw/`、`data/processed/` |
+| 3 | 数据统一 + 泄漏检查 | ✅ | `tools/check_leak.py`、`tools/audit_run.py` |
+| 4 | 激活采集（5 层 × 12k 条） | ✅ | `cache/acts/acts_train.npz`（174 MB） |
+| 5 | 子集选择（nait / nait_dedup / rand_len） | ✅ | `data/subsets/*.json`、`results/select_stats*.json` |
+| 6 | 冒烟（train→adapter→eval→upsert） | ✅ | `results/metrics_long.csv` |
+| 7 | 第一轮主实验（19 run，3 seeds） | ✅ | `RESULTS.md` |
+| 8 | **第二轮：补到 6 seeds + rand_len 对照** | 🟡 正在跑 | `night6.log` |
+| 9 | R 分析层（等效性/剂量/科室/算力） | ✅ | `R/run_all.R` → `paper/figures/` |
+| 10 | 预注册 + 审计链 + 论文表 | ✅ | `docs/PREREG.md`、`audit/`、`paper/table1.md` |
+| 11 | 真数据（MIMIC / 院内 EMR） | ⬜ 卡许可 | `docs/MIMIC_CHECKLIST.md` |
+| 12 | 生成式评估 | ⬜ 设计完成 | `docs/GENERATIVE_EVAL.md` |
 
-**与最初计划的偏离（必须写进论文 limitation）**
+**与最初计划的偏离（都写进 limitation）**
 
-1. **基座 1.5B 而不是 3B**：3B 显存峰值 7.3–9.5 GiB > 物理 7.96 GiB，Windows 换页导致 GPU 掉到 200 MHz、0.35 样本/秒，不可用。1.5B 实测 1.11 样本/秒（bs4×512）。
-2. **训练池 12,000 条而不是 24,000**：时间账。12k 跑一遍约 1.3–1.5 h。
-3. **3 个 seed 而不是 6 个**，比例仍为 10/20/30/50/70。
-4. 待办之一：跑 full 在 6k/12k/24k 三点，证明 12k 已到平台（否则"30% 等效"可能只是"12k 冗余多"）。
+1. **基座 1.5B 而不是 3B**：3B 显存峰值 7.3–9.5 GiB > 物理 7.96 GiB，Windows 换页导致 203 MHz 空转、0.35 样本/秒。
+2. **训练池 12,000 条**（不是 24k）：时间账，12k 跑一遍约 40 分钟。
+3. **训练池从 HealthCareMagic 换到 MedMCQA-train**：前者是患者口语，训完 MedQA 反而掉 3.8pp（base 0.4776 → SFT 0.4399），不对域。
+4. 待办：跑 full 在 6k/12k/24k 三点，证明 12k 已到平台。
 
-**本机实测性能**（`results/benchmarks.json` 有原始记录）：36 SM、7.96 GiB、最高 3090 MHz；bf16/fp16 矩阵乘 7.0–11.8 TFLOPS、fp32 3.5–3.8；满载功耗仅 31 W（上限 93.8 W）。结论：GPU 被压在低功耗状态，约只用出额定的 1/8。
+**本机实测性能**（`results/benchmarks.json`）：36 SM、7.96 GiB、最高 3090 MHz；bf16 矩阵乘 7.0–11.8 TFLOPS；满载功耗顶到 93 W 上限、时钟约 202 MHz。
 
----
+## ⚠️ 五个坑（都踩过）
 
-## ⚠️ 两个已知的坑（踩过，别再踩）
+1. **R 只能用 base R**——shell 装不了包，脚本一律零依赖。
+2. **pip 打完 `Successfully installed` 不退出**——后台跑、读日志、见成功就 kill。
+3. **8 GB 显存跑不了 3B**——会掉进显存换页；主矩阵用 1.5B。
+4. **`expandable_segments` 在这台机器无效**——设了只会有警告。
+5. **别用 PowerShell 的 `-replace | Set-Content` 改含中文的文件**——会把 UTF-8 写坏。
 
-- **pip**：清华源会卡死在 `Looking in indexes`（一律用官方 `pypi.org` 或阿里云）；装完打了 `Successfully installed` 进程也不退出（kill 掉，用 `import` 验证）。
-- **cuda**：`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` 在这台机器**不生效**（`expandable_segments not supported on this platform`），别指望它省显存。
+## 一条命令看全部结论
 
----
-
-## STEP 1 · 环境（已完成，留档）
-
-```bat
-cd C:\Users\yang'yu\Desktop\codetest\datadiet-ehr
-python -m venv .venv
-.venv\Scripts\activate
-python -m pip install -U pip
-pip install torch --index-url https://download.pytorch.org/whl/cu128
-pip install transformers datasets accelerate peft trl pandas numpy pyarrow
+```bash
+Rscript R\run_all.R          # 4 张图 + 3 张表，读 results/ 下的 CSV
+python tools\make_table1.py  # 论文正文表 paper/table1.md
 ```
 
-必须 cu128：5070 Laptop = Blackwell `sm_120`，cu118/cu121 会报
-`no kernel image is available for execution on the device`。
+## 跑一个实验（3600 条约 13 分钟）
 
-**验收**：`python -c "import torch;print(torch.cuda.get_device_capability())"` → `(12, 0)`。
-
----
-
-## STEP 2 · 数据（已完成，留档）
-
-`data/raw/` 现在的 4 个输入：
-
-```
-healthcaremagic/hcm-100k.parquet                      67.25 MiB (112,165 行, instruction/input/output)
-medmcqa/data/test-00000-of-00001.parquet               0.89 MB
-medmcqa/data/validation-00000-of-00001.parquet         1.41 MB
-medqa/phrases_no_exclude_test.jsonl                    1.98 MiB (1,273 题)
+```bash
+.venv\Scripts\python.exe run_one.py --method nait --ratio 0.30 --seed 4
+.venv\Scripts\python.exe run_one.py --method rand_len --ratio 0.30 --seed 4   # 长度匹配对照
 ```
 
-镜像经验：ModelScope 对模型最快（~2.5 MB/s，12 线程）；hf-mirror 对 dataset 单连接 ~0.66 MB/s 但**并发会 429**，`tools/fetch_parallel.py` 已加指数退避。
+`--method` 可选：`full`、`random`、`nait`、`nait_dedup`、`rand_len`。
+一条命令内部：选子集 → 训练 LoRA → 两个任务各评一次 → upsert 到 `results/*.csv`。
 
----
+## 队列（整夜跑）
 
-## STEP 3 · MIMIC 申请（还没做，唯一有排队延迟的事）
-
-1. https://physionet.org 注册 + 完成 CITI "Data or Specimens Only Research"（约 2 小时，可中断）
-2. 传 CITI 证书 → 提交 MIMIC-IV DUA（**需要导师签字**）
-3. research use 里写清：研究训练子集选择与算力节省，不用于临床决策
-
-**验收**：credentialing 完成邮件 + DUA submitted。批下来只换数据不换代码。
-
----
-
-## STEP 4 · Python 骨架（已完成）
-
-| 文件 | 作用 |
-|---|---|
-| `prepare_data.py` | 统一 JSONL、科室映射、去重、切 train/probe/评测集 |
-| `collect_acts.py` | 采 5 层（8/12/16/20/24）response-token 平均激活 → `cache/acts/*.npz` |
-| `select_subset.py` | 打分 `s_i=mean_l cos(ā,c_l)` → 流式贪心去重（cos>0.95）→ 科室配额 → 取满 |
-| `train.py` | LoRA SFT；长度分桶 batch、分词缓存、只对 response 算 loss |
-| `eval.py` | 单次前向比 `" A".." D"` 四个 token 的 logprob，输出逐题 preds |
-| `run_one.py` | 一条命令 = 选子集 → 训练 → 评测 → upsert `metrics_long.csv` / `compute.csv` |
-
-基座、数据、评测的口径都写在 `config.py` 顶部；改 `BASE_DIR` / `N_POOL` 就能整体换配置。
-
----
-
-## STEP 5 · 冒烟测试（✅ 2026-10-22 20:53 通过）
-
-```bat
-.venv\Scripts\python.exe run_one.py --smoke --method full --seed 1 --epochs 1
+```bash
+python tools\night_queue.py --plan seeds6 --dry-run   # 先看要跑哪些
+python tools\night_queue.py --plan seeds6             # 真跑，自动跳过已完成的
 ```
 
-**验收**：loss 不 nan、显存峰值 < 7.5 GiB、`results/preds/full_s1_medqa.csv.gz` 与 `full_s1_medmcqa.csv.gz` 都有文件、`results/metrics_long.csv` 多出两行。
-唯一目的：在花 16 小时之前确认没有隐藏的坑。**已全部满足**，且长度分桶把吞吐从 1.11 提到 **4.34 样本/秒**（12,000 条一遍约 46 分钟）。
+## 五道自检（改完代码必跑）
 
----
-
-## STEP 6 · 全量基线（1 个 seed）
-
-```bat
-.venv\Scripts\python.exe run_one.py --method full --seed 1 --epochs 1
+```bash
+.venv\Scripts\python.exe tools\verify.py        # 数据/子集/表值一致性
+.venv\Scripts\python.exe tools\audit_run.py     # 原始文件 → JSONL → preds 溯源
+.venv\Scripts\python.exe tools\audit_deep2.py   # 统计口径与混杂
+.venv\Scripts\python.exe tools\audit_final.py   # 六段交叉核对 A–F
+.venv\Scripts\python.exe tools\confirm_fixes.py # 四项修复是否还在
 ```
 
-**验收**：域内 probe 与 MedQA 两项都记下来，且明显不同于 base。这组数是所有 delta 的分母。
-**注意**：现在评测只有选择题；STEP 6 之后要补 **probe（HCM 留出 2,000 条）的 loss/准确率**作为域内主指标——那是"训得好不好"的正面证据。
+全绿才能引用数字。
 
----
+## 目录
 
-## STEP 7 · 激活采集 + 选择（创新点）
-
-```bat
-.venv\Scripts\python.exe collect_acts.py --split train
-.venv\Scripts\python.exe collect_acts.py --split probe
-.venv\Scripts\python.exe select_subset.py
+```
+config.py           全局常量（模型路径、池子大小、种子、方法表）
+prepare_data.py     原始数据 → data/processed/*.jsonl（统一契约）
+prepare_mimic.py    MIMIC → 同一契约（有数据后才跑；现在可 --selftest）
+collect_acts.py     采激活 → cache/acts/*.npz
+select_subset.py    打分 + 分层配额 + 去重 → data/subsets/*.json
+train.py            LoRA SFT（只对 response 算 loss，长度分桶）
+eval.py             四选一，比 " A".." D" 的 logprob
+run_one.py          一条命令跑完一个 (method, ratio, seed)
+R/                  分析层（base R，出表和图）
+tools/              下载、审计、队列、表、自检脚本
+docs/               PROTOCOL / PREREG / ALIGNMENT / MIMIC_CHECKLIST / GENERATIVE_EVAL / ADVISOR_SUMMARY
+results/            逐题预测、指标表、审计 JSON（都在 git 里）
 ```
 
-**验收**：`data/subsets/subsets.json` 里 `nait{10,20,30,50,70}` 与 `nait_dedup{...}` 的 id 数量与比例一致；打印的 dedupe 保留率 < 100%（说明真去重了）。
+## 现在只有三件事会卡住进度
 
----
-
-## STEP 8 · 先跑 3 个 run 看方向，再铺矩阵
-
-```bat
-.venv\Scripts\python.exe run_one.py --method full   --seed 1 --epochs 1
-.venv\Scripts\python.exe run_one.py --method nait   --ratio 0.30 --seed 1 --epochs 1
-.venv\Scripts\python.exe run_one.py --method random --ratio 0.30 --seed 1 --epochs 1
-```
-
-**决策点**：如果 `nait@30%` 相对 full 掉点 > 3pp，先改选择策略，别铺 16 小时。
-过了再跑：`full × 3 seeds` + `{random,nait,nait_dedup}×0.30×3 seeds` + 曲线（seed 1 的 10/20/50/70）。
-
----
-
-## STEP 9 · R 出结论（管线已就绪）
-
-```bat
-& "C:\Program Files\R\R-4.6.1\bin\x64\Rscript.exe" "R/run_all.R"
-```
-
-切真实数据：`R/00_setup.R` 里 `RESULTS` 改成 `results`，并删掉 `R/run_all.R` 第一行的 `99_make_demo_data.R`。
-
----
-
-## STEP 10 · 写作
-
-`PLAN.md` §0 的 C1–C5 就是论文骨架，图 2/4/5 由 R 直接出。
-要补的是 §1 相关工作（读 20 篇 MIMIC / 子集选择方向）和临床场景叙述。
-
----
+1. **MIMIC 许可**（唯一有排队延迟的）：见 `docs/MIMIC_CHECKLIST.md`，需要导师签 DUA。
+2. **院内 EMR 渠道**：找导师要，哪怕几千条去标识化记录就能升级结论。
+3. **机器**：另外两台机器的显卡/显存还没确认；≥6 GB 就能分担种子。
 
 ## 如果卡住
 
-1. `import torch` 报 `no kernel image` → torch 版本不对，必须 cu128
-2. 显存爆 → 降 `--bs`、降 `--max-len`、或换 1.5B（`config.BASE_DIR`）
-3. 磁盘不够 → `pip cache purge`、删 `models/Qwen2.5-3B-Instruct`
-4. R 装包失败 → 一律 base R 零依赖，不要装包
+- 先跑 `check_env.bat`，它会告诉你环境哪一段坏了。
+- 再看 `night.log` / `night6.log` 最后 20 行。
+- 数据问题看 `docs/PROTOCOL.md` 的"输入契约"一节。
+- 统计口径的争论看 `docs/PREREG.md`（判据是跑之前定的，不许改）。
