@@ -13,8 +13,10 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-RES = ROOT / "results"
-SUBS = ROOT / "data" / "subsets"
+sys.path.insert(0, str(ROOT))
+import config as C  # noqa: E402
+RES = C.RESULTS
+SUBS = C.SUBSETS
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 fails: list[str] = []
@@ -32,14 +34,14 @@ p = RES / "sample_stats.csv"
 if p.exists():
     ss = pd.read_csv(p)
     ids = set(ss["id"].astype(str))
-    ids_cur = {json.loads(l)["id"] for l in (ROOT / "data" / "processed" / "train.jsonl").open(encoding="utf-8")}
-    check(len(ss) == 12000, "行数 = 12000", f"{len(ss)}")
+    ids_cur = {json.loads(l)["id"] for l in (C.PROC / "train.jsonl").open(encoding="utf-8")}
+    check(len(ss) == C.N_POOL, f"行数 = {C.N_POOL}", f"{len(ss)}")
     check(len(ids & ids_cur) == len(ids), "所有 id 都在当前池子里",
           f"{len(ids & ids_cur)}/{len(ids)} 命中")
     col30 = [c for c in ss.columns if c == "nait_30"]
     if col30:
         n30 = int(ss[col30[0]].fillna(0).astype(bool).sum())
-        check(n30 == 3600, "nait_30 选中 3600 条", str(n30))
+        check(n30 == int(round(C.N_POOL * 0.30)), f"nait_30 选中 {int(round(C.N_POOL * 0.30))} 条", str(n30))
     st = json.loads((RES / "select_stats.json").read_text(encoding="utf-8"))
     p50 = float(ss["act_score"].median())
     check(abs(p50 - st["score_quantiles"]["p50"]) < 5e-4,
@@ -60,7 +62,7 @@ for f in ("eq_per_seed.csv", "eq_table.csv", "eq_contrast.csv"):
     check(ok, f"{f} 存在", f"{n} 行")
 ep = pd.read_csv(RES / "eq_per_seed.csv")
 n_seed_30 = len(ep[(ep["ratio"] == 0.3) & (ep["task"] == "medmcqa") & (ep["method"] == "nait")])
-check(n_seed_30 == 3, "MedMCQA nait@30% 逐种子行数 = 3", str(n_seed_30))
+check(n_seed_30 >= 3, "MedMCQA nait@30% 逐种子行数 ≥3", str(n_seed_30))
 check("equiv_seed" in pd.read_csv(RES / "eq_table.csv").columns, "eq_table 有 equiv_seed 列", "")
 
 # ---------- 修复③ 长度匹配臂 ----------
@@ -72,8 +74,9 @@ if rl.exists():
     body = d.get("rand_len", {})
     check(sorted(body.keys()) == ["10", "20", "30", "50", "70"],
           "五档比例齐全", str(sorted(body.keys())))
-    check(len(body.get("30", [])) == 3600, "30% 档 3600 条", str(len(body.get("30", []))))
-    pool_ids = {json.loads(l)["id"] for l in (ROOT / "data" / "processed" / "train.jsonl").open(encoding="utf-8")}
+    n30_rl = int(round(C.N_POOL * 0.30))
+    check(len(body.get("30", [])) == n30_rl, f"30% 档 {n30_rl} 条", str(len(body.get("30", []))))
+    pool_ids = {json.loads(l)["id"] for l in (C.PROC / "train.jsonl").open(encoding="utf-8")}
     bad = [i for i in body.get("30", []) if i not in pool_ids]
     check(not bad, "rand_len 的 id 全在训练池里", f"{len(bad)} 个越界")
 cfg = (ROOT / "config.py").read_text(encoding="utf-8", errors="replace")

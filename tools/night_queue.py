@@ -62,6 +62,17 @@ def plan(name: str) -> list[tuple[str, float, int]]:
             q.append(("nait_dedup", 0.30, s))
         return q
 
+    if name == "scale":
+        # "放大池子"那一轮：24k 池、1 epoch、3 种子、4 个臂（12 run）。
+        # 假设：池子越大冗余越重，随机基线越吃亏，选择算法才可能拉开差距。
+        # 顺序：先跑最长的 full（它是所有差值的分母），再跑三个 30% 臂。
+        q: list[tuple[str, float, int]] = []
+        for s in (1, 2, 3):
+            q.append(("full", 1.0, s))
+        for s in (1, 2, 3):
+            q += [("nait", 0.30, s), ("random", 0.30, s), ("rand_len", 0.30, s)]
+        return q
+
     q: list[tuple[str, float, int]] = []
     # 1. the baseline, then the head-to-head at the headline ratio
     q += [("full", 1.0, 1), ("nait", 0.30, 1), ("random", 0.30, 1)]
@@ -79,7 +90,7 @@ def plan(name: str) -> list[tuple[str, float, int]]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--plan", default="full", choices=["full", "quick", "seeds6"])
+    ap.add_argument("--plan", default="full", choices=["full", "quick", "seeds6", "scale"])
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 

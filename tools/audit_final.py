@@ -58,9 +58,10 @@ ss = read_csv(C.RESULTS / "sample_stats.csv")
 ss_ids = {r["id"] for r in ss}
 check(len(ss) == len(pool), "行数等于池子大小", f"{len(ss)} vs {len(pool)}")
 check(ss_ids <= pool_ids, "id 全部来自当前池子", f"{len(ss_ids - pool_ids)} 个不在池里")
-check(sum(int(r["nait_30"]) for r in ss) == 3600, "nait_30 选中 3600 条")
+n30_expected = int(round(C.N_POOL * 0.30))
+check(sum(int(r["nait_30"]) for r in ss) == n30_expected, f"nait_30 选中 {n30_expected} 条")
 subs = json.loads((C.SUBSETS / "subsets.json").read_text(encoding="utf-8"))
-check(len(set(subs["nait"]["30"])) == 3600, "subsets.json 里 nait/30 也是 3600 条")
+check(len(set(subs["nait"]["30"])) == n30_expected, f"subsets.json 里 nait/30 也是 {n30_expected} 条")
 
 print()
 print("=" * 74)

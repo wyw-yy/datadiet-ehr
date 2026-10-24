@@ -13,12 +13,15 @@ echo.
 echo ============================================================
 echo  [1/6] 确认队列已经跑完
 echo ============================================================
-if not exist night6.log (
-    echo [X] 找不到 night6.log，队列没启动过？
+REM 自动挑最新的 night*.log（seeds6 那一轮是 night6.log，放大池子那一轮是 night.log）
+for /f "delims=" %%f in ('powershell -NoProfile -Command "Get-ChildItem night*.log | Sort-Object LastWriteTime | Select-Object -Last 1 -ExpandProperty Name"') do set NLOG=%%f
+if not defined NLOG (
+    echo [X] 找不到任何 night*.log，队列没启动过？
     goto :failed
 )
-powershell -NoProfile -Command "$t = Get-Content night6.log -Tail 5; $t | ForEach-Object { Write-Host '   ' $_ }"
-findstr /C:"[night] finished" night6.log >nul
+echo     用日志：%NLOG%
+powershell -NoProfile -Command "Get-Content '%NLOG%' -Tail 5 | ForEach-Object { Write-Host '   ' $_ }"
+findstr /C:"[night] finished" %NLOG% >nul
 if errorlevel 1 (
     echo.
     echo [X] night6.log 里还没有 "finished"，说明队列仍在跑。

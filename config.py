@@ -5,6 +5,8 @@ experiment grid, activation layers, dept taxonomy.
 """
 from pathlib import Path
 
+import os
+
 PROJ = Path(__file__).resolve().parent
 
 DATA     = PROJ / "data"
@@ -27,8 +29,10 @@ PREDS    = RESULTS / "preds"
 PREDS.mkdir(parents=True, exist_ok=True)
 
 # ---------------------------------------------------------------- data scale
-N_TRAIN = 12000          # the "full" training pool (see PLAN.md §2, G2)
-N_POOL  = 12000          # how many of train.jsonl to use as the pool (lower it to shrink every run)
+# 12,000 是第 1 轮（12k 池）的规模。跑"放大池子"那一轮时用环境变量覆盖，
+# 例如：$env:DATADIET_N_TRAIN=24000（见 tools/run_scale.py）。默认值不动，老结果可复现。
+N_TRAIN = int(os.environ.get("DATADIET_N_TRAIN", 12000))   # the "full" training pool
+N_POOL  = int(os.environ.get("DATADIET_N_POOL", N_TRAIN))  # how many of train.jsonl to use as the pool
 N_PROBE = 2000           # in-domain reference set used to build activation centroids
 MAX_LEN = 512            # tokens per training example (pool: p50=256, p90=366, p99=582)
 
