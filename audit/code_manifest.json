@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-24T14:55:24+0800",
+  "generated_at": "2026-10-24T20:54:05+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 60,
+  "n_files": 62,
   "files": [
     {
       "path": "check_env.bat",
@@ -29,6 +29,12 @@
       "mtime": "2026-10-22T20:10:43"
     },
     {
+      "path": "finish_round.bat",
+      "sha256": "adf6bf35981957b4ad9b889fd4fda43af6a43deff8265b0636bae016ea59c371",
+      "size": 2876,
+      "mtime": "2026-10-24T14:58:37"
+    },
+    {
       "path": "prepare_data.py",
       "sha256": "b434bbbf314cc72c5875b32a76e7558aa3eede19de0a9b2ca0d2c3fbc1b4642c",
       "size": 15172,
@@ -42,33 +48,33 @@
     },
     {
       "path": "R/00_setup.R",
-      "sha256": "865596f1ee9d0b42ede8586ea85345f2bbe431a9e309d62b07292db730d79f0a",
-      "size": 2194,
-      "mtime": "2026-10-24T01:06:51"
+      "sha256": "eb5a407edab4a4113bc421a27bad73345094529f63a0d407b50f9c59fcddcb9d",
+      "size": 2228,
+      "mtime": "2026-10-24T14:56:02"
     },
     {
       "path": "R/01_equivalence.R",
-      "sha256": "382faff0ace4b74fc5a56c96eddc5a245d75bf3b162f612f09d7f63cf79a8673",
-      "size": 8557,
-      "mtime": "2026-10-24T14:27:41"
+      "sha256": "ea39e843d59cfa8e521656abf3ad9a910d64e5ca7743cc0f1b42cb6a7cf3933a",
+      "size": 8997,
+      "mtime": "2026-10-24T20:51:58"
     },
     {
       "path": "R/02_curve.R",
-      "sha256": "a996a8a4cfec6747935d3eb9f57040074a946c1557754fa134f9e73f62d18a16",
-      "size": 3806,
-      "mtime": "2026-10-24T01:07:43"
+      "sha256": "228827471a67fd67bf81ba1d125d53e6c89e88c0a4fc5c405e42685b1e5e4309",
+      "size": 3876,
+      "mtime": "2026-10-24T14:56:51"
     },
     {
       "path": "R/03_robustness.R",
-      "sha256": "0c2106c2fd882deb91c14f99d89574b775fa1aff16d756100e9509d9db7a7ca7",
-      "size": 3837,
-      "mtime": "2026-10-24T01:08:50"
+      "sha256": "128c029aa2ad71cc31662c8e5d9370627f00915d93a137e886752413e3cd7404",
+      "size": 3879,
+      "mtime": "2026-10-24T14:57:55"
     },
     {
       "path": "R/04_compute.R",
-      "sha256": "aa9f7a51649669aa8fbb9d4d7a0824a44dc117844d06e11a72196b488665d365",
-      "size": 5239,
-      "mtime": "2026-10-24T01:08:24"
+      "sha256": "16919de78ce7fa43251fea94af2d3b834cc7d69ae9a657e339966aa9e32eab51",
+      "size": 5483,
+      "mtime": "2026-10-24T20:49:19"
     },
     {
       "path": "R/99_make_demo_data.R",
@@ -228,9 +234,9 @@
     },
     {
       "path": "tools/make_table1.py",
-      "sha256": "bdf60b3c25cf10e9216d85a6e00a8c669fa8abfa362cc8badf921107188f4264",
-      "size": 5484,
-      "mtime": "2026-10-24T14:50:29"
+      "sha256": "8be2b0eedc62f73bca66e87cf73276b359f7d963eaffae9a7abf527e1635d1b8",
+      "size": 7055,
+      "mtime": "2026-10-24T20:53:18"
     },
     {
       "path": "tools/manifest_data.json",
@@ -258,9 +264,9 @@
     },
     {
       "path": "tools/night_queue.py",
-      "sha256": "4c09d1388bfc1a90f785161812a66979ede1023e1ae346093c22410d4cc1d7b6",
-      "size": 4869,
-      "mtime": "2026-10-24T14:45:38"
+      "sha256": "2aaa7d811b168bbac6c941db9e941ee2bc4bf01121c9ba61634ca54f801538e4",
+      "size": 5495,
+      "mtime": "2026-10-24T15:18:35"
     },
     {
       "path": "tools/paired_stats.py",
@@ -347,10 +353,16 @@
       "mtime": "2026-10-22T21:11:58"
     },
     {
+      "path": "tools/watch_queue.py",
+      "sha256": "3a792e9e6929ecb8ce46526be97e1341222a63704e271b023630dbc3e2fd410d",
+      "size": 4795,
+      "mtime": "2026-10-24T15:03:15"
+    },
+    {
       "path": "train.py",
-      "sha256": "a544cee77b418ccd7ea7153b36d2aa20097801b224fb2cbfd21de28374c12ba6",
-      "size": 10638,
-      "mtime": "2026-10-23T18:30:57"
+      "sha256": "c64089c53559b380db9ad1cc7173a0e6897d33b96dc3894831201e8cf5260f3e",
+      "size": 11062,
+      "mtime": "2026-10-24T15:35:09"
     },
     {
       "path": "watch_progress.bat",
@@ -365,5 +377,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "d9e5267f1a84f9cd1cec2407870bad415bcbffe74849bb37d19ded2d2ccfe6bc"
+  "manifest_sha256": "2eb98f95cd1dc89de44dfee03d9aa20622a2554b8603d5dea1141e525be135a1"
 }

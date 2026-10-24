@@ -1,0 +1,16 @@
+{
+  "exp_id": "rand_len_r30_s4",
+  "method": "rand_len",
+  "ratio": 0.3,
+  "seed": 4,
+  "epochs": 1.0,
+  "n_samples": 3600,
+  "steps": 450,
+  "max_len": 512,
+  "bs": 4,
+  "grad_accum": 2,
+  "train_seconds": 733.1,
+  "loss_last": 2.0797,
+  "adapter": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\adapters\\rand_len_r30_s4",
+  "pool_size": 12000
+}

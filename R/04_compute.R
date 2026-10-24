@@ -38,7 +38,9 @@ cat(sprintf("每样本训练耗时：中位数 %.4f s，清洗后 %.4f s（剔�
             rate, rate_clean, sum(cp$contaminated)))
 
 cp$train_h  <- cp$n_samples * rate_clean / 3600
-cp$select_h <- ifelse(cp$method %in% c("full", "random"), 0, sel)
+# 只有"要看一遍模型"的方法才付选择前向的钱：nait* 要采激活+打分；
+# random 和 rand_len 都是纯抽样（rand_len 只是按 nait 的长度分布抽），零开销。
+cp$select_h <- ifelse(cp$method %in% c("full", "random", "rand_len"), 0, sel)
 cp$gpu_hours <- cp$train_h + cp$select_h
 
 full_h <- 12000 * rate_clean / 3600

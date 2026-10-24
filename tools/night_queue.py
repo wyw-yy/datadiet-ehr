@@ -25,6 +25,7 @@ import config as C  # noqa: E402
 
 PY = ROOT / ".venv" / "Scripts" / "python.exe"
 LOG = ROOT / "night.log"
+RUN_LOGS = ROOT / "logs"
 
 
 def done_ids() -> set[str]:
@@ -104,11 +105,16 @@ def main() -> None:
         with open(LOG, "a", encoding="utf-8") as lf:
             lf.write(head + "\n")
         t = time.time()
+        # 每个 run 独立日志。不能把父进程的 LOG 句柄传给子进程：外层 PowerShell 也用
+        # `*>` 重定向同一个文件，两个写者叠加会让子进程的输出整段丢掉（上一轮就是这样）。
+        RUN_LOGS.mkdir(exist_ok=True)
+        run_log = RUN_LOGS / f"{eid}.log"
         try:
-            with open(LOG, "a", encoding="utf-8") as lf:
+            with open(run_log, "w", encoding="utf-8") as lf:
                 p = subprocess.run(cmd, cwd=ROOT, stdout=lf, stderr=subprocess.STDOUT)
             if p.returncode != 0:
-                raise RuntimeError(f"run_one exit {p.returncode}")
+                tail = run_log.read_text(encoding="utf-8", errors="replace").strip().splitlines()[-4:]
+                raise RuntimeError(f"run_one exit {p.returncode}: " + " | ".join(tail))
         except Exception as e:                                    # keep going
             failures.append((eid, str(e)))
             msg = f"  FAILED {eid}: {e}"
@@ -117,8 +123,10 @@ def main() -> None:
                 lf.write(msg + "\n")
             continue
         print(f"  ok in {(time.time() - t) / 60:.0f} min", flush=True)
+        acc = [ln for ln in run_log.read_text(encoding="utf-8", errors="replace").splitlines()
+               if "ACCURACY=" in ln]
         with open(LOG, "a", encoding="utf-8") as lf:
-            lf.write(f"  ok in {(time.time() - t) / 60:.1f} min\n")
+            lf.write(f"  ok in {(time.time() - t) / 60:.1f} min; " + " ".join(acc) + "\n")
 
     total = (time.time() - t0) / 3600
     summary = (f"[night] finished {len(items) - len(failures)}/{len(items)} runs "

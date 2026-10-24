@@ -1,0 +1,16 @@
+{
+  "exp_id": "random_r30_s6",
+  "method": "random",
+  "ratio": 0.3,
+  "seed": 6,
+  "epochs": 1.0,
+  "n_samples": 3600,
+  "steps": 450,
+  "max_len": 512,
+  "bs": 4,
+  "grad_accum": 2,
+  "train_seconds": 555.2,
+  "loss_last": 1.9364,
+  "adapter": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\adapters\\random_r30_s6",
+  "pool_size": 12000
+}

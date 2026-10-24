@@ -93,18 +93,49 @@ def main() -> None:
                 ss=mark(r.get("same_sign"))))
 
     L.append("\n# Table 3 — 算力净账（30%）\n")
-    L.append("| 方法 | 训练 | 选择前向 | 合计 (GPU-h) | 净省 |")
-    L.append("|---|---|---|---|---|")
+    L.append("| 方法 | 训练 (GPU-h) | 选择前向 (GPU-h) | 合计 (GPU-h) | 归一化净省 | 实测墙钟净省 |")
+    L.append("|---|---|---|---|---|---|")
     full = comp[comp["method"] == "full"]["gpu_hours"].mean()
+
+    # 墙钟口径：直接取 runs/*.json 里的 train_seconds（按样本数过滤掉 pilot/短跑）
+    wall: dict[str, float] = {}
+    run_dir = RES / "runs"
+    if run_dir.exists():
+        import json
+        recs = []
+        for p in run_dir.glob("*.json"):
+            try:
+                recs.append(json.loads(p.read_text(encoding="utf-8")))
+            except Exception:
+                continue
+        n_full = max((r.get("n_samples", 0) for r in recs), default=0)
+        fulls = [r["train_seconds"] for r in recs
+                 if r.get("method") == "full" and r.get("n_samples") == n_full]
+        if fulls:
+            wall["full"] = sum(fulls) / len(fulls)
+            for m in ("nait", "rand_len", "random"):
+                v = [r["train_seconds"] for r in recs
+                     if r.get("method") == m and abs(float(r.get("ratio", 0)) - 0.30) < 1e-9]
+                if v:
+                    wall[m] = sum(v) / len(v)
+
     for m in ("nait", "rand_len", "random"):
         z = comp[(comp["method"] == m) & (comp["ratio"] == 0.30)]
         if not len(z):
             continue
         z = z.iloc[0]
-        L.append("| {} | 训练 {:.3f} | {:.3f} | **{:.3f}** | **{:.0f}%** |".format(
-            METHOD_LABEL.get(m, m), z["train_h"],
-            z["select_h"], z["gpu_hours"], z["net_saving_pct"]))
-    L.append("| 全量（基线） | 训练 {:.3f} | 0 | {:.3f} | 0% |".format(full, full))
+        wtxt = "—"
+        if wall.get("full") and wall.get(m):
+            sav = (1 - (wall[m] + z["select_h"] * 3600) / wall["full"]) * 100
+            wtxt = f"**{sav:.1f}%**"
+        L.append("| {} | {:.3f} | {:.3f} | **{:.3f}** | **{:.1f}%** | {} |".format(
+            METHOD_LABEL.get(m, m), z["train_h"], z["select_h"], z["gpu_hours"],
+            z["net_saving_pct"], wtxt))
+    wtxt_full = "0%"
+    L.append("| 全量（基线） | {:.3f} | 0 | {:.3f} | 0% | {} |".format(full, full, wtxt_full))
+    L.append("\n> 归一化口径按每样本恒定耗时算；墙钟口径取 `results/runs/*.json` 的实测 "
+             "`train_seconds`（12,000 条那一档的均值为全量基线），含模型加载等固定开销，"
+             "不随样本数缩放，所以短 run 的净省略低。论文正文写墙钟值，脚注给归一化值。\n")
 
     dose = eq[(eq["method"] == "nait")].copy()
     if len(dose):

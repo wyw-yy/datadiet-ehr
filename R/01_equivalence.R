@@ -140,12 +140,21 @@ write.csv(res, file.path(RESULTS, "eq_table.csv"), row.names = FALSE)
 # ============================================================
 con <- list(); j <- 1
 others <- setdiff(SUBS, "random")
+# 先做"每个方法 vs 随机"，再补两条关键对照：
+#   nait vs rand_len —— 排除"长度代理"解释（长度分布完全对齐后还赢不赢）
+#   nait_dedup vs nait —— 去重本身有没有伤到效果
+pairs <- lapply(others, function(m) c(m, "random"))
+extra <- list(c("nait", "rand_len"), c("nait_dedup", "nait"))
+for (e in extra) {
+  if (all(e %in% SUBS)) pairs[[length(pairs) + 1]] <- e
+}
 for (tk in TASKS) {
-  for (mt in others) {
+  for (pp in pairs) {
+    mt <- pp[1]; base <- pp[2]
     for (r in sort(unique(per$ratio[per$method == mt]))) {
       ds <- c(); ps <- c(); se <- c()
       for (sd in SEEDS) {
-        pr <- paired(exp_id(mt, r, sd), exp_id("random", r, sd), tk)
+        pr <- paired(exp_id(mt, r, sd), exp_id(base, r, sd), tk)
         if (is.null(pr)) next
         ds <- c(ds, mean(pr$d) * 100)
         ps <- c(ps, mcnemar_p(pr$a_only, pr$b_only))
@@ -153,7 +162,7 @@ for (tk in TASKS) {
       }
       if (!length(ds)) next
       con[[j]] <- data.frame(
-        task = tk, method = mt, vs = "random", ratio = r, n_seed = length(ds),
+        task = tk, method = mt, vs = base, ratio = r, n_seed = length(ds),
         delta_pp = round(mean(ds), 2), seed_min_pp = round(min(ds), 2),
         seed_max_pp = round(max(ds), 2), seed_sd_pp = round(ifelse(length(ds) > 1, sd(ds), NA_real_), 2),
         per_seed_pp = paste(sprintf("%+.2f", ds), collapse = " / "),

@@ -167,6 +167,8 @@ def main():
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--epochs", type=float, default=1.0)
     ap.add_argument("--max-len", type=int, default=C.MAX_LEN)
+    # bs=4 × accum=2：与前 6 个 run 保持一致（换 batch 结构会给跨种子的比较引入混杂）。
+    # 8 GB 卡上 bs=4 峰值 ~7.4 GiB，只要插着电源就能跑满功耗。
     ap.add_argument("--bs", type=int, default=4)
     ap.add_argument("--grad-accum", type=int, default=2)
     ap.add_argument("--lr", type=float, default=1e-4)
@@ -230,6 +232,11 @@ def main():
             break
 
     train_s = time.time() - t0
+    try:
+        print(f"[train] peak {torch.cuda.max_memory_allocated() / 2**30:.2f} GiB allocated, "
+              f"{torch.cuda.max_memory_reserved() / 2**30:.2f} GiB reserved", flush=True)
+    except Exception:
+        pass
     if not a.no_save:
         out_dir.mkdir(parents=True, exist_ok=True)
         model.save_pretrained(str(out_dir))
