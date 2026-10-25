@@ -1,0 +1,16 @@
+{
+  "exp_id": "full_s4",
+  "method": "full",
+  "ratio": 1.0,
+  "seed": 4,
+  "epochs": 1.0,
+  "n_samples": 24000,
+  "steps": 3000,
+  "max_len": 512,
+  "bs": 4,
+  "grad_accum": 2,
+  "train_seconds": 3478.7,
+  "loss_last": 2.0085,
+  "adapter": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\adapters\\full_s4",
+  "pool_size": 24000
+}

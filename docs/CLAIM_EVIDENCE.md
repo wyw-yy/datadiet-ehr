@@ -19,7 +19,7 @@
 | 论文表 | `paper/table1.md` Table 1 |
 | 图 | `paper/figures/fig02_data_efficiency.png`、`fig06_forest.png` |
 
-状态：**✅ 逐题口径 6/6 等效；种子口径 2/6 等效。**
+状态：**✅ 8 行里 7 行双口径等效（nait / random / rand_len 三个臂在 6 个种子下全部通过；el2n 两项不通过）。**
 写法要求：必须两个口径都报（`docs/PREREG.md` §3.3）。只报逐题口径等于藏起一半事实。
 
 ---

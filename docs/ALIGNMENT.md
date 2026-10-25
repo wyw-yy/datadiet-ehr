@@ -11,18 +11,18 @@
 
 | # | 提案要求 | 我们的实现 | 证据文件 | 状态 |
 |---|---|---|---|---|
-| ① | 问题：少用三成病历数据还能不能训好模型 | 全量 12,000 条 vs 子集 3,600 条（30%），同一张考卷，等效界 δ=2pp | `results/eq_table.csv`、`RESULTS.md` §1 | 🟡 结论有了，但**种子只有 3 个**，种子级判定不够（见 `docs/PREREG.md` §5，需 6 个） |
+| ① | 问题：少用三成病历数据还能不能训好模型 | 全量 24,000 条 vs 子集 7,200 条（30%），同一张考卷，等效界 δ=2pp | `results/eq_table.csv`、`RESULTS.md` §1 | ✅ 8 行里 7 行双口径等效（nait 6 种子 −0.53 / −0.25pp） |
 | ② | 缺口：选择协议此前不可复现 | 随机性全固定（seed=42）、层集合 {8,12,16,20,24}、阈值 0.95、所有中间量落盘、代码哈希留档 | `data/subsets/subsets.json`、`results/select_stats.json`、`audit/` | ✅ |
 | ③ | 做法：基于神经元激活做子集选择 | 采 5 层隐状态 → **减池内均值** → L2 归一 → 与 probe 质心算余弦 → 按科室分层配额取满 | `collect_acts.py`、`select_subset.py`、`cache/acts/*.npz` | ✅ |
 | ③ | 做法：给出可复现协议 | 10 节协议文档：输入契约、采集、去均值、打分、去重、分层、审计、参数总表、自检、放弃的选项 | `docs/PROTOCOL.md` | ✅ |
 | ③ | 做法：开源实现 | 代码齐全 + 一键脚本 + 环境锁定 + 新机器部署说明；**缺 README / LICENSE** | `check_env.bat`、`run_pilots.bat`、`requirements-lock.txt`、`docs/SETUP_MACHINES.md` | 🟡 缺 `README.md` + `LICENSE` |
 | ③ | 做法：测量数据削减比例 | 五档 10 / 20 / 30 / 50 / 70% 全部跑完（30% 有 6 种子，其余 1 种子） | `results/eq_table.csv`、`paper/figures/fig02_data_efficiency.png` | ✅ |
-| ③ | 做法：算力节省 | 每次 run 的真实 `train_seconds`；选择前向开销 **0.13 GPU-h** 实测；每样本耗时用中位数剔污染 | `results/compute_table.csv`、`paper/figures/fig05_compute.png` | ✅ 净省 **实测 43.8%**（归一化 46.3%，不是 70%） |
+| ③ | 做法：算力节省 | 每次 run 的真实 `train_seconds`；选择前向开销按方法实测（nait **0.255**、el2n **0.607** GPU-h）；每样本耗时用中位数剔污染 | `results/compute_table.csv`、`paper/figures/fig05_compute.png` | ✅ 净省 nait **45.2%**、random 70.0%、el2n **10.8%**（都不是 70%） |
 | ③ | 做法：跨科室稳健性 | 6 个科室逐题结果可分；科室 n<30 跳过 | `results/robust.csv`、`paper/figures/fig04_dept.png` | 🟡 有图有表，但科室级样本量很小、CI 极宽（24k 轮最差是 onco 的 nait −3.55pp，CI [−8.51, +0.71] 跨 0，不能下结论） |
 | ③ | 做法：跨任务稳健性 | MedMCQA（同域，4,183）＋ MedQA（跨任务，1,273） | `data/processed/medmcqa.jsonl`、`medqa.jsonl` | ✅ |
 | ④ | 产出：开源协议 | 同"可复现协议" | `docs/PROTOCOL.md` | ✅ |
-| ④ | 产出：数据冗余度报告 | 去重保留 **99.08%**（11,889/12,000）；随机对余弦 p50 −0.014 / p99 0.427 | `results/select_stats.json` | ✅ 结论：**这批数据几乎没有语义级近重复**，冗余不在"重复样本"上 |
-| ④ | 产出：算力节省结论 | 净省 43.8%（实测墙钟）／46.3%（归一化）；子集训练 0.17 + 选择 0.13 / 全量 0.56 | `results/compute_table.csv` | ✅ |
+| ④ | 产出：数据冗余度报告 | 去重保留 **98.43%**（23,624/24,000）；随机对余弦 p50 −0.0125 / p99 0.4474 | `results/select_stats.json` | ✅ 结论：**这批数据几乎没有语义级近重复**，冗余不在"重复样本"上 |
+| ④ | 产出：算力节省结论 | nait 净省 45.2%（训练 0.308 + 选择 0.255 / 全量 1.02 GPU-h）；el2n 只省 10.8% | `results/compute_table.csv` | ✅ |
 
 ---
 
@@ -30,10 +30,10 @@
 
 | # | 提案要求 | 我们的实现 | 证据 | 状态 |
 |---|---|---|---|---|
-| ① | 来源：院内电子病历（结构化与文本） | **偏离**：用公开医学题库 `MedMCQA` 的 train split 当训练池（182,822 条里抽 12,000），用其 test+valid 当考卷 | `data/raw/medmcqa-train/train.parquet` | ⚠️ **必须写 limitation**：不是院内 EMR，没有结构化生命体征/实验室值 |
+| ① | 来源：院内电子病历（结构化与文本） | **偏离**：用公开医学题库 `MedMCQA` 的 train split 当训练池（182,822 条里抽 24,000），用其 test+valid 当考卷 | `data/raw/medmcqa-train/train.parquet` | ⚠️ **必须写 limitation**：不是院内 EMR，没有结构化生命体征/实验室值 |
 | ① | （备选）公开医患问答 | `lavita/ChatDoctor-HealthCareMagic-100k` 112,165 条仍留在磁盘，作**跨域对照**（已验证：在这上面训练会让 MedQA 掉 3.8pp） | `data/raw/healthcaremagic/hcm-100k.parquet` | ✅ 作为反例证据留着 |
-| ② | 单位与规模：样本单位为训练样本 | 1 条"题干+四选项→答案+解析"= 1 个训练样本；池子 12,000 条 | `data/processed/train.jsonl` | ✅ |
-| ③ | 关键字段：样本激活统计 | **每样本一行**：激活得分、全池名次、百分位、是否被 10 档子集选中 | `results/sample_stats.csv`（12,000 行 × 15 列） | ✅ |
+| ② | 单位与规模：样本单位为训练样本 | 1 条"题干+四选项→答案+解析"= 1 个训练样本；池子 24,000 条 | `data/processed/train.jsonl` | ✅ |
+| ③ | 关键字段：样本激活统计 | **每样本一行**：激活得分、全池名次、百分位、是否被 10 档子集选中 | `results/sample_stats.csv`（24,000 行 × 15 列） | ✅ |
 | ③ | 关键字段：被选子集 | 两个变体 × 五档比例，附 id 列表 | `data/subsets/subsets.json` | ✅ |
 | ③ | 关键字段：训练数据量 | 每个 run 的 method / ratio / 实际样本数 | `results/metrics_long.csv` | ✅ |
 | ③ | 关键字段：下游任务表现 | 每道题的对错 + 四个选项概率 | `results/preds/<run>_<task>.csv.gz`（19 run × 2 任务） | ✅ |
@@ -62,7 +62,7 @@
 |---|---|---|---|---|
 | ① | 场景：临床模型训练算力预算压缩 | 单卡 8GB 笔电上把 12k 条的训练压到 0.17 GPU-h | `results/compute_table.csv` | ✅ |
 | ② | 用户：模型训练团队 / 信息科 / 预算决策方 | 一句话能讲清："少看七成题，考分不掉，电费省一半" | `RESULTS.md` | 🟡 缺一页给非技术读者的摘要 |
-| ③ | 用途：效果不降前提下降低数据与算力成本 | 净省 43.8%（实测）／46.3%（归一化），代价是 0.13 GPU-h 的一次性选择开销 | `fig05_compute.png` | ✅ |
+| ③ | 用途：效果不降前提下降低数据与算力成本 | 净省 45.2%，代价是一次性 0.255 GPU-h 的选择前向；同比例下 EL2N 要 0.607 GPU-h，只省 10.8% | `fig05_compute.png` | ✅ |
 | ④ | 验收：同效果下训练数据削减 ≥30% | **30% 达成**（逐题口径），但"同效果"的强度取决于种子数 | `results/eq_table.csv` | 🟡 |
 | ⑤ | 落地：发布开源协议与实施指南 | 协议有、脚本有、新机器部署说明有；缺 README/LICENSE 与"如何换自己的数据"教程 | `docs/PROTOCOL.md`、`docs/SETUP_MACHINES.md` | 🟡 |
 

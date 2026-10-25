@@ -118,7 +118,8 @@ if hp.exists():
     # 文档里引用的逐种子数字、对比数字也要能溯源
     for r in read_csv(C.RESULTS / "eq_table.csv"):
         for col in ("delta_pp", "ci_lo_pp", "ci_hi_pp", "acc_full", "acc_sub",
-                    "seed_min_pp", "seed_max_pp", "seed_sd_pp", "stouffer_p"):
+                    "seed_min_pp", "seed_max_pp", "seed_sd_pp", "stouffer_p",
+                    "ci_seed_lo_pp", "ci_seed_hi_pp"):
             add(r.get(col))
     for r in read_csv(C.RESULTS / "eq_per_seed.csv"):
         for col in ("delta_pp", "ci_lo_pp", "ci_hi_pp", "acc_full", "acc_sub", "mcnemar_p"):
@@ -130,7 +131,8 @@ if hp.exists():
         for tok in re.findall(r"[-+]?\d+\.\d+", r.get("per_seed_pp", "") + " " + r.get("per_seed_p", "")):
             add(tok)
     for r in read_csv(C.RESULTS / "compute_table.csv"):
-        for col in ("gpu_hours", "select_overhead_h", "net_saving_pct", "acc"):
+        for col in ("gpu_hours", "select_overhead_h", "net_saving_pct", "acc",
+                    "train_h", "select_h"):
             add(r.get(col))
     for r in read_csv(C.RESULTS / "robust.csv"):
         for col in ("delta_pp", "ci_lo_pp", "ci_hi_pp", "acc_full", "acc_sub"):

@@ -1,0 +1,16 @@
+{
+  "exp_id": "full_s5",
+  "method": "full",
+  "ratio": 1.0,
+  "seed": 5,
+  "epochs": 1.0,
+  "n_samples": 24000,
+  "steps": 3000,
+  "max_len": 512,
+  "bs": 4,
+  "grad_accum": 2,
+  "train_seconds": 4198.9,
+  "loss_last": 1.9431,
+  "adapter": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\adapters\\full_s5",
+  "pool_size": 24000
+}
