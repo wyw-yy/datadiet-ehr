@@ -18,6 +18,12 @@ dir.create(FIG, recursive = TRUE, showWarnings = FALSE)
 # 都可能因为 CI 太宽而判不合格，δ=2pp 才有检验功效。审稿人问起，这就是理由。
 DELTA <- 0.02
 
+# 方法之间的等效界。这里问的不是"和全量比掉不掉"，而是"两种挑法有没有区别"。
+# 界取 1pp：小于 1pp 的差距在实际部署里没法用（换个种子就翻方向），
+# 所以"差异 < 1pp"就该判成"等效"，而不是用"p>0.05 所以没差别"来糊过去
+# （那是 absence of evidence，不是 evidence of absence）。
+DELTA_CONTRAST <- 0.01
+
 TASKS   <- c("medqa", "medmcqa")
 METHODS <- c("full", "random", "rand_len", "nait", "nait_dedup")
 PAL     <- c(full = "grey30", random = "grey65", rand_len = "#CC79A7",

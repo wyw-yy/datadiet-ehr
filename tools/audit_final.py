@@ -124,8 +124,9 @@ if hp.exists():
         for col in ("delta_pp", "ci_lo_pp", "ci_hi_pp", "acc_full", "acc_sub", "mcnemar_p"):
             add(r[col])
     for r in read_csv(C.RESULTS / "eq_contrast.csv"):
-        for col in ("delta_pp", "seed_min_pp", "seed_max_pp", "seed_sd_pp", "stouffer_p"):
-            add(r[col])
+        for col in ("delta_pp", "seed_min_pp", "seed_max_pp", "seed_sd_pp", "stouffer_p",
+                    "ci_lo_pp", "ci_hi_pp", "tost_margin_pp"):
+            add(r.get(col))
         for tok in re.findall(r"[-+]?\d+\.\d+", r.get("per_seed_pp", "") + " " + r.get("per_seed_p", "")):
             add(tok)
     for r in read_csv(C.RESULTS / "compute_table.csv"):

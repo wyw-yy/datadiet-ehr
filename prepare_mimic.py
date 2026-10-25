@@ -257,6 +257,7 @@ def build(src: Path, out: Path, n_probe: int, n_eval: int, seed: int) -> int:
 
     sp = split_by_subject(df["subject_id"].astype(str).tolist(), seed, n_probe, n_eval)
     rows = {"train": [], "probe": [], "eval": []}
+    row_subject: dict[str, list] = {"train": [], "probe": [], "eval": []}
     skipped = 0
     for _, r in df.iterrows():
         body = extract_section(str(r["text"]), "hospital_course")
@@ -272,6 +273,7 @@ def build(src: Path, out: Path, n_probe: int, n_eval: int, seed: int) -> int:
         bucket = "train" if sid in sp["train"] else ("probe" if sid in sp["probe"] else "eval")
         rid = f"m{bucket[0]}{len(rows[bucket]):05d}"
         rows[bucket].append(make_pair(meta, body, dept, rid))
+        row_subject[bucket].append([rid, sid])
 
     out.mkdir(parents=True, exist_ok=True)
     for k, v in rows.items():
@@ -280,7 +282,20 @@ def build(src: Path, out: Path, n_probe: int, n_eval: int, seed: int) -> int:
             for r in v:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
         print(f"[mimic] {name}: {len(v)} 条")
-    print(f"[mimic] 跳过（住院经过 <200 字符）: {skipped}")
+    print(f"跳过（住院经过 <200 字符）: {skipped}")
+    # 切分清单：审计要用。只记 subject_id 与归属，不记任何文本。
+    manifest = {
+        "seed": seed, "n_probe": n_probe, "n_eval": n_eval,
+        "n_subject": int(df["subject_id"].nunique()),
+        "splits": {k: sorted(str(s) for s in v) for k, v in sp.items()},
+        "rows": {k: len(v) for k, v in rows.items()},
+        # 每条样本属于哪个病人（只有伪 ID，没有文本）——审计要用它证明"同一个人没跨集合"
+        "row_subject": row_subject,
+        "skipped_short": skipped,
+    }
+    with open(out / "mimic_split.json", "w", encoding="utf-8") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=1)
+    print(f"[mimic] 切分清单 {out / 'mimic_split.json'}（{manifest['n_subject']} 个病人）")
     print("[mimic] 注意：MIMIC 的评测是**参考文本生成**（ROUGE/BERTScore + 人工抽检），"
           "不是四选一准确率，R 侧要另写一个分析脚本。")
     return 0

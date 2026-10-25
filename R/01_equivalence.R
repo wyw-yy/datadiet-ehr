@@ -152,19 +152,28 @@ for (tk in TASKS) {
   for (pp in pairs) {
     mt <- pp[1]; base <- pp[2]
     for (r in sort(unique(per$ratio[per$method == mt]))) {
-      ds <- c(); ps <- c(); se <- c()
+      ds <- c(); ps <- c(); se <- c(); vecs <- list()
       for (sd in SEEDS) {
         pr <- paired(exp_id(mt, r, sd), exp_id(base, r, sd), tk)
         if (is.null(pr)) next
         ds <- c(ds, mean(pr$d) * 100)
         ps <- c(ps, mcnemar_p(pr$a_only, pr$b_only))
         se <- c(se, sd)
+        vecs[[length(vecs) + 1]] <- pr$d
       }
       if (!length(ds)) next
+      # 逐题口径：先按题把各 seed 的 d 平均（题目相同，可以逐题合并），再对题做 bootstrap。
+      # 这样得到的 CI 回答的是"换一批题，差距会落在哪"，不受种子噪声放大。
+      dbar <- rowMeans(do.call(cbind, vecs))
+      bc <- boot_ci(dbar * 100, seed = 7)
+      lo <- round(bc[1], 2); hi <- round(bc[2], 2)
       con[[j]] <- data.frame(
         task = tk, method = mt, vs = base, ratio = r, n_seed = length(ds),
         delta_pp = round(mean(ds), 2), seed_min_pp = round(min(ds), 2),
         seed_max_pp = round(max(ds), 2), seed_sd_pp = round(ifelse(length(ds) > 1, sd(ds), NA_real_), 2),
+        ci_lo_pp = lo, ci_hi_pp = hi,
+        tost_equiv = (lo > -DELTA_CONTRAST * 100) && (hi < DELTA_CONTRAST * 100),
+        tost_margin_pp = DELTA_CONTRAST * 100,
         per_seed_pp = paste(sprintf("%+.2f", ds), collapse = " / "),
         per_seed_p = paste(sprintf("%.3f", ps), collapse = " / "),
         stouffer_p = round(stouffer(ps, ds), 4),
@@ -192,9 +201,11 @@ pw <- per[abs(per$ratio - 0.30) < 1e-9, ]
 print(pw[, c("task", "method", "seed", "delta_pp", "ci_lo_pp", "ci_hi_pp", "mcnemar_p", "equiv")],
       row.names = FALSE)
 
-cat("\n== 方法 vs 随机：同一比例下谁更好 ==\n")
-print(contrast[, c("task", "method", "ratio", "delta_pp", "seed_min_pp", "seed_max_pp",
-                   "per_seed_pp", "stouffer_p", "same_sign")], row.names = FALSE)
+cat("\n== 方法 vs 随机：同一比例下谁更好（TOST 界 ±",
+    DELTA_CONTRAST * 100, "pp）==\n", sep = "")
+print(contrast[, c("task", "method", "ratio", "delta_pp", "ci_lo_pp", "ci_hi_pp",
+                   "tost_equiv", "per_seed_pp", "stouffer_p", "same_sign")],
+      row.names = FALSE)
 
 cat("\n== 各比例下 nait 的掉点 ==\n")
 n <- res[res$method == "nait", c("task", "ratio", "n_seed", "delta_pp",

@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-25T12:45:44+0800",
+  "generated_at": "2026-10-25T13:33:26+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 113,
+  "n_files": 115,
   "files": [
     {
       "path": "check_env.bat",
@@ -42,21 +42,21 @@
     },
     {
       "path": "prepare_mimic.py",
-      "sha256": "db0351e6c5d0eee498c92f7a30ecb26a696941d43e7def3399403d69d8f47f5c",
-      "size": 13082,
-      "mtime": "2026-10-24T14:52:44"
+      "sha256": "39a6b9530967e65f11cddfd9f78bafde0c031f977a726da23614792ed5791edf",
+      "size": 13975,
+      "mtime": "2026-10-25T13:31:34"
     },
     {
       "path": "R/00_setup.R",
-      "sha256": "eb5a407edab4a4113bc421a27bad73345094529f63a0d407b50f9c59fcddcb9d",
-      "size": 2228,
-      "mtime": "2026-10-24T14:56:02"
+      "sha256": "0d37e54ee22e913235c920cd20bdd098aa334329e8b56392621c7cf6881da77d",
+      "size": 2621,
+      "mtime": "2026-10-25T13:29:59"
     },
     {
       "path": "R/01_equivalence.R",
-      "sha256": "ea39e843d59cfa8e521656abf3ad9a910d64e5ca7743cc0f1b42cb6a7cf3933a",
-      "size": 8997,
-      "mtime": "2026-10-24T20:51:58"
+      "sha256": "bc3c5d7a6b7ebb3219d874df765077847b4d9cdcf26b2f8e0fa2f82566f39c77",
+      "size": 9660,
+      "mtime": "2026-10-25T13:30:15"
     },
     {
       "path": "R/02_curve.R",
@@ -432,9 +432,9 @@
     },
     {
       "path": "tools/audit_final.py",
-      "sha256": "f943e8055ac0682a914cfa7c4af8576089cbcd8c10af219542b0ea901e58cd6b",
-      "size": 11441,
-      "mtime": "2026-10-25T12:43:51"
+      "sha256": "d3387f38f84b3fe52d3f5c1b6208a01c23260d29128905fcf0e6d1b893f2f41c",
+      "size": 11988,
+      "mtime": "2026-10-25T13:33:17"
     },
     {
       "path": "tools/audit_run.py",
@@ -519,6 +519,12 @@
       "sha256": "637dcfed8a82d9ae83d2b2ecd0b534437dab395d798c422cea4b2e629644996c",
       "size": 7542,
       "mtime": "2026-10-24T14:26:57"
+    },
+    {
+      "path": "tools/make_fake_ehr.py",
+      "sha256": "1b0eb3b44923e5db7c376863ea99a5fe7da19d0ad6b15b47000242665712212e",
+      "size": 8637,
+      "mtime": "2026-10-25T13:31:13"
     },
     {
       "path": "tools/make_randlen.py",
@@ -635,6 +641,12 @@
       "mtime": "2026-10-22T21:06:14"
     },
     {
+      "path": "tools/rehearse_ehr.py",
+      "sha256": "4fff53c8ab87336137a7a42f87b132beff8e97abc3f102d03f0880af8da2ec1b",
+      "size": 8527,
+      "mtime": "2026-10-25T13:31:47"
+    },
+    {
       "path": "tools/report_numbers.py",
       "sha256": "51953ca8f55de7dba10e497cf5431590dcdc3d346e91e0e44469fddff308924e",
       "size": 6731,
@@ -683,5 +695,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "405d1bca16fc6302c64e98a379c396c158717d066e303ec34f9b06bb8ed72053"
+  "manifest_sha256": "6f2916db618672d8d83e07794082abf5a60088dd1164990671c0e7ed42c935b4"
 }
