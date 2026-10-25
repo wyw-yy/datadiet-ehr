@@ -4,6 +4,11 @@
 # 并把 00_setup.R 的 RESULTS 指向 results/demo。
 
 t0 <- Sys.time()
+# Fig.2 的剂量-反应曲线来自 12k pilot 轮（24k 主轮只跑了 30% 一档）。
+# 归档目录存在时才指过去，否则退回当前轮，免得换机器就报错。
+.curve_archive <- file.path(getwd(), "results_round1_12k")
+if (dir.exists(.curve_archive)) Sys.setenv(DATADIET_CURVE_DIR = .curve_archive)
+
 steps <- c("R/01_equivalence.R", "R/02_curve.R",
            "R/03_robustness.R", "R/04_compute.R",
            "R/05_multiple.R", "R/06_forest.R")

@@ -1,10 +1,23 @@
 # 02_curve.R —— 数据效率曲线（论文 Fig.2）
-# 输入：results/metrics_long.csv
+# 输入：默认 results/metrics_long.csv（当前轮）；可用 DATADIET_CURVE_DIR 指向别的轮次
 # 输出：paper/figures/fig02_data_efficiency.png, fig02_absolute.png
+#
+# 为什么要能换目录：24k 主轮只跑了 30% 这一档（其它比例在 12k 轮的归档里），
+# 单点画不出曲线。所以 Fig.2 默认取 12k 轮的剂量-反应（五档齐全、标注为 pilot），
+# 而 6 种子主终点由 Fig.6 的森林图承担。
 
 source("R/00_setup.R")
 
-m <- read_results("metrics_long.csv")
+curve_dir <- Sys.getenv("DATADIET_CURVE_DIR", unset = "")
+if (nzchar(curve_dir)) {
+  f <- file.path(curve_dir, "metrics_long.csv")
+  cat(sprintf("Fig.2 数据来源：%s\n", f))
+  m <- read.csv(f, stringsAsFactors = FALSE)
+  m$value <- as.numeric(m$value)
+  m$ratio <- as.numeric(m$ratio)
+} else {
+  m <- read_results("metrics_long.csv")
+}
 sub <- m[m$method != "full", ]
 full_mean <- tapply(m$value[m$method == "full"], m$task[m$method == "full"], mean)
 
@@ -65,6 +78,11 @@ draw <- function(mode, file) {
   # 图例单独铺在图底，不压任何曲线
   par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
   plot.new()
+  if (nzchar(curve_dir)) {
+    # 图顶留的 oma 是 0，mtext(outer=TRUE) 会被裁掉，所以写在覆盖层里
+    text(0.5, 0.975, "12k pool  ·  dose-response round (single seed except 30%)",
+         cex = 0.72, col = "grey35")
+  }
   ord  <- c("random", "el2n", "rand_len", "nait", "nait_dedup")
   lab  <- c("random", "el2n", "rand_len (length-matched)", "nait", "nait + dedup")
   keep <- intersect(ord, unique(agg$method))
