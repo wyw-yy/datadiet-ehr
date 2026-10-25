@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-25T13:33:26+0800",
+  "generated_at": "2026-10-25T22:06:08+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 115,
+  "n_files": 120,
   "files": [
     {
       "path": "check_env.bat",
@@ -18,9 +18,9 @@
     },
     {
       "path": "config.py",
-      "sha256": "ab1a42cce1c7718984a88a5262f81ccd9453b751bd39f631dc992d4c9a1304a5",
-      "size": 3566,
-      "mtime": "2026-10-24T22:32:18"
+      "sha256": "0aca6c3318d160b8ff3dbe36bfc32dbe0430339dc2e97a8581b021c7ed54ea34",
+      "size": 3616,
+      "mtime": "2026-10-25T21:38:30"
     },
     {
       "path": "eval.py",
@@ -48,9 +48,9 @@
     },
     {
       "path": "R/00_setup.R",
-      "sha256": "0d37e54ee22e913235c920cd20bdd098aa334329e8b56392621c7cf6881da77d",
-      "size": 2621,
-      "mtime": "2026-10-25T13:29:59"
+      "sha256": "18a9873a3e267d1785ed8fbefdcb0dd6e66239a3128243b3692ed115456ef0c6",
+      "size": 2629,
+      "mtime": "2026-10-25T21:38:42"
     },
     {
       "path": "R/01_equivalence.R",
@@ -77,6 +77,18 @@
       "mtime": "2026-10-25T12:40:02"
     },
     {
+      "path": "R/05_multiple.R",
+      "sha256": "78c693ab30c90d1dc00aaf13567ba0c633c60a0659da5d35713f83f36edccbd4",
+      "size": 2573,
+      "mtime": "2026-10-25T22:03:42"
+    },
+    {
+      "path": "R/06_forest.R",
+      "sha256": "185b4ff56e628d3e149ff5724fbfe5ee2483de2b7debd3f883a87cdad74365b6",
+      "size": 3076,
+      "mtime": "2026-10-25T22:04:40"
+    },
+    {
       "path": "R/99_make_demo_data.R",
       "sha256": "922e96f606f54e2d04de7099ed55494fa227fcd30719807428f20125adcb88de",
       "size": 3228,
@@ -84,9 +96,9 @@
     },
     {
       "path": "R/run_all.R",
-      "sha256": "36b97e823d30fcb40265fd864c028764045436b6692afddc1578c17b043496fe",
-      "size": 615,
-      "mtime": "2026-10-24T01:07:00"
+      "sha256": "fbb9eb54df85c60f28642c155d1e994798bdeab633512ef40b0c00adaa52f5c1",
+      "size": 662,
+      "mtime": "2026-10-25T22:03:56"
     },
     {
       "path": "requirements-lock.txt",
@@ -419,6 +431,12 @@
       "mtime": "2026-10-23T13:25:05"
     },
     {
+      "path": "tools/audit_check_manifest.py",
+      "sha256": "8a3b0749f200517195eedc51a2c04bb50bb42a58040c59073c2635fdc8ecb054",
+      "size": 2446,
+      "mtime": "2026-10-25T22:05:26"
+    },
+    {
       "path": "tools/audit_deep.py",
       "sha256": "1ebc724cbcc59f7b2313496d19519bb6992b27116ff4e13b583d7a9b52225767",
       "size": 5786,
@@ -471,6 +489,12 @@
       "sha256": "de255c7633ecff921abd9df41fcd83e7d6b4f29654c5e17bea1b73f1b769a632",
       "size": 3320,
       "mtime": "2026-10-22T18:28:58"
+    },
+    {
+      "path": "tools/el2n_scores.py",
+      "sha256": "d594f09a42e58c7a549511e8e1ac96b32867d9d68ddce942f597363c58183716",
+      "size": 8284,
+      "mtime": "2026-10-25T21:43:12"
     },
     {
       "path": "tools/export_sample_stats.py",
@@ -564,9 +588,9 @@
     },
     {
       "path": "tools/night_queue.py",
-      "sha256": "107d80b82f05e767813910366939d821a4391a8d3101452981edf7c3a0d6231c",
-      "size": 6064,
-      "mtime": "2026-10-24T22:32:29"
+      "sha256": "f1e9b31c3fe96868f90d070a1c79e132c180373e1bac3352d9ba84b714b9910a",
+      "size": 6496,
+      "mtime": "2026-10-25T21:38:18"
     },
     {
       "path": "tools/paired_stats.py",
@@ -671,6 +695,12 @@
       "mtime": "2026-10-24T22:44:07"
     },
     {
+      "path": "tools/wait_then_el2n.py",
+      "sha256": "d76670a25f7b836de8415fd6bc6bde80147cddffd62e3bda432967ae0b273e83",
+      "size": 4762,
+      "mtime": "2026-10-25T21:43:16"
+    },
+    {
       "path": "tools/watch_queue.py",
       "sha256": "3a792e9e6929ecb8ce46526be97e1341222a63704e271b023630dbc3e2fd410d",
       "size": 4795,
@@ -695,5 +725,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "6f2916db618672d8d83e07794082abf5a60088dd1164990671c0e7ed42c935b4"
+  "manifest_sha256": "f4ef833332b96bb32c9742e15ed887154e693b5a9c7f40d8e00c881757784326"
 }

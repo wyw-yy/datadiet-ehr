@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use this protocol, please cite it as below."
+# TODO(作者): 把 name / orcid / affiliation 换成真实信息，再删掉这行 TODO。
+title: "DataDiet-EHR: a reproducible activation-based training-subset selection protocol for clinical language models"
+abstract: >-
+  A reproducible pipeline that scores every training example by its
+  target-domain neuron activation, keeps a stratified, deduplicated subset,
+  and evaluates whether the subset matches full-data performance under a
+  pre-registered equivalence margin. Released with per-seed predictions,
+  selection logs and a claim-evidence matrix.
+authors:
+  - family-names: "wyw-yy"
+    given-names: ""
+    affiliation: "(fill in)"
+version: "0.2.0"
+date-released: "2026-10-25"
+license: MIT
+repository-code: "https://github.com/wyw-yy/datadiet-ehr"
+keywords:
+  - instruction tuning
+  - data selection
+  - data pruning
+  - equivalence testing
+  - medical question answering
+  - reproducibility
+references:
+  - type: article
+    title: "Deep Learning on a Data Diet: Finding Important Examples Early in Training"
+    authors:
+      - family-names: Paul
+      - family-names: Ganguli
+      - family-names: Dziugaite
+    year: 2021
+    notes: "EL2N baseline implemented in tools/el2n_scores.py"
+  - type: conference
+    title: "Neuron-Aware Data Selection in Instruction Tuning for Large Language Models"
+    authors:
+      - family-names: Chen
+    year: 2026
+    notes: "ICLR 2026 poster; this repository reproduces its activation-selection mechanism, not its code"

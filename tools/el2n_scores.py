@@ -148,10 +148,16 @@ def main():
                 inp[i, : len(ids)] = torch.tensor(ids, device="cuda")
                 att[i, : len(ids)] = 1
 
-            logits = model(input_ids=inp, attention_mask=att).logits.float()
-            logp = torch.log_softmax(logits[:, :-1], dim=-1)
+            logits = model(input_ids=inp, attention_mask=att).logits
+            # nll = logsumexp(logits) - logit_of_true_token, computed without the
+            # float32 copy of the full (B, T-1, V) tensor - that copy alone is
+            # ~2.5 GiB at bs=8/len=512/V=151k and would not fit next to the model.
+            lg = logits[:, :-1]
             tgt = inp[:, 1:]
-            tok_nll = -logp.gather(-1, tgt.unsqueeze(-1)).squeeze(-1)   # (B, T-1)
+            tgt_logit = lg.gather(-1, tgt.unsqueeze(-1)).squeeze(-1).float()
+            log_z = torch.logsumexp(lg, dim=-1).float()
+            tok_nll = log_z - tgt_logit                                # (B, T-1)
+            del logits, lg
 
             for i, span in enumerate(spans):
                 if span is None:

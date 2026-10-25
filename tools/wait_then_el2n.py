@@ -59,11 +59,20 @@ def gpu_used_mib() -> int | None:
 
 
 def run(cmd: list[str], tag: str) -> int:
+    """Run one stage, teeing its output to a per-stage log.
+
+    Without this the child's stdout goes to the hidden window and the stage is
+    a black box for 30+ minutes (learned the hard way on the scale round).
+    """
     log(f"--- {tag}: {' '.join(Path(c).name if i == 0 else c for i, c in enumerate(cmd))}")
+    logf = ROOT / f"el2n_{tag.replace(' ', '_')}.log"
     t0 = time.time()
-    p = subprocess.run(cmd, cwd=ROOT)
+    with open(logf, "a", encoding="utf-8") as fh:
+        fh.write(f"\n===== {tag} @ {datetime.now():%Y-%m-%d %H:%M:%S} =====\n")
+        fh.flush()
+        p = subprocess.run(cmd, cwd=ROOT, stdout=fh, stderr=subprocess.STDOUT)
     dt = time.time() - t0
-    log(f"--- {tag} exit={p.returncode} after {dt / 60:.1f} min")
+    log(f"--- {tag} exit={p.returncode} after {dt / 60:.1f} min (full output: {logf.name})")
     return p.returncode
 
 

@@ -1,0 +1,46 @@
+name: static-checks
+
+# 这个仓库的 CI 只做**静态**检查，原因是诚实的：
+# 数据集与模型权重都不入库（体积 + 许可），所以任何需要跑训练的检查在 CI 里都不可能。
+# 能在此保证的三件事：Python 代码能被解析、R 脚本能被解析、审计清单与提交的产物一致。
+# 真正的正确性检查是 tools/verify.py 与 tools/audit_final.py，需要本地数据，写在 README 里。
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  parse:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Python files parse (syntax only, no deps)
+        shell: pwsh
+        run: |
+          python -m compileall -q .
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: R scripts parse (base R only)
+        shell: pwsh
+        run: |
+          choco install r.project -y --no-progress | Out-Null
+          $r = "C:\Program Files\R\R-*\bin\x64\Rscript.exe"
+          $exe = (Get-ChildItem $r).FullName
+          foreach ($f in Get-ChildItem R -Filter *.R) {
+            & $exe -e "invisible(parse(file='$($f.FullName)'))"
+            if ($LASTEXITCODE -ne 0) { Write-Error "parse failed: $($f.Name)"; exit 1 }
+          }
+
+      - name: Audit manifest matches committed artifacts
+        shell: pwsh
+        run: |
+          if (Test-Path audit/ARTIFACTS.sha256) {
+            python tools/audit_check_manifest.py
+          } else {
+            Write-Host "no audit manifest committed; skipping"
+          }
