@@ -26,7 +26,7 @@
 | 算 loss | 交叉熵，**只对 response** 算 | 冒烟 2.45（perplexity ≈11.6） |
 | 反向 | 从 loss 倒推每个参数的梯度 | 算力约为前向 2 倍 |
 | 更新 | AdamW + OneCycleLR 挪一小步 | `lr=1e-4`，`bs=4`，`grad_accum=2` |
-| epoch | 把训练集看一遍 | 12,000 条 ≈ 46 分钟 |
+| epoch | 把训练集看一遍 | 24,000 条 ≈ 62 分钟 |
 
 **算术对得上**：`步数 = 样本数 ÷ (bs × grad_accum)` = 200 ÷ 8 = 25 步（日志 `step 25/25`）。
 
@@ -55,7 +55,7 @@
 
 | 术语 | 一句话 | 我们的值 |
 |---|---|---|
-| **样本 sample** | 一条训练数据（一问一答） | 12,000 条 |
+| **样本 sample** | 一条训练数据（一问一答） | 24,000 条 |
 | **instruction / input / output** | HCM 三列：指令 / 病人自述 / 医生回答 | `output` 即 response |
 | **prompt** | 喂给模型的前半段 | ~86 token |
 | **response / completion** | 要模型学会的后半段 | ~121 token |

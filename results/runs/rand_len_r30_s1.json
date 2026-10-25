@@ -4,13 +4,13 @@
   "ratio": 0.3,
   "seed": 1,
   "epochs": 1.0,
-  "n_samples": 3600,
-  "steps": 450,
+  "n_samples": 7200,
+  "steps": 900,
   "max_len": 512,
   "bs": 4,
   "grad_accum": 2,
-  "train_seconds": 505.0,
-  "loss_last": 2.1302,
+  "train_seconds": 1105.5,
+  "loss_last": 2.0064,
   "adapter": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\adapters\\rand_len_r30_s1",
-  "pool_size": 12000
+  "pool_size": 24000
 }

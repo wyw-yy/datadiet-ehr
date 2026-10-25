@@ -26,8 +26,10 @@ import select_subset as S  # noqa: E402
 def main() -> None:
     ids, tr = S.load_acts("train")
     _, pr = S.load_acts("probe")
-    ids = list(ids)[: C.N_POOL]
-    tr = tr[: C.N_POOL]
+    # 不按 C.N_POOL 截断：激活文件本来就是这个池子的（24k 池就是 24k 条）。
+    # 之前写 ids[: C.N_POOL] 会在环境变量没传时把 24k 池悄悄砍成 12k，
+    # 导出的表与真实池子对不上，而脚本不会报错。
+    ids = list(ids)
 
     scores, _ = S.nait_scores(tr, pr)          # 与 select_subset.py 完全同一条路径
     scores = np.asarray(scores).ravel()

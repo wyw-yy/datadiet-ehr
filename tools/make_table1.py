@@ -98,10 +98,14 @@ def main() -> None:
     full = comp[comp["method"] == "full"]["gpu_hours"].mean()
 
     # 墙钟口径：直接取 runs/*.json 里的 train_seconds（按样本数过滤掉 pilot/短跑）
+    # 用中位数而不是均值：full_s1 那一条跑在被抢算力的时段（1250 s/千样本 vs 别的 750 s/千样本），
+    # 用均值会把基线抬高 30%，净省就成了虚高数字。
     wall: dict[str, float] = {}
     run_dir = RES / "runs"
     if run_dir.exists():
         import json
+        import statistics
+
         recs = []
         for p in run_dir.glob("*.json"):
             try:
@@ -112,12 +116,12 @@ def main() -> None:
         fulls = [r["train_seconds"] for r in recs
                  if r.get("method") == "full" and r.get("n_samples") == n_full]
         if fulls:
-            wall["full"] = sum(fulls) / len(fulls)
+            wall["full"] = statistics.median(fulls)
             for m in ("nait", "rand_len", "random"):
                 v = [r["train_seconds"] for r in recs
                      if r.get("method") == m and abs(float(r.get("ratio", 0)) - 0.30) < 1e-9]
                 if v:
-                    wall[m] = sum(v) / len(v)
+                    wall[m] = statistics.median(v)
 
     for m in ("nait", "rand_len", "random"):
         z = comp[(comp["method"] == m) & (comp["ratio"] == 0.30)]
@@ -133,9 +137,10 @@ def main() -> None:
             z["net_saving_pct"], wtxt))
     wtxt_full = "0%"
     L.append("| 全量（基线） | {:.3f} | 0 | {:.3f} | 0% | {} |".format(full, full, wtxt_full))
-    L.append("\n> 归一化口径按每样本恒定耗时算；墙钟口径取 `results/runs/*.json` 的实测 "
-             "`train_seconds`（12,000 条那一档的均值为全量基线），含模型加载等固定开销，"
-             "不随样本数缩放，所以短 run 的净省略低。论文正文写墙钟值，脚注给归一化值。\n")
+    L.append("\n> 归一化口径：每样本耗时取所有 run 的中位数，再乘样本数，不含固定开销；"
+             "墙钟口径：直接取 `results/runs/*.json` 的实测 `train_seconds`（各臂取中位数，"
+             "全量基线为 24,000 条那一档），含模型加载等不随样本数缩放的固定开销，"
+             "所以短 run 的净省看起来更高。正文写归一化值更保守，墙钟值放脚注。\n")
 
     dose = eq[(eq["method"] == "nait")].copy()
     if len(dose):

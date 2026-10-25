@@ -27,7 +27,13 @@ sel_of <- function(method, default = 0) {
 }
 sel <- sel_of("nait")
 
-n_of <- function(method, ratio) if (identical(method, "full")) 12000 else round(12000 * ratio)
+# 池子大小从数据里读，不写死：24k 那一轮的 train.jsonl 就是 24,000 行。
+# 之前写死 12000 会让 24k 轮的"每样本耗时"整体翻倍、子集条数只报一半。
+pool_file <- file.path(PROJ, "data", "processed", "train.jsonl")
+N_FULL <- if (file.exists(pool_file)) length(readLines(pool_file, warn = FALSE)) else 12000
+cat(sprintf("训练池大小（读 train.jsonl）：%d 条\n", N_FULL))
+
+n_of <- function(method, ratio) if (identical(method, "full")) N_FULL else round(N_FULL * ratio)
 cp$n_samples <- mapply(n_of, cp$method, cp$ratio)
 cp$s_per_sample <- cp$train_seconds / cp$n_samples
 
@@ -43,7 +49,7 @@ cp$train_h  <- cp$n_samples * rate_clean / 3600
 cp$select_h <- ifelse(cp$method %in% c("full", "random", "rand_len"), 0, sel)
 cp$gpu_hours <- cp$train_h + cp$select_h
 
-full_h <- 12000 * rate_clean / 3600
+full_h <- N_FULL * rate_clean / 3600
 
 tab <- do.call(rbind, lapply(split(cp, list(cp$method, cp$ratio), drop = TRUE), function(d) {
   data.frame(method = d$method[1], ratio = d$ratio[1], n_samples = d$n_samples[1],

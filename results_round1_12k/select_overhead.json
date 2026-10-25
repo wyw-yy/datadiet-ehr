@@ -1,0 +1,1 @@
+{"nait": 0.1333, "nait_dedup": 0.1333, "random": 0.0, "rand_len": 0.0, "el2n": 0.1333, "full": 0.0, "_note": "measured one-off selection pass: acts_train 400s + acts_probe 66s + scoring 14s = 480s = 0.1333 GPU-h. random and rand_len pay nothing: they never look at the model."}

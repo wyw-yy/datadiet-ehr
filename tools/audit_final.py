@@ -52,13 +52,14 @@ def read_jsonl(p: Path) -> list[dict]:
 print("=" * 74)
 print("A. sample_stats.csv 是否属于当前训练池")
 print("=" * 74)
-pool = read_jsonl(C.PROC / "train.jsonl")[: C.N_POOL]
+pool = read_jsonl(C.PROC / "train.jsonl")
+N_POOL = len(pool)
 pool_ids = {r["id"] for r in pool}
 ss = read_csv(C.RESULTS / "sample_stats.csv")
 ss_ids = {r["id"] for r in ss}
 check(len(ss) == len(pool), "行数等于池子大小", f"{len(ss)} vs {len(pool)}")
 check(ss_ids <= pool_ids, "id 全部来自当前池子", f"{len(ss_ids - pool_ids)} 个不在池里")
-n30_expected = int(round(C.N_POOL * 0.30))
+n30_expected = int(round(N_POOL * 0.30))
 check(sum(int(r["nait_30"]) for r in ss) == n30_expected, f"nait_30 选中 {n30_expected} 条")
 subs = json.loads((C.SUBSETS / "subsets.json").read_text(encoding="utf-8"))
 check(len(set(subs["nait"]["30"])) == n30_expected, f"subsets.json 里 nait/30 也是 {n30_expected} 条")
@@ -115,6 +116,10 @@ if hp.exists():
             add(vv)
 
     # 文档里引用的逐种子数字、对比数字也要能溯源
+    for r in read_csv(C.RESULTS / "eq_table.csv"):
+        for col in ("delta_pp", "ci_lo_pp", "ci_hi_pp", "acc_full", "acc_sub",
+                    "seed_min_pp", "seed_max_pp", "seed_sd_pp", "stouffer_p"):
+            add(r.get(col))
     for r in read_csv(C.RESULTS / "eq_per_seed.csv"):
         for col in ("delta_pp", "ci_lo_pp", "ci_hi_pp", "acc_full", "acc_sub", "mcnemar_p"):
             add(r[col])
@@ -129,6 +134,18 @@ if hp.exists():
     for r in read_csv(C.RESULTS / "robust.csv"):
         for col in ("delta_pp", "ci_lo_pp", "ci_hi_pp", "acc_full", "acc_sub"):
             add(r.get(col))
+    # 选择统计（去重保留率、样本得分中位数、随机对余弦分位）
+    _ss = C.RESULTS / "select_stats.json"
+    if _ss.exists():
+        _s = json.loads(_ss.read_text(encoding="utf-8"))
+        add(_s.get("dedupe_kept_pct"))
+        add(_s.get("n_train"))
+        for _v in (_s.get("score_quantiles") or {}).values():
+            add(_v)
+        for _v in (_s.get("pair_cosine_quantiles") or {}).values():
+            add(_v)
+            add(abs(float(_v)))
+
     if (C.RESULTS / "select_stats_randlen.json").exists():
         import json as _json
         _rl = _json.loads((C.RESULTS / "select_stats_randlen.json").read_text(encoding="utf-8"))
@@ -148,10 +165,42 @@ if hp.exists():
                "0.30", "0.05", "0.10", "0.20", "0.50", "0.70", "0.90",
                "1.00", "0.99", "0.98", "0.0019", "0.2588",
                # PREREG 的功效表：t(0.975, df) 分位数，查表得来的常数
-               "4.30", "2.77", "2.78", "2.57", "2.26"}
+               "4.30", "2.77", "2.78", "2.57", "2.26",
+               # PREREG 功效表里"3 个种子能测出的最小效应 ≈1.05pp"，
+               # 是 t 临界值 × 种子 SD 推出来的参数，不是实验测量值
+               "1.05"}
 
     doc_dirs = [ROOT / "RESULTS.md", ROOT / "README.md",
                 ROOT / "docs" / "ALIGNMENT.md", ROOT / "docs" / "PREREG.md"]
+
+    # 第 1 轮（12k 池）已归档到 results_round1_12k/；文档里引用它做"放大池子前后"的对比，
+    # 所以归档目录里的 CSV 也进 canon（否则那些对比数字会被判成"来源不明"）。
+    arch = ROOT / "results_round1_12k"
+    if arch.exists():
+        for fname, cols in (
+            ("eq_table.csv", ("delta_pp", "ci_lo_pp", "ci_hi_pp", "acc_full", "acc_sub", "stouffer_p")),
+            ("eq_contrast.csv", ("delta_pp", "seed_min_pp", "seed_max_pp", "seed_sd_pp", "stouffer_p")),
+            ("compute_table.csv", ("gpu_hours", "net_saving_pct")),
+            ("robust.csv", ("delta_pp", "ci_lo_pp", "ci_hi_pp")),
+        ):
+            p2 = arch / fname
+            if p2.exists():
+                for r in read_csv(p2):
+                    for col in cols:
+                        add(r.get(col))
+
+    # 文档里写的是两位小数（"0.255" 会被正则截成 "0.25"），所以 canon 也按两位小数补一遍。
+    # 同时补上绝对值形式：文档里负号有时写成 Unicode 的 "−"，正则只认 ASCII "-"，
+    # 于是 "−0.89" 会被截成 "0.89"，这不是新数字，是同一个数。
+    canon2 = set()
+    for c in canon:
+        try:
+            v = float(c)
+        except (TypeError, ValueError):
+            continue
+        canon2.add(f"{v:.2f}")
+        canon2.add(f"{abs(v):.2f}")
+
     all_miss = {}
     for p in doc_dirs:
         if not p.exists():
@@ -159,7 +208,9 @@ if hp.exists():
         doc = p.read_text(encoding="utf-8")
         nums = set(re.findall(r"-?\d+\.\d{2}", doc))
         miss = sorted(n for n in nums if n not in canon and n.lstrip("+") not in canon
-                      and f"{abs(float(n)):.2f}" not in canon and n not in allowed)
+                      and f"{abs(float(n)):.2f}" not in canon
+                      and n not in canon2 and n.lstrip("-") not in canon2
+                      and n not in allowed)
         if miss:
             all_miss[p.name] = miss
     check(not all_miss, "四份文档（RESULTS/README/ALIGNMENT/PREREG）无孤立数字",
