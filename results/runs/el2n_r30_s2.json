@@ -1,0 +1,16 @@
+{
+  "exp_id": "el2n_r30_s2",
+  "method": "el2n",
+  "ratio": 0.3,
+  "seed": 2,
+  "epochs": 1.0,
+  "n_samples": 7200,
+  "steps": 900,
+  "max_len": 512,
+  "bs": 4,
+  "grad_accum": 2,
+  "train_seconds": 766.8,
+  "loss_last": 2.216,
+  "adapter": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\adapters\\el2n_r30_s2",
+  "pool_size": 24000
+}

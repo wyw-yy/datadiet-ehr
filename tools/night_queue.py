@@ -73,6 +73,18 @@ def plan(name: str) -> list[tuple[str, float, int]]:
             q += [("nait", 0.30, s), ("random", 0.30, s), ("rand_len", 0.30, s)]
         return q
 
+    if name == "fill30":
+        # 按 PREREG 第 5 节：正式跑要 6 个种子。这一轮只补 30% 这一档的 s4–6，
+        # 让主终点（子集 vs 全量）从 3 个种子变 6 个。顺序先 full（它是所有差值的分母），
+        # 再跑三个 30% 臂（每条 7,200 条，约 20 min）。
+        # el2n 保持 3 个种子——它是次要基线，表里会显示 n_seed=3。
+        q: list[tuple[str, float, int]] = []
+        for s in (4, 5, 6):
+            q.append(("full", 1.0, s))
+        for s in (4, 5, 6):
+            q += [("nait", 0.30, s), ("random", 0.30, s), ("rand_len", 0.30, s)]
+        return q
+
     if name == "el2n":
         # 经典基线：EL2N 打分后保留最难的 30%（Paul et al., 2021）。
         # 只跑 30% 这一档、三个种子——它回答的是"激活选择比经典基线强吗"。
@@ -95,7 +107,8 @@ def plan(name: str) -> list[tuple[str, float, int]]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--plan", default="full", choices=["full", "quick", "seeds6", "scale", "el2n"])
+    ap.add_argument("--plan", default="full",
+                    choices=["full", "quick", "seeds6", "scale", "el2n", "fill30"])
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 

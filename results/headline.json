@@ -62,7 +62,7 @@
     "gpu_hours": 0.308,
     "net_saving_pct": 70.0
   },
-  "n_runs": 12,
+  "n_runs": 15,
   "n_tasks": 2,
   "sample_stats_rows": 24000,
   "sample_stats_nait30": 7200

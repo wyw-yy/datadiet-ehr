@@ -44,9 +44,15 @@ cat(sprintf("每样本训练耗时：中位数 %.4f s，清洗后 %.4f s（剔�
             rate, rate_clean, sum(cp$contaminated)))
 
 cp$train_h  <- cp$n_samples * rate_clean / 3600
-# 只有"要看一遍模型"的方法才付选择前向的钱：nait* 要采激活+打分；
-# random 和 rand_len 都是纯抽样（rand_len 只是按 nait 的长度分布抽），零开销。
-cp$select_h <- ifelse(cp$method %in% c("full", "random", "rand_len"), 0, sel)
+# 只有"要看一遍模型"的方法才付选择前向的钱，而且各家不一样：
+#   nait*  采 5 层激活 + 打分（实测 917 s = 0.2547 GPU-h）
+#   el2n   只需一次前向拿 p_true（实测 36.4 min = 0.607 GPU-h，比采激活更贵，
+#          因为它跑的是完整词表 softmax，而激活采集只存 5 层隐藏态）
+#   random / rand_len 是纯抽样（rand_len 只是按 nait 的长度分布抽），零开销。
+ovh <- c(full = 0, random = 0, rand_len = 0,
+         nait = sel_of("nait"), nait_dedup = sel_of("nait_dedup"), el2n = sel_of("el2n"))
+cp$select_h <- as.numeric(ovh[cp$method])
+cp$select_h[is.na(cp$select_h)] <- 0
 cp$gpu_hours <- cp$train_h + cp$select_h
 
 full_h <- N_FULL * rate_clean / 3600
@@ -68,45 +74,40 @@ tab$acc <- round(mapply(function(mt, r) acc[mt, as.character(r)], tab$method, ta
 write.csv(tab, file.path(RESULTS, "compute_table.csv"), row.names = FALSE)
 
 # ---------------- 图 ----------------
-pal <- c(random = "grey55", rand_len = "#CC79A7", nait = "#0072B2", nait_dedup = "#009E73")
-ord <- c("random", "rand_len", "nait", "nait_dedup")
-lab <- c("random", "rand_len", "nait", "nait + dedup")
-ms  <- intersect(ord, unique(tab$method))
+# 这一轮只有 30% 一档（其它比例是上一轮 12k 池的），所以不画曲线，画"堆叠柱"：
+# 每根柱子 = 训练 + 选择前向，虚线 = 全量训练的算力。读者一眼看到
+# "el2n 明明只留 30% 数据，算力却几乎没省"，那是它跑全词表 softmax 的代价。
+pal <- c(random = "grey55", el2n = "#E69F00", rand_len = "#CC79A7", nait = "#0072B2", nait_dedup = "#009E73")
+ord <- c("random", "el2n", "rand_len", "nait", "nait_dedup")
+lab <- c("random", "el2n", "rand_len", "nait", "nait + dedup")
+
+z <- tab[abs(tab$ratio - 0.30) < 1e-9, ]
+z <- z[match(intersect(ord, z$method), z$method), ]
+ms <- z$method
 labs <- lab[match(ms, ord)]
 
 png(file.path(FIG, "fig05_compute.png"), width = 1750, height = 1000, res = 150)
-par(mar = c(3.6, 4.6, 2.8, 4.2), oma = c(0, 0, 2.0, 0), mgp = c(2.7, 0.8, 0), las = 1)
-ylim <- c(0, max(c(tab$gpu_hours, full_h)) * 1.18)
-plot(NA, xlim = c(0.04, 0.80), ylim = ylim, xlab = "", bty = "l", xaxt = "n",
-     ylab = "GPU-hours per run\n(training + selection pass)", main = "Net compute budget")
-axis(1, at = c(.1, .2, .3, .5, .7), labels = c("10%", "20%", "30%", "50%", "70%"))
-mtext("Retained training data (fraction)", side = 1, line = 2.2, cex = 0.9)
+par(mar = c(3.8, 4.8, 2.8, 4.2), oma = c(0, 0, 2.0, 0), mgp = c(2.7, 0.8, 0), las = 1)
+ylim <- c(0, max(c(z$gpu_hours, full_h)) * 1.20)
+bp <- barplot(rbind(z$train_h, z$select_h), names.arg = labs, ylim = ylim,
+              col = c("grey80", "grey45"), border = NA, space = 0.55,
+              ylab = "GPU-hours per run\n(30% retained)", main = "What the 70% saving costs to earn",
+              cex.names = 0.9)
+text(bp, z$gpu_hours, sprintf("%.0f%%", z$net_saving_pct), pos = 3, cex = 0.8, col = "grey15")
 
 abline(h = full_h, col = "grey30", lty = 3, lwd = 1.5)
-text(0.06, full_h, sprintf("full data (%.2f GPU-h)", full_h), pos = 3, adj = 0,
-     cex = 0.75, col = "grey30")
-
-for (mt in ms) {
-  d <- tab[tab$method == mt, ]
-  lines(d$ratio, d$gpu_hours, col = pal[[mt]], lwd = 2)
-  points(d$ratio, d$gpu_hours, col = pal[[mt]], pch = 19, cex = 1.05)
-}
+text(bp[1] - 0.10, full_h, sprintf("full data (%.2f GPU-h)", full_h),
+     pos = 3, adj = c(0, 0), cex = 0.75, col = "grey30")
 
 axis(4, at = pretty(ylim), labels = pretty(ylim) * 2, col.axis = "grey40", cex.axis = 0.8)
-text(0.05, ylim[2], "right axis: cost (CNY @ 2/GPU-h)", adj = c(0, 1), cex = 0.7, col = "grey40")
-
-z <- tab[tab$method == "nait" & abs(tab$ratio - 0.3) < 1e-9, ]
-if (nrow(z)) {
-  text(0.79, ylim[1] + 0.06 * diff(ylim),
-       sprintf("At 30%% retained: %.2f vs %.2f GPU-h  =  %.0f%% net saving",
-               z$gpu_hours, full_h, z$net_saving_pct),
-       adj = c(1, 0), cex = 0.78, col = "grey20")
-}
+text(bp[1] - 0.55, ylim[2], "right axis: cost (CNY @ 2/GPU-h)", adj = c(0, 1), cex = 0.7, col = "grey40")
 
 par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
 plot.new()
-legend("top", legend = labs, col = pal[ms], lwd = 2, pch = 19,
-       horiz = TRUE, bty = "n", cex = 0.85, seg.len = 2.4)
+legend("top", legend = c("training", "selection forward pass", "net saving vs full data"),
+       fill = c("grey80", "grey45", NA), border = NA, lty = c(NA, NA, 3),
+       lwd = c(NA, NA, 1.5), col = c(NA, NA, "grey30"),
+       horiz = TRUE, bty = "n", cex = 0.82)
 invisible(dev.off())
 
 cat("\n表已写出：", file.path(RESULTS, "compute_table.csv"), "\n")

@@ -1,7 +1,9 @@
 "family","task","method","vs","ratio","delta_pp","ci_lo_pp","ci_hi_pp","stouffer_p","p_holm","sig_raw","sig_holm"
-"C_contrast_at_30","medmcqa","nait","rand_len",0.3,-0.42,-1.03,0.19,0.103,0.515,FALSE,FALSE
-"C_contrast_at_30","medmcqa","nait","random",0.3,-0.48,-1.08,0.12,0.0698,0.4188,FALSE,FALSE
+"C_contrast_at_30","medmcqa","el2n","random",0.3,-0.8,-1.35,-0.26,0.0031,0.0248,TRUE,TRUE
+"C_contrast_at_30","medmcqa","nait","rand_len",0.3,-0.42,-1.03,0.19,0.103,0.618,FALSE,FALSE
+"C_contrast_at_30","medmcqa","nait","random",0.3,-0.48,-1.08,0.12,0.0698,0.4886,FALSE,FALSE
 "C_contrast_at_30","medmcqa","rand_len","random",0.3,-0.06,-0.61,0.48,0.9454,1,FALSE,FALSE
+"C_contrast_at_30","medqa","el2n","random",0.3,-0.45,-1.44,0.55,0.4679,1,FALSE,FALSE
 "C_contrast_at_30","medqa","nait","rand_len",0.3,0.29,-0.79,1.36,0.5681,1,FALSE,FALSE
 "C_contrast_at_30","medqa","nait","random",0.3,0,-1.18,1.13,0.979,1,FALSE,FALSE
 "C_contrast_at_30","medqa","rand_len","random",0.3,-0.29,-1.31,0.81,0.6455,1,FALSE,FALSE

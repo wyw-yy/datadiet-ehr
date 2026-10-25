@@ -65,8 +65,8 @@ draw <- function(mode, file) {
   # 图例单独铺在图底，不压任何曲线
   par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
   plot.new()
-  ord  <- c("random", "rand_len", "nait", "nait_dedup")
-  lab  <- c("random", "rand_len (length-matched)", "nait", "nait + dedup")
+  ord  <- c("random", "el2n", "rand_len", "nait", "nait_dedup")
+  lab  <- c("random", "el2n", "rand_len (length-matched)", "nait", "nait + dedup")
   keep <- intersect(ord, unique(agg$method))
   labs <- lab[match(keep, ord)]
   cols <- PAL[keep]

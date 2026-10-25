@@ -1,0 +1,17 @@
+{
+  "method": "el2n",
+  "n_pool": 24000,
+  "scored": 24000,
+  "score_p50": 5.423415,
+  "score_p99": 10.292411,
+  "kept_30pct": 7200,
+  "dept_counts_30": {
+    "other": 4654,
+    "cardio": 548,
+    "resp": 445,
+    "neuro": 818,
+    "onco": 454,
+    "endo": 281
+  },
+  "score_convention": "2*(1-p_true) averaged over response tokens, base model, no reference training"
+}

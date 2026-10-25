@@ -47,9 +47,9 @@ res <- do.call(rbind, rows)
 write.csv(res, file.path(RESULTS, "robust.csv"), row.names = FALSE)
 
 # ---- 图：点 + 区间，按科室分组 ----
-pal <- c(random = "grey55", rand_len = "#CC79A7", nait = "#0072B2", nait_dedup = "#009E73")
-ord <- c("random", "rand_len", "nait", "nait_dedup")
-lab <- c("random 30%", "rand_len 30%", "nait 30%", "nait+dedup 30%")
+pal <- c(random = "grey55", el2n = "#E69F00", rand_len = "#CC79A7", nait = "#0072B2", nait_dedup = "#009E73")
+ord <- c("random", "el2n", "rand_len", "nait", "nait_dedup")
+lab <- c("random 30%", "el2n 30%", "rand_len 30%", "nait 30%", "nait+dedup 30%")
 ms  <- intersect(ord, SUBS)
 labs <- lab[match(ms, ord)]
 

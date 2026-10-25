@@ -17,6 +17,12 @@
 "medqa","rand_len","onco",47,-2.13,-7.09,2.13,FALSE
 "medqa","rand_len","other",283,0.59,-1.41,2.71,FALSE
 "medqa","rand_len","resp",92,-2.17,-6.52,1.81,FALSE
+"medqa","el2n","cardio",642,-1.45,-2.91,0.05,FALSE
+"medqa","el2n","endo",103,2.91,-0.32,6.47,FALSE
+"medqa","el2n","neuro",106,-3.77,-8.18,0.63,FALSE
+"medqa","el2n","onco",47,-0.71,-7.09,5.67,FALSE
+"medqa","el2n","other",283,-0.24,-2.47,2,FALSE
+"medqa","el2n","resp",92,-2.17,-6.52,2.17,FALSE
 "medmcqa","nait","cardio",315,-0.85,-3.49,1.69,FALSE
 "medmcqa","nait","endo",238,1.54,-0.84,4.06,FALSE
 "medmcqa","nait","neuro",282,0,-3.07,3.19,FALSE
@@ -35,3 +41,9 @@
 "medmcqa","rand_len","onco",352,-0.76,-2.46,1.04,FALSE
 "medmcqa","rand_len","other",2760,-0.59,-1.45,0.23,TRUE
 "medmcqa","rand_len","resp",236,-0.71,-3.67,2.26,FALSE
+"medmcqa","el2n","cardio",315,-0.32,-2.54,1.9,FALSE
+"medmcqa","el2n","endo",238,-0.42,-2.66,1.82,FALSE
+"medmcqa","el2n","neuro",282,-0.35,-2.84,2.01,FALSE
+"medmcqa","el2n","onco",352,-2.56,-4.64,-0.57,FALSE
+"medmcqa","el2n","other",2760,-0.94,-1.75,-0.11,TRUE
+"medmcqa","el2n","resp",236,-2.26,-4.94,0.42,FALSE
