@@ -75,8 +75,18 @@ print("=" * 72)
 
 # ---------------------------------------------------------------- 1. 数据规模
 print("\n[1] 数据规模：每个文件的行数对不对")
+# 池子多大不该由 config 猜：以"选择阶段实际用的池子"为准（results/select_stats.json
+# 的 n_train），否则 24k 池会被判成"预期 12,000 行"。找不到就退回 config 默认值。
+_pool = C.N_TRAIN
+_ss = os.path.join(C.RESULTS, "select_stats.json")
+if os.path.exists(_ss):
+    try:
+        import json as _json
+        _pool = int(_json.loads(open(_ss, encoding="utf-8").read()).get("n_train") or C.N_TRAIN)
+    except Exception:
+        pass
 expect = {
-    "train.jsonl": C.N_TRAIN,
+    "train.jsonl": _pool,
     "probe.jsonl": C.N_PROBE,
     "medqa.jsonl": 1273,
     "medmcqa.jsonl": 4183,
