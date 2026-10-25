@@ -73,6 +73,11 @@ def plan(name: str) -> list[tuple[str, float, int]]:
             q += [("nait", 0.30, s), ("random", 0.30, s), ("rand_len", 0.30, s)]
         return q
 
+    if name == "el2n":
+        # 经典基线：EL2N 打分后保留最难的 30%（Paul et al., 2021）。
+        # 只跑 30% 这一档、三个种子——它回答的是"激活选择比经典基线强吗"。
+        return [("el2n", 0.30, s) for s in (1, 2, 3)]
+
     q: list[tuple[str, float, int]] = []
     # 1. the baseline, then the head-to-head at the headline ratio
     q += [("full", 1.0, 1), ("nait", 0.30, 1), ("random", 0.30, 1)]
@@ -90,7 +95,7 @@ def plan(name: str) -> list[tuple[str, float, int]]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--plan", default="full", choices=["full", "quick", "seeds6", "scale"])
+    ap.add_argument("--plan", default="full", choices=["full", "quick", "seeds6", "scale", "el2n"])
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 

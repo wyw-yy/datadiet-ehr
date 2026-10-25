@@ -25,7 +25,7 @@ DELTA <- 0.02
 DELTA_CONTRAST <- 0.01
 
 TASKS   <- c("medqa", "medmcqa")
-METHODS <- c("full", "random", "rand_len", "nait", "nait_dedup")
+METHODS <- c("full", "random", "rand_len", "el2n", "nait", "nait_dedup")
 PAL     <- c(full = "grey30", random = "grey65", rand_len = "#CC79A7",
              el2n = "#E69F00", nait = "#0072B2", nait_dedup = "#009E73")
 
