@@ -1,0 +1,17 @@
+{
+  "n_items": 24,
+  "acc_strict": 0.4583,
+  "format_ok_rate": 1.0,
+  "parse_rate": 1.0,
+  "n_tokens_p50": 54,
+  "n_tokens_max": 107,
+  "n_flagged": 0,
+  "flag_rate": 0.0,
+  "tag": "base",
+  "task": "medmcqa",
+  "adapter": "none",
+  "limit": 24,
+  "bs": 8,
+  "max_new": 160,
+  "seconds": 11.1
+}

@@ -1,0 +1,501 @@
+item_id,dept,answer,pred,correct,format_ok,n_tokens,flags,text
+mc07586,onco,A,A,1,1,11,,A. A i.e. Brain parenchyma
+mc08498,other,A,A,1,1,16,,A. Ans. A i.e. By binding with trivalent Fe3+
+mc07403,resp,B,A,0,1,35,,A. A 100mm lens is commonly used for ear surgery. The reason is that it provides good magnification and depth of field without requiring an extension tube.
+mc09350,resp,A,C,0,1,16,,C. Ans. C i.e. Posterior superior part of nasal septum
+mc08447,cardio,B,D,0,1,40,,D. Insulin promoter factor-1 (IPF-1)  Insulin promoter factor 1 (IPF-1) gene mutations cause Maturity Onset Diabetes of Young (MODY).
+mc07335,other,B,A,0,1,9,,A. A i.e. Atrium
+mc07002,cardio,C,C,1,1,14,,"C. Ans. is 'c' i.e., Autoimmune hepatitis"
+mc09756,cardio,A,A,1,1,11,,A. A i.e. Chest pain occurs at rest
+mc08048,other,B,D,0,1,16,,D. The RPE is the most affected layer in diabetic retinopathy.
+mc06339,other,A,B,0,1,13,,"B. Ans. is 'b' i.e., CRVO"
+mc10247,other,A,B,0,1,12,,B. B i.e. To hold bone fragments with traction
+mc09069,other,D,D,1,1,23,,D. All of the above Resin crosslinking increases strength and hardness as well as crazing resistance.
+mc09385,other,C,A,0,1,9,,A. A i.e. Conscious Sedation
+mc07901,other,B,B,1,1,8,,B. Ans. acts via cAMP
+mc09529,other,C,D,0,1,9,,D. Ans. 6 monthly culture sensitivity
+mc08109,other,C,C,1,1,13,,"C. Ans. is 'c' i.e., Dunlop"
+mc08358,resp,A,B,0,1,25,,B. Brown fat is found in scapula and around blood vessels. It is not present in subcutaneous tissue.
+mc08879,other,B,B,1,1,27,,"B. Ans. is 'b' i.e., Number of flutes on the blade are more in files than in reamers"
+mc07465,other,A,B,0,1,13,,B. Ans. B i.e. Vaginal hysterectomy
+mc09405,other,B,C,0,1,16,,"C. Ans. is 'c' i.e., Erythromycin"
+mc09713,other,C,C,1,1,8,,C. C i.e. No treatment
+mc08997,neuro,D,B,0,1,33,,B. The occipital artery arises from the internal carotid and supplies the scalp. The other three options are branches of the external carotid artery.
+mc07419,other,C,B,0,1,16,,B. Ans. when centric relation and centric occlusion do not coincide
+mc07082,other,B,B,1,1,13,,"B. Ans. is 'b' i.e., Folate"
+mc06652,resp,D,D,1,1,10,,D. D i.e. Oxytocin
+mc07546,other,C,C,1,1,18,,C. Radiation sensitivity: Bone > Hematopoietic tissue > Nerve > Muscle
+mc06708,other,D,D,1,1,143,,D. All of the above  Apical periodontitis can be caused by any of the following: Wedging of foreign objects Wedging of restorations Wedging of amalgam Wedging of composite Wedging of cement Wedging of metal wedges Wedging of dental implants Wedging of root canal filling Wedging of endodontic materials Wedging of tooth structure Wedging of denture base Wedging of occlusal surface Wedging of crown a
+mc06737,cardio,A,B,0,1,9,,B. Ans. Doxycycline
+mc09140,other,B,C,0,1,14,,C. C i.e. Palatal termination of maxillary denture
+mc07085,resp,C,C,1,1,79,,"C. Repolarization in excitable cells occurs when K+ efflux increases and depolarization decreases. The action potential is initiated by an increase in membrane permeability to Na+. This causes Na+ to enter the cell, which leads to depolarization. When the membrane becomes more permeable to K+, it allows K+ to flow out of the cell, causing repolarization."
+mc06704,other,D,D,1,1,36,,D. Antibody-dependent enhancement is seen in dengue hemorrhagic fever. It occurs when antibodies against one serotype enhance infection by promoting viral replication and dissemination to other tissues.
+mc06617,other,B,D,0,1,39,,D. Reduced haemoglobin is not seen in delayed haemolysis. Delayed haemolysis occurs when there is an increase in red cell destruction and release of hemoglobin into plasma.
+mc08566,cardio,C,D,0,1,14,,"D. Ans. is 'd' i.e., Liver function tests"
+mc09398,endo,D,D,1,1,31,,D. Glycosylation is an example of post translational modification of proteins. The other three options are examples of post-transcriptional modifications of RNA.
+mc09227,other,B,B,1,1,16,,"B. Ans. is 'b' i.e., Inhibition of protein synthesis"
+mc07982,cardio,A,B,0,1,10,,B. Ans. B i.e. CT Scan
+mc07221,other,A,D,0,1,11,,D. D i.e. Use on anterior bite plane
+mc07281,other,B,B,1,1,50,,B. Linagliptin is an inhibitor of dipeptidyl peptidase-4 and has no effect on blood glucose levels in patients with renal impairment. It does not require dose adjustment in patients with mild to moderate renal impairment.
+mc06954,other,A,A,1,1,14,,"A. A i.e. Collection, collation and dissemination of information"
+mc07548,neuro,D,A,0,1,13,,A. A i.e. 3 arteries & 1 vein
+mc10169,other,C,A,0,1,79,,A. A i.e. 8ml MgSO4 + 10ml of NS MgSO4 is used for IV loading dose to prevent eclamptic seizures in preeclampsia. It should be given as an IV bolus at a rate of 3-5mg/kg over 1 minute. The total dose should not exceed 60 mg/kg.
+mc08853,onco,A,A,1,1,10,,A. Ans. A i.e. EBV
+mc09530,onco,D,D,1,1,46,,D. Dentinogenesis imperfecta is characterized by enamel defects that result from defective mineralization of the tooth's surface. The defect may be localized to a specific area of the tooth or it can affect all surfaces of the tooth.
+mc08560,other,B,D,0,1,45,,"D. First permanent molars appear around age 2 years and complete their development by about age 3 years. Refer: Nelson's Textbook of Pediatrics, Edition 20th, Page no: 458"
+mc08134,other,B,A,0,1,11,,A. A i.e. Keratinised squamous
+mc07608,neuro,C,C,1,1,42,,"C. Motor division of trigeminal nerve emerges from foramen ovale. Foramen ovale is also known as ""foramen cecum"" and it is located in posterior cranial fossa."
+mc09813,other,A,C,0,1,29,,C. Distraction osteogenesis is used to increase the consolidation time and decrease the time of fixation. It is also called as distraction osteogenesis.
+mc09884,neuro,A,A,1,1,15,,A. A i.e. Point of articulation of 4 skull bones
+mc08639,other,A,B,0,1,29,,B. Etchants in gel form have better concentration of etching agent. Gel forms can be applied directly to tooth surface without rinsing.
+mc07530,resp,A,B,0,1,16,,"B. Ans. is 'b' i.e., Tympanosclerosis"
+mc08012,neuro,B,B,1,1,18,,B. The liver is divided into 8 segments on the basis of poal veins.
+mc08132,endo,A,A,1,1,12,,A. A i.e. USG for fetal cardiac activity
+mc09315,other,A,B,0,1,17,,B. The maxillary first molar is a simple mesial root canal system.
+mc09307,other,B,C,0,1,23,,"C. Ans. is 'c' i.e., Has a broad spectrum but are inactive against anaerobes"
+mc08433,other,C,B,0,1,8,,B. Ans. X linked recessive
+mc08582,onco,C,A,0,1,11,,A. A i.e. Tetracycline therapy
+mc08920,other,A,A,1,1,11,,A. A i.e. Maxillary lateral incisor
+mc09327,other,A,A,1,1,19,,A. A i.e. Steroids reduce the rate of repair of tissues thus delays the healing
+mc07715,other,B,A,0,1,52,,A. A is correct. 180mg / 500mg = 3/10 2ml x 3/10 = 6/10 6/10 x 10 divisions = 6 divisions
+mc06532,other,A,A,1,1,9,,A. A i.e. Chronic gout
+mc06593,onco,D,B,0,1,13,,B. Anti centromere antibodies are seen in SLE.
+mc07177,other,A,A,1,1,9,,A. A i.e. Eradication
+mc07056,other,B,C,0,1,15,,"C. Ans. is 'c' i.e., 12 years"
+mc09109,other,B,C,0,1,16,,"C. Ans. is 'c' i.e., G-6PD deficiency"
+mc09990,other,C,A,0,1,29,,A. A i.e. 0.25 mm Periodontal probes have a tip diameter of 0.25mm.
+mc08635,other,B,D,0,1,28,,D. Systematic reviews have highest level of evidence. Systematic reviews are considered to be the most reliable and valid type of research study.
+mc06228,other,B,B,1,1,20,,B. The presence of movement at the fracture site is associated with increased callus formation and healing.
+mc07593,other,B,B,1,1,18,,"B. Ans. is 'b' i.e., Bradycardia with AV block"
+mc07785,other,D,D,1,1,31,,D. The patient has an acute hemodynamic instability due to massive hemorrhage. Immediate action is to clamp the chest tube to prevent further loss of blood.
+mc08238,other,B,C,0,1,8,,C. C i.e. Dentin
+mc08831,other,D,D,1,1,15,,"D. Ans. is 'd' i.e., Misoprostol"
+mc06500,other,A,A,1,1,16,,A. A i.e. Radiographs are good showing full length of canals
+mc09277,other,D,B,0,1,13,,B. Ans. 15% - 30%
+mc10293,other,B,B,1,1,16,,"B. Ans. is 'b' i.e., E multilocularis"
+mc07052,onco,C,D,0,1,15,,D. Ans. D i.e. Arteriosclerosis obliterans
+mc06912,onco,B,D,0,1,16,,D. Ans. should be completed within 6 hours of receiving from blood bank
+mc08928,other,D,B,0,1,14,,B. Immediate steps should be intubation and chest xray.
+mc08825,other,B,B,1,1,34,,B. FNAC can be used for diagnosis of papillary and follicular carcinomas of thyroid but not for diagnosis of follicular adenocarcinoma of lung.
+mc08389,other,B,B,1,1,10,,B. B i.e. Maxillary arch expansion
+mc07120,other,D,C,0,1,72,,"C. Linagliptin is an incretin-based GLP-1 receptor agonist that has been shown to have anti-inflammatory effects in animal models. It may also reduce inflammation in patients with type 2 diabetes. Ref: Harrison's Principles of Internal Medicine, 20th edition, Chapter 346, pg 1890."
+mc09624,other,A,A,1,1,8,,A. A i.e. Parasitic
+mc08039,resp,C,D,0,1,16,,D. Ans. D i.e. Preservation of speech and not difficulty in breathing
+mc06684,other,B,B,1,1,45,,B. The loss of bone density and osseous structure is more pronounced in the anterior maxilla than in the posterior region. The anterior maxilla has less blood supply and therefore it is more susceptible to osteoporosis.
+mc07054,endo,A,D,0,1,9,,D. D i.e. Fatty acids
+mc07298,other,C,A,0,1,20,,A. A is correct because it is the only material that does not contain calcium and phosphorus.
+mc06548,onco,D,D,1,1,26,,D. c-erbB1 is an oncogene. c-erbB2 is also known as HER2/neu.
+mc09409,other,B,B,1,1,26,,B. Binder is used to hold all components together and provide rigidity. It also helps in reducing shrinkage during casting process.
+mc06366,resp,A,A,1,1,13,,A. A i.e. Binds avidly with Hb
+mc06293,neuro,C,C,1,1,59,,"C. Median is the middle value when all values are arranged in ascending order. In case of even number of observations, median is the arithmetic mean of two middle numbers. Ref: Park's Textbook of Preventive and Social Medicine, 24th edition, Page no: 78"
+mc10203,other,B,A,0,1,10,,A. Ans. A i.e. HSV I
+mc09920,other,D,A,0,1,10,,A. A i.e. Thiopentone
+mc08172,endo,B,B,1,1,32,,B. Turku's Sugar Study: The study showed that dental caries is more common in children who consume high amounts of sugar than those who do not.
+mc09799,other,A,A,1,1,75,,"A. A i.e. Magnesium sulfate Magnesium sulphate is an effective and safe drug in preventing preterm labour. It has been shown to reduce neonatal mortality rate by 50% and morbidity by 30%. Ref: Park's Textbook of Preventive and Social Medicine, 26th edition, Page no: 178"
+mc08106,other,D,D,1,1,44,,D. Law of pulse oxymetry is based on Beer-Lambert's law. Beer-Lambert's law states that the amount of light absorbed by a solution is directly proportional to its concentration and path length.
+mc10167,other,A,D,0,1,15,,D. Chromosomal abnormalities are the most common cause of recurrent pregnancy loss.
+mc08681,other,A,A,1,1,17,,A. A i.e. Take radiograph and Cvek's pulpotomy
+mc08375,other,C,C,1,1,42,,"C. Carbon in phosphate bonded investment is used to make the material more brittle and less prone to cracking. Carbon also increases the melting point of the investment material, which can lead to problems during the casting process."
+mc07067,other,C,D,0,1,13,,"D. Ans. is 'd' i.e., Anti D"
+mc08702,other,C,D,0,1,10,,D. D i.e. Liridectomy
+mc06687,cardio,C,C,1,1,53,,C. Both factors A and B affect the treatment of MI. Regional wall motion abnormality is an important factor in deciding whether to perform primary angioplasty or not. Troponin levels help decide if the patient can be treated with thrombolysis or not.
+mc06851,other,A,B,0,1,160,,B. Mandibular canine erupting before mandibular premolar is not significant. The eruption sequence of teeth in the lower jaw is: mandibular 1st molar > mandibular 2nd molar > mandibular 3rd molar > mandibular 4th molar > mandibular 5th molar > mandibular 6th molar > mandibular 7th molar > mandibular 8th molar > mandibular 9th molar > mandibular 10th molar > mandibular 11th molar > mandibular 12th 
+mc09015,neuro,A,D,0,1,21,,D. Inferior oblique muscle rotates upward and laterally. It also extorts the eyeball.
+mc06923,other,B,B,1,1,28,,B. Type II error occurs when we fail to reject a false null hypothesis. Type I error occurs when we reject a true null hypothesis.
+mc07116,cardio,A,D,0,1,9,,D. Ans. Bacteria in gram stain
+mc07919,other,B,B,1,1,25,,B. Scammon's curve is an inverted U-shaped curve that shows the relationship between age and body weight in children.
+mc07405,other,B,C,0,1,15,,C. Piperacilllin is not an ureido penicillin.
+mc07264,other,D,D,1,1,33,,D. EDTA is used for pulp fixation. It chelates calcium and magnesium ions in the dentine to prevent them from reacting with the disinfectant.
+mc08942,other,A,A,1,1,12,,A. Ans. A: Prior to age 10
+mc07081,resp,A,B,0,1,11,,B. B i.e. Superior olivary complex
+mc06302,other,C,B,0,1,11,,B. B i.e. Optic chiasma
+mc09058,other,B,B,1,1,27,,B. B lymphocyte numbers decrease in chronic periodontitis. The number of T lymphocytes is increased in chronic periodontitis.
+mc06354,other,C,D,0,1,10,,D. Ans. D i.e. BPD
+mc08557,other,B,B,1,1,11,,B. Ans. Craniopharyngioma
+mc07752,other,B,B,1,1,84,,B. The Ottawa Charter is an international document that outlines the principles and strategies for promoting health at the community level. It was developed by WHO in 1986 to guide countries in their efforts to improve public health. The charter emphasizes the importance of reorienting health services towards primary prevention and health promotion. It also highlights the need for effective health
+mc09131,other,A,A,1,1,16,,A. A i.e. Recline chair and shout for help and give oxygen
+mc07000,cardio,C,A,0,1,13,,A. A i.e. Metabolic acidosis with respiratory compensation
+mc08319,other,B,A,0,1,41,,A. Metoclopramide acts as an antimuscarinic agent and blocks muscarinic cholinergic receptors in the gastrointestinal tract. It also has 5-HT3 receptor antagonistic activity.
+mc07443,other,B,B,1,1,22,,B. Lidocaine is an antiarrhythmic drug that blocks sodium channels and decreases cardiac excitability.
+mc08664,other,D,D,1,1,7,,D. Ans. Respiratory failure
+mc08137,cardio,B,B,1,1,14,,"B. Ans. is 'b' i.e., ORS solution"
+mc06719,onco,D,D,1,1,17,,D. Ans. D i.e. Due to citrate based anticoagulant
+mc08779,other,A,B,0,1,14,,"B. Ans. is 'b' i.e., Mesial root"
+mc09065,other,A,B,0,1,17,,"B. Ans. is 'b' i.e., Chelates with metal ions"
+mc06369,other,D,B,0,1,26,,B. A patient presenting with unilateral visual loss in absence of any other symptoms should be considered for anterior ischemic optic neuropathy.
+mc06606,other,D,B,0,1,12,,B. Ans. B i.e. Rotor's syndrome
+mc08529,other,A,C,0,1,18,,"C. Ans. is 'c' i.e., Separation starts from the periphery"
+mc07934,other,C,C,1,1,14,,"C. Ans. is 'c' i.e., Etomidate"
+mc06620,other,C,C,1,1,30,,C. C i.e. HF HF is an extremely weak acid and it does not cause any chemical reaction when it comes in contact with tissues.
+mc10084,other,C,B,0,1,13,,B. The prevalence of the disease is lower in population A.
+mc08656,neuro,A,D,0,1,30,,"D. Mesorectal fascia contains inferior and superior rectal veins, pararectal lymph nodes, and inferior mesenteric plexus."
+mc07224,other,D,A,0,1,11,,A. A i.e. Maxillary supporting cusp
+mc09318,other,B,C,0,1,26,,C. Retention is achieved at the dentino-enamel junction. Retention is not possible if it is done entirely in enamel.
+mc08939,other,A,A,1,1,9,,A. A i.e. Primaquine
+mc07270,resp,A,C,0,1,66,,C. The tetanizing frequency is given by: TETANIZING FREQUENCY = CONTRACTION TIME / LATENT PERIOD * RELAXATION TIME = 40/10*50 = 200/50 = 4 Hz * This is also known as the maximum rate of stimulation.
+mc08477,endo,D,D,1,1,19,,D. All of the above All three functions can be found in apoproteins.
+mc06283,other,B,B,1,1,8,,B. Ans. Abdominal mass
+mc10261,cardio,B,B,1,1,19,,B. Abrupt cessation of heavy and prolonged consumption of alcohol causes delirium tremens.
+mc08755,neuro,A,D,0,1,13,,D. The arrows in this image point to gap junctions.
+mc09035,neuro,C,D,0,1,39,,D. The white pulp is composed of follicles and trabeculae. Follicles contain germinal centers and mantle cells. Trabeculae contain T-lymphocytes.
+mc08838,other,C,D,0,1,19,,"D. Ans. is 'd' i.e., Necrotizing ulcerative gingivitis"
+mc09381,other,D,A,0,1,9,,A. A i.e. Hydrocephalus
+mc09967,other,D,A,0,1,9,,A. A i.e. Enamel matrix
+mc06216,other,C,C,1,1,35,,C. The zygomatic bone is attached to the frontal and maxillary bones but not to the nasal bone. It articulates with the temporal bone at its lateral end.
+mc09668,neuro,A,B,0,1,15,,"B. Ans. is 'b' i.e., Synchondrosis"
+mc06429,other,D,B,0,1,16,,"B. Ans. is 'b' i.e., Clostridium difficile"
+mc07094,other,A,A,1,1,10,,A. A i.e. Treat with catalase
+mc09081,resp,B,B,1,1,17,,"B. Ans. is 'b' i.e., Stapedial otosclerosis"
+mc09831,other,D,D,1,1,19,,"D. Ans. is 'd' i.e., A. E. vermicularis"
+mc06898,other,A,A,1,1,58,,"A. A person who is criminally not responsible for his actions if at the time of doing it by reason of unsoundness of mind, in incapable of knowing the nature of the act or that he is doing what is either wrong or contrary to the law. McNaughten Rule"
+mc06488,other,B,B,1,1,19,,"B. Ans. is 'b' i.e., Air bronchogram on chest x-ray"
+mc06890,other,C,B,0,1,14,,"B. Ans. is 'b' i.e., Mebanazole"
+mc07134,neuro,D,A,0,1,12,,A. A i.e. Medial Pterygoid
+mc08513,onco,B,B,1,1,15,,"B. Ans. is 'b' i.e., Haemorrhage"
+mc09621,neuro,D,D,1,1,22,,"D. All of the above The soft palate is composed of mucosa, muscle, and cartilage."
+mc06952,resp,D,C,0,1,25,,C. Central wrapping is seen in flower spray endings. Type 1 and type 2 fibres have annular wrapping.
+mc06203,cardio,A,B,0,1,9,,B. Modified Shock Index = MAP / HR
+mc09090,other,A,B,0,1,9,,B. B i.e. Simple tongue thrust
+mc06703,onco,D,C,0,1,14,,"C. Ans. is 'c' i.e., Beta HCG"
+mc09267,onco,A,A,1,1,12,,A. A i.e. Hairy leukoplakia
+mc07873,other,A,D,0,1,54,,D. Flat palate: This is due to paralysis of uvula and palatopharyngeus muscle. Nasal regurgitation: Due to paralysis of pharyngotympanic tube. Nasal twang: Due to paralysis of velum.
+mc08203,neuro,B,B,1,1,18,,B. The preganglionic fibers for both adrenal glands comes from the sympathetic chain.
+mc08599,other,B,C,0,1,33,,C. IPC 313 deals with rape and IPC 312 deals with sexual intercourse without marriage. IPC 310 deals with child marriage.
+mc07683,onco,D,B,0,1,10,,B. B i.e. Pyroptosis
+mc08856,other,C,C,1,1,53,,C. Density of radiograph is not affected by cone angulation. The density of X-ray image depends on:  1. Tube current (mA) 2. Tube voltage (kVp)  3. Object thickness  4. Distance between source and film
+mc07267,other,C,C,1,1,61,,"C. The maxillary bone is divided into two parts: medial and lateral. The medial part is called the maxillary body and the lateral part is called the maxillary process. The maxillary process is further subdivided into three parts: median process, palatal process, and premaxillary process."
+mc08697,other,A,C,0,1,14,,C. Ans. Block of Cardio-accelerator fibers of synthetic origin
+mc06388,onco,C,C,1,1,10,,C. C i.e. Hyper IgM Syndrome
+mc07915,other,B,A,0,1,15,,"A. Ans. is 'a' i.e., McMohan Pugh"
+mc07799,resp,A,A,1,1,10,,A. A i.e. Neutrophils
+mc09374,other,A,A,1,1,74,,A. A i.e. 15th April 1987 The National Health and Family Welfare Board was established in 1984 under the Ministry of Health & Family Welfare. The board is responsible for implementing the National Health Policy and the National Family Planning Programme. It has been given powers to make rules and regulations for implementation of these programmes.
+mc10092,other,D,A,0,1,27,,A. Atropine is used in organophosphorous poisoning to reverse muscarinic effects and also for mydriasis.
+mc08197,other,A,C,0,1,40,,C. Denosumelin is a gene that encodes a protein which inhibits osteoclastogenesis and bone resorption. It has been shown to be involved in odontoblast differentiation.
+mc06639,neuro,A,B,0,1,32,,B. The action of the muscle marked in the image is depression of mandible. The muscles that depress mandible are: Masseter and Temporalis.
+mc08262,onco,D,B,0,1,10,,B. Ans. Sturge-Weber Syndrome
+mc07376,endo,A,D,0,1,35,,D. All of the above  Enzymes can be classified in many ways: by their action on substrates; by their nature; and by their mechanism of action.
+mc09009,resp,A,D,0,1,11,,D. D i.e. Monosynaptic reflex
+mc08434,other,A,A,1,1,10,,A. A i.e. Decrease micro leakage
+mc09722,other,D,A,0,1,11,,A. A i.e. Nasion and Sella
+mc06792,onco,A,A,1,1,13,,"A. Ans. is 'a' i.e., Gardasil"
+mc10236,neuro,C,C,1,1,53,,C. The posterior-inferior cerebral artery supplies the anterior and middle cerebral arteries. The posterior communicating artery is an extra-arterial branch that arises from the basilar artery and joins the internal carotid artery at its origin to form the circle of Willis.
+mc07338,other,B,B,1,1,21,,"B. Ans. is 'b' i.e., The national population is always taken as the standard population"
+mc07504,neuro,B,D,0,1,27,,D. Buccinator is not pierced by molar gland. It is pierced by buccal branches of facial and lingual nerves.
+mc09663,neuro,A,D,0,1,22,,D. Crista galli is not present in ethmoid bone. It is present only in frontal bone.
+mc07473,other,A,A,1,1,11,,A. A i.e. Patient on heparin
+mc08340,other,B,B,1,1,46,,"B. Ans. is 'b' i.e., The State Government's share of expenditure on medical care is 1/8; the ESI Corporation's share of expenditure on medical care is 7/8 of total cost"
+mc08372,other,B,B,1,1,85,,"B. Metronidazole is an antibiotic that is used to treat anaerobic infections such as bacterial vaginosis and trichomoniasis. It is not effective for treating sexually transmitted diseases like gonorrhea or chlamydia. It can cause some side effects including nausea, vomiting, diarrhea, headache, dizziness, and allergic reactions. It should be avoided during pregnancy because it may cause birth defe"
+mc08449,neuro,C,C,1,1,11,,C. C i.e. Preganglionic
+mc08769,cardio,B,A,0,1,13,,A. Ans. A: Streptococcus viridans
+mc09006,other,D,B,0,1,7,,B. Ans. Endoscopy
+mc06691,other,B,B,1,1,28,,"B. The modified Dean’s fluorosis index is based on six categories: none, mild, moderate, severe, very severe and extreme."
+mc09775,other,C,C,1,1,12,,"C. Ans. is 'c' i.e., CT"
+mc08310,other,B,B,1,1,41,,B. Elliot separator is used for separating crab claws from other parts of the crab. It consists of two parallel bars which can be moved up and down to separate the claws from the rest of the body.
+mc06996,onco,C,C,1,1,46,,"C. An aneurysmal bone cyst has a fibrous capsule and does not have an epithelial lining. The other options are correct: Sinuses, fistulas, and keratocytes are lined by epithelium."
+mc09830,cardio,D,B,0,1,15,,B. Atrial fibrillation can be treated with amiodarone.
+mc07956,resp,C,D,0,1,12,,D. D i.e. Increased loss of phosphate in urine
+mc09095,other,C,B,0,1,18,,"B. Ans. is 'b' i.e., Maxillary 1st molar"
+mc06314,neuro,A,A,1,1,13,,A. A i.e. Branches of cervical plexus
+mc07817,other,C,A,0,1,18,,A. A i.e. The buccal and lingual cusps are more prominent
+mc07555,other,D,C,0,1,10,,C. Ans. Contact area too occlusively
+mc10152,onco,D,D,1,1,8,,D. D i.e. Tetanus
+mc08626,other,C,A,0,1,160,,A. A i.e. Liraglutide Liraglutide is an incretin mimetic that acts as a GLP-1 receptor agonist. It reduces HbA1c in patients with type 2 diabetes mellitus. It also improves insulin sensitivity and glycemic control in patients with obesity. It can be used for weight loss. It is safe and well tolerated. It is available as subcutaneous injection. It is approved for use in adults with type 2 diabetes 
+mc06184,other,D,C,0,1,6,,C. Ans. Anti E
+mc08886,cardio,A,A,1,1,11,,A. A i.e. Amphotericin B
+mc07144,neuro,B,B,1,1,14,,"B. Ans. is 'b' i.e., Microcephaly"
+mc06297,other,A,B,0,1,13,,"B. Ans. is 'b' i.e., Natal teeth"
+mc06756,other,C,A,0,1,11,,A. A i.e. Hopping on one leg
+mc07987,other,A,A,1,1,99,,"A. Sentinel surveillance is used to monitor disease trends and detect outbreaks. Sentinel surveillance involves monitoring specific individuals who have been identified as having an increased likelihood of contracting a particular disease. These individuals may be those at highest risk for HIV infection, such as intravenous drug users, men who have sex with men, and people living in areas where HI"
+mc09978,other,A,D,0,1,16,,D. No pocket Trauma is reversible and does not cause pocketing.
+mc06919,neuro,A,B,0,1,14,,B. Anterior division of mandibular nerve is motor only.
+mc08268,other,B,C,0,1,33,,C. The most probable chance of developing caries is at point C. The risk of developing caries increases as we move from left to right along the curve.
+mc08791,other,A,A,1,1,16,,A. A i.e. Middle 1/3rd of esophagus
+mc09164,endo,B,B,1,1,7,,B. B i.e. LDL
+mc07863,other,B,C,0,1,35,,C. Calcium supplementation should be done only if there is evidence of hypocalcemia. Refer: Sabiston 20th edition Pgno : 1354
+mc07016,other,D,B,0,1,21,,B. Specific plaque hypothesis states that only certain bacteria in plaque are causative agents of dental caries.
+mc09814,onco,B,B,1,1,10,,B. Ans. Rhabdomyoblastic
+mc07481,other,B,B,1,1,12,,"B. Ans. is 'b' i.e., Facial"
+mc06567,onco,C,C,1,1,28,,C. Apoptosis does not cause swelling of organelles. Apoptosis is characterized by intact cell membranes and no inflammatory response.
+mc07205,other,A,A,1,1,10,,A. A i.e. Mottled enamel
+mc08157,resp,C,A,0,1,11,,A. A i.e. Low control and skilled movements
+mc06636,other,A,A,1,1,9,,A. A i.e. Gillis temporal
+mc09241,resp,B,B,1,1,50,,B. The fibers that reach directly to Purkinje cells in the cerebellar cortex come from the inferior olivary nucleus. The fibers that reach the granular layer of cerebellum come from the vestibulocerebellar nuclei.
+mc07448,other,A,A,1,1,14,,A. A i.e. Facial surface should be perpendicular to cavity margins
+mc06798,other,C,C,1,1,23,,"C. Ans. is 'c' i.e., Reduce malaria disease so that it no longer a public health problem"
+mc08377,other,A,A,1,1,13,,A. A i.e. Primary lower 1st molar
+mc10064,other,D,A,0,1,13,,A. A i.e. Does not preserve the attached gingiva
+mc06692,other,D,C,0,1,20,,"C. Ans. is 'c' i.e., Pneumocystis carinii"
+mc10121,onco,D,C,0,1,17,,"C. Ans. is 'c' i.e., Mandibular third molar"
+mc09103,other,A,B,0,1,14,,"B. Ans. is 'b' i.e., ANOVA"
+mc06779,endo,C,A,0,1,11,,A. A i.e. Glycogenesis in muscle
+mc09086,endo,D,B,0,1,8,,B. Ans. Autosomal dominant inheritance
+mc07280,onco,B,B,1,1,16,,"B. Ans. is 'b' i.e., Hyaluronidase"
+mc10164,other,C,C,1,1,36,,"C. Permanent second molars usually move distally when there is loss of a primary second molar. The tooth that moves distally is called the ""drifting"" tooth."
+mc09457,other,B,A,0,1,11,,A. A i.e. Type of sealer used
+mc08786,other,C,C,1,1,37,,C. The patient has been treated with surgery + radiotherapy + chemotherapy + endocrine therapy. Therefore she should be assessed clinically every 3 months for 1 year and annually thereafter.
+mc06969,other,B,B,1,1,46,,B. The next step in this case would be to use a larger size instrument that is 1mm shorter than the previous preparation. This will allow for adequate space to fit the larger instrument without causing damage to the tooth structure.
+mc06610,cardio,A,D,0,1,46,,"D. Nodular sclerosis is the most common type and has the best prognosis. Nodular sclerosis is characterized by large lymphocytes in a nodular pattern, which may be accompanied by small amounts of histiocytosis."
+mc06590,other,B,C,0,1,13,,"C. Ans. is 'c' i.e., 3"
+mc06380,other,A,C,0,1,17,,"C. Ans. is 'c' i.e., Less than 50 degree"
+mc08170,other,D,A,0,1,22,,A. A: Gold jewellery contains 18 karat gold and can cause allergic reactions in some people.
+mc07020,onco,B,A,0,1,10,,A. A i.e. Drug induced lupus
+mc06364,other,C,B,0,1,20,,"B. Ans. is 'b' i.e., Presence of air in stomach and duodenum"
+mc06766,cardio,B,B,1,1,23,,B. Acromegaly is caused by excessive growth hormone secretion after closure of epiphyses of long bones.
+mc09792,other,D,B,0,1,20,,"B. Ans. is 'b' i.e., 60:40:00"
+mc09337,other,C,B,0,1,36,,B. Instruments should be burnt in flame. Ref: Ananthanarayan & Paniker's Textbook of Microbiology 9th edition Pgno : 104
+mc07472,other,D,A,0,1,13,,A. A i.e. 14-18 weeks
+mc07597,other,D,B,0,1,16,,"B. Ans. is 'b' i.e., Osteosarcoma"
+mc09730,other,C,C,1,1,15,,C. Immediate intervention therapy is used for severe malocclusion in children.
+mc07033,resp,D,B,0,1,8,,B. B i.e. C fiber
+mc09459,other,D,D,1,1,40,,D. Tranexamic acid is used in cases where there is excessive bleeding during surgery. It is an antifibrinolytic agent that inhibits fibrinolysis and thus prevents bleeding.
+mc09202,other,A,A,1,1,9,,A. A i.e. Macrocephaly
+mc08653,resp,A,C,0,1,15,,"C. Ans. is 'c' i.e., Emphysema"
+mc07440,other,C,C,1,1,14,,"C. Ans. is 'c' i.e., Mann Whitney Test"
+mc06423,other,C,D,0,1,67,,"D. A small apical vesicovaginal fistula will allow only very slow leakage of urine, so it would take much longer than 15 minutes to detect any leakage. The patient may have a small apical vesicovaginal fistula that is too small to leak the dye in 15 minutes."
+mc08427,resp,D,B,0,1,20,,B. The patient has been treated for prolactinoma and therefore does not need estrogen replacement.
+mc06299,other,B,A,0,1,16,,A. A i.e. Research papers and other articles proving efficacy of the drug
+mc07969,other,D,D,1,1,45,,"D. Postherpetic neuralgia is defined as pain lasting beyond 4 weeks. Ref: Harrison's Principles of Internal Medicine, 18th edition, Chapter 507, pg 2690"
+mc09692,other,B,B,1,1,19,,"B. Ans. is 'b' i.e., Single dose of dexamethasone"
+mc10135,other,C,C,1,1,24,,"C. Ans. is 'c' i.e., Asymptomatic necrotic pulp with periapical lesion"
+mc07506,onco,D,C,0,1,13,,"C. Ans. is 'c' i.e., T cell"
+mc10214,other,C,C,1,1,29,,C. C i.e. Calcium hydroxide + iodine o Metapex is used for root canal obturation in endodontics.
+mc06307,other,D,C,0,1,43,,C. Ref: Ganong 25th edition pg 1043 Limb Placement Reflex is a voluntary movement that occurs when the limb is placed in an abnormal position. It disappears after several months.
+mc08979,endo,B,A,0,1,29,,A. Amino acid that do not enter into the Krebs cycle is glycine. Glycine enters the urea cycle instead.
+mc06607,other,B,C,0,1,11,,C. C i.e. DB is largest cusp
+mc06183,other,A,A,1,1,68,,A. A i.e. ABCDE The steps of intubation are as follows:- 1. Head extension and flexion of neck. 2. Introduction of laryngoscope. 3. Inflation of cuff. 4. Fixation of tube to prevent dislodgement. 5. Check breath sounds with stethoscope.
+mc06487,other,A,C,0,1,8,,C. C i.e. Plaque
+mc06304,cardio,B,B,1,1,10,,"B. Ans. Paired ""t"" test"
+mc07999,other,B,C,0,1,16,,C. C i.e. is derived initially from the outer enamel epithelium
+mc09788,other,C,B,0,1,11,,B. Ans. B i.e. Vagal stimulation
+mc08079,other,A,A,1,1,9,,A. A i.e. Battle's sign
+mc06667,resp,A,A,1,1,10,,A. A i.e. Cardiac rhythm generation
+mc09547,other,C,C,1,1,40,,"C. The symptoms suggest that there is an infection in the maxillary sinus. Ref: Park's Textbook of Preventive and Social Medicine, 23rd edition, Page 709"
+mc08758,other,D,C,0,1,18,,"C. Ans. is 'c' i.e., Water is the byproduct of reaction"
+mc06633,other,C,B,0,1,17,,"B. Ans. is 'b' i.e., Zinc oxide-eugenol cement"
+mc08752,other,A,D,0,1,8,,D. D i.e. Socket preservation
+mc06876,endo,B,B,1,1,9,,B. B i.e. VLDL
+mc08151,endo,C,C,1,1,12,,C. C i.e. Sorting of glycoproteins
+mc06551,other,A,B,0,1,12,,B. B i.e. Cervical third of crown
+mc09803,resp,A,D,0,1,9,,D. D i.e. Politzer Test
+mc08972,other,C,B,0,1,8,,B. B i.e. Deposit zone
+mc08462,other,A,C,0,1,33,,C. Habit is an automatic response to a stimulus that has been repeated so many times it becomes involuntary. It can be either compulsive or non-compulsory.
+mc06928,cardio,D,D,1,1,19,,"D. Ans. is 'd' i.e., Used in combination with short-acting insulin"
+mc08147,other,A,A,1,1,26,,A. A i.e. Bradycardia Atropine is an M1 receptor blocker and does not affect heart rate.
+mc07453,endo,D,D,1,1,13,,D. The most accurate method is chorionic villus sampling.
+mc09420,other,A,A,1,1,10,,A. A i.e. F and V sounds
+mc09055,other,D,C,0,1,69,,"C. Digoxin is an antiarrhythmic drug that acts on the AV node to slow conduction. It has no effect on the SA node. Therefore, it does not cause bradycardia. Digoxin causes sinus tachycardia. Ref: Harrison 18th edition pg 2045"
+mc10317,onco,B,C,0,1,15,,"C. Ans. is 'c' i.e., CD 34"
+mc09317,other,A,A,1,1,8,,A. A i.e. Lordosis
+mc09538,other,B,B,1,1,13,,"B. Ans. is 'b' i.e., Zinc oxide"
+mc08179,other,A,A,1,1,16,,"A. A i.e. Doctor is guilty under ""Last clear chance"" doctrine"
+mc09982,other,C,C,1,1,33,,C. Sparrow foot marks are not present in most cases of whiplash injuries. Sparrow foot marks are only seen in severe whiplash injuries.
+mc10074,other,A,B,0,1,28,,B. The implant is surrounded by a layer of fibrous connective tissue that can be up to 3.65mm thick.
+mc07231,other,C,C,1,1,18,,"C. Ans. is 'c' i.e., Tetralogy of Fallot's"
+mc09388,neuro,A,A,1,1,15,,A. A i.e. Ecological This is an ecological study.
+mc06222,cardio,A,A,1,1,59,,A. A i.e. Amoxicillin  Amoxicillin is used as an alternative to penicillins in patients who have allergy to penicillins. It has been shown that amoxicillin can be used safely and effectively in patients with known allergy to penicillins.
+mc08384,other,B,B,1,1,11,,B. B i.e. Submandibular space
+mc06294,onco,B,A,0,1,11,,A. A i.e. Osteosarcoma
+mc09647,other,A,A,1,1,20,,A. A i.e. Cut through the isthmus and remove the inlay in two pieces
+mc08631,other,C,C,1,1,50,,"C. The formula for predicting height from arm span is: Height = 70 + 2 x Arm Span. So in this case, Height = 70 + 2 x 24.5 = 130 cm."
+mc09950,other,A,A,1,1,16,,"A. Ans. is 'a' i.e., Echocardiography"
+mc09229,other,B,B,1,1,8,,B. B i.e. Load sharing
+mc10085,other,C,A,0,1,15,,A. Ans. A i.e. 40-50%
+mc07017,cardio,C,C,1,1,18,,"C. Ans. is 'c' i.e., Streptococcus viridans"
+mc08004,cardio,D,D,1,1,9,,D. Ans. Polyangitis nodosa
+mc10234,other,B,B,1,1,12,,"B. Ans. is 'b' i.e., Color"
+mc07768,other,B,B,1,1,34,,B. The penetration depth for all materials used in endodontic procedures should not exceed 50μm. ISO 6876:2001
+mc09882,endo,D,D,1,1,11,,D. Increased peripheral resistance is not seen in pregnancy.
+mc09736,other,D,D,1,1,17,,D. Raised ASLO titer is not a major criteria for rheumatic fever.
+mc06649,other,B,A,0,1,13,,A. A i.e. Lower Incisor and Lower Molar
+mc06441,other,C,B,0,1,54,,"B. The reason for this is that the material will be more viscous near the edges and therefore it will not flow as well. The viscosity of the liquid polymer decreases as temperature increases. Therefore, the higher the temperature, the less time needed to process the material."
+mc09712,other,B,C,0,1,9,,C. C i.e. Horizontal bone loss
+mc07040,other,C,A,0,1,10,,A. A i.e. Renal aery
+mc06777,other,B,A,0,1,11,,A. A i.e. Perrie Fauchard
+mc09644,cardio,B,B,1,1,16,,"B. Ans. is 'b' i.e., Check HBV DNA load"
+mc09643,other,B,C,0,1,58,,C. Dentinal tubules have maximum number in the pulp chamber and minimum in the root canal. The size of the tubules increases as we move away from the pulp chamber towards the apical region. The tubules are lined by odontoblasts which secrete cementum.
+mc06346,other,A,A,1,1,9,,A. A i.e. Infant mortality rate
+mc06752,other,B,B,1,1,20,,B. B i.e. Prevents the formation of chromium oxide or dissolves chromic oxide layer
+mc10027,other,B,B,1,1,16,,"B. Ans. is 'b' i.e., Increased specificity and decreased sensitivity"
+mc08064,other,A,A,1,1,11,,A. A i.e. Mandibular Incisor
+mc09960,other,A,A,1,1,41,,A. A i.e. Prevalence rate Prevalence refers to the number of cases that exist at a particular time and place. It can be used for both chronic diseases and acute conditions.
+mc07452,onco,C,D,0,1,7,,D. Ans. Bone marrow biopsy
+mc09188,other,D,D,1,1,48,,"D. All of the above  Mercury is toxic to all organs and tissues in the body. It can be absorbed through skin, lungs, digestive tract, and oral mucosa. Ref: KDT 6/e p104"
+mc10310,other,A,D,0,1,39,,"D. The law does not mention any specific person to be considered as an aggravating factor. The only exception is that if it is committed during communal or secular violence, it will be aggravated."
+mc08995,other,D,B,0,1,160,,"B. Ans. is 'b' i.e., 200 Vision centres under VISION 2020 programme in India are: 1. National Centre for Visual Rehabilitation and Training, New Delhi 2. National Institute of Health Sciences, Bangalore 3. National Institute of Ophthalmology, New Delhi 4. National Institute of Optometry, Hyderabad 5. National Institute of Rural Health Management, Raipur 6. National Institute of Public Health, Mumb"
+mc07814,neuro,C,A,0,1,11,,A. A i.e. Superficial temporal artery
+mc08535,endo,A,A,1,1,8,,A. A i.e. Arthritis
+mc09912,other,A,A,1,1,83,,A. A is correct because tooth buds and salivary glands have high density of calcium which makes them very sensitive to X-rays. B. Nerve and muscle tissues are not as dense as bone so they do not absorb much radiation. C. Hair and nails are made up of keratin which does not absorb much radiation. D. Cartilage has low density of calcium so it absorbs less radiation than bone.
+mc09274,other,B,A,0,1,13,,A. A i.e. Pseudomonas aeruginosa
+mc09141,other,D,A,0,1,11,,A. A i.e. Apply ketone over tray
+mc07605,other,A,B,0,1,34,,"B. The distance between the tip and the shank is called as ""anti rotational stability"". It should be kept at least 3mm away from the shank."
+mc06310,other,B,C,0,1,46,,"C. Hone is a type of steel that has been tempered to make it hard and brittle. It cannot be stretched without fracturing. Hone is used for sharpening tools like knives, razors, scissors, etc."
+mc07008,endo,A,A,1,1,16,,"A. Ans. is 'a' i.e., Cessation of smoking"
+mc09285,other,A,A,1,1,56,,A. A i.e. Atropine Atropine acts as an antagonist for muscarinic cholinergic receptors and hence it can counteract the effects of acetylcholine. It also has antiemetic action which helps in reducing the vomiting caused by poisoning.
+mc08234,cardio,A,A,1,1,8,,A. A i.e. Point mutation
+mc08882,other,C,C,1,1,10,,C. C i.e. Extraction of posterior teeth
+mc08032,other,C,C,1,1,17,,"C. Ans. is 'c' i.e., Macafee and Johnson regime"
+mc09557,other,C,D,0,1,38,,"D. Dentsure loosening occurs when the denture is not retentive enough. The denture may be loose due to poor fit, improper retention, or inadequate base material."
+mc07253,neuro,D,C,0,1,11,,C. C i.e. Reticular dermis
+mc09745,neuro,B,C,0,1,9,,C. C i.e. Pterion
+mc08556,resp,D,B,0,1,16,,"B. Ans. is 'b' i.e., Xenon dilution technique"
+mc08983,other,B,A,0,1,10,,A. A i.e. Dehiscence
+mc09881,other,C,C,1,1,43,,C. Direct ophthalmoscopy magnifies image to 10x. Direct ophthalmoscopy has 2 disc diameter field of view. Self-illuminated device is indirect ophthalmoscopy.
+mc09674,other,C,C,1,1,14,,C. Fear is an emotion that can be either objective or subjective.
+mc10080,other,A,B,0,1,16,,B. The baby has mild respiratory distress which can be managed with mechanical ventilation.
+mc09221,other,D,C,0,1,50,,"C. Passive surveillance is done to detect any adverse events in patients who have undergone surgical procedures. In this case, it would be passive surveillance for detecting any visual impairment that may occur due to intraocular pressure elevation caused by the use of PCBA."
+mc08543,other,B,B,1,1,10,,B. B i.e. Pregnancy Gingivitis
+mc07441,other,D,D,1,1,8,,D. D i.e. Ankle
+mc06894,other,A,A,1,1,13,,A. A i.e. Bitemporal hemianopia
+mc08416,other,D,A,0,1,10,,A. A i.e. Prolactin
+mc07922,other,C,C,1,1,21,,C. Surface roughness is measured using profilometers. Profilometers measure surface topography and texture.
+mc08736,other,A,B,0,1,47,,B. The talus has an angular relationship to the tibia and fibula that allows for rotation of the foot in dorsiflexion. This is important because it allows for the ability to plantarflex the foot while walking.
+mc09397,other,A,A,1,1,12,,A. A i.e. Pubococcygeus
+mc09660,cardio,C,B,0,1,26,,B. Nobel prize for medicine/physiology in 2018 for the discovery of CRISPR-Cas9.
+mc07899,other,C,D,0,1,10,,D. D i.e. Hemilaminectomy
+mc09042,other,C,B,0,1,40,,B. The parallel walls provide the greatest mechanical advantage to resist proximal displacement of the restoration. The occlusal dovetail and acute lingual inclination do not contribute to resistance to proximal displacement.
+mc06504,other,A,B,0,1,78,,"B. The 95% CI is used to determine if there is any difference between the two groups. The null hypothesis states that there is no difference between the two groups. If the 95% CI does not include zero, it means that there is a significant difference between the two groups. In this case, we can conclude that the drug has some effect on the disease."
+mc06231,endo,A,D,0,1,26,,"D. D i.e. Fructose-2, 6-biphosphate stimulation of phosphofructokinase-2"
+mc07717,endo,B,A,0,1,34,,A. A i.e. 12 weeks Anti-D should be given at 12 weeks of pregnancy as it will prevent all future pregnancies from being affected.
+mc06618,other,C,A,0,1,15,,A. A i.e. Fracture of surgical neck of humerus
+mc08309,resp,A,A,1,1,11,,A. A i.e. One way ANOVA
+mc07400,neuro,D,D,1,1,13,,D. Ans. D i.e. Nasolacrimal nerve
+mc10183,other,A,A,1,1,12,,A. A i.e. Soft matrix and hard filler particles
+mc07966,other,D,C,0,1,31,,"C. For root fractures, radiographs should be taken in three planes: 45°, 90° and 110°."
+mc06776,other,D,D,1,1,12,,D. D i.e. Cover with impervious barrier
+mc07958,other,B,B,1,1,24,,B. Permanent teeth that have been treated for caries may be retained in their original position if they are not infected.
+mc09681,other,B,A,0,1,12,,A. A i.e. Can cause extensive spread of infection
+mc09916,neuro,D,B,0,1,19,,B. Ans. B i.e. At the junction of middle and posterior cranial fossa
+mc07007,other,A,D,0,1,18,,"D. Ans. is 'd' i.e., Fundus flavimaculatus"
+mc09079,onco,B,C,0,1,17,,"C. Ans. is 'c' i.e., Benign pemphigoid"
+mc06897,other,C,B,0,1,17,,B. The PDL is not re-epithelialized in this case.
+mc07776,other,B,B,1,1,17,,"B. Ans. is 'b' i.e., Greater to Znpo4"
+mc06325,other,C,C,1,1,41,,C. The rooting reflex is present at birth and persists until about 6 months of age. The rooting reflex is an innate response to touch on the cheek. It is seen in all mammals except humans.
+mc08461,other,C,C,1,1,47,,"C. Plaque microflora becomes gram negative. Plaque is composed of bacteria and fungi that adhere to tooth surfaces. The composition of plaque varies depending on the host's age, diet, oral hygiene habits, and other factors."
+mc10231,other,A,B,0,1,26,,B. Resection of supracrestal fibers is done to correct rotation of teeth. The other options are not indicated here.
+mc09828,other,A,A,1,1,9,,A. A i.e. Retrieve follicles
+mc08045,resp,B,A,0,1,11,,A. A i.e. Isolated stapes defect
+mc07669,other,C,C,1,1,14,,"C. Ans. is 'c' i.e., Platelet disorder"
+mc09407,other,A,D,0,1,17,,"D. Ans. is 'd' i.e., it is due to congenital"
+mc07137,other,A,D,0,1,18,,"D. Ans. is 'd' i.e., Fluoride containing dentifrices"
+mc06643,other,C,C,1,1,25,,"C. Cauda equina syndrome is characterized by lower extremity weakness, sensory loss, and bowel/bladder dysfunction."
+mc10258,other,C,A,0,1,12,,A. A i.e. Periapical bony changes
+mc06781,other,C,D,0,1,21,,D. Standard error of difference in proportions.  The standard error of difference between two proportions is given by:
+mc06492,endo,D,D,1,1,12,,D. Ans. D i.e. All of the above
+mc07848,neuro,B,B,1,1,41,,B. The common carotid artery is divided into internal and external carotid arteries at the level of thyroid cartilage. The division occurs in front of the cricopharyngeus muscle.
+mc07141,other,A,B,0,1,15,,"B. Ans. is 'b' i.e., Hyperkalemia"
+mc10127,onco,A,A,1,1,10,,A. A i.e. Lichen planus
+mc09922,other,D,D,1,1,18,,"D. Ans. is 'd' i.e., it enhances the growth of other bacteria"
+mc08546,other,D,D,1,1,10,,D. Ans. Acute viral myositis
+mc08006,resp,B,C,0,1,34,,C. C fibers have slow conduction velocity and therefore propagate slowly. The other options are false because they describe features of depolarization that occur during an action potential.
+mc07047,other,A,A,1,1,25,,A. Mode is the value that most frequently occurs in a set of observation. The mode is not affected by extreme values.
+mc06832,other,B,B,1,1,38,,B. Glass ionomers have low mechanical properties and therefore they are not suitable for large restorations. They can be reinforced with metallic powders which increase their hardness and resistance to wear.
+mc07118,other,C,C,1,1,13,,"C. Ans. is 'c' i.e., Bloom syndrome"
+mc10329,other,D,D,1,1,17,,"D. D i.e. Appearance, Pulse, Grimace, Activity, Respiration"
+mc08195,endo,D,D,1,1,17,,D. Metronidazole is the drug of choice for vaginal infections during pregnancy.
+mc08232,cardio,A,A,1,1,18,,"A. A i.e. Lymphocytosis, Low Glucose, High protein"
+mc09735,other,A,C,0,1,30,,"C. C i.e. SBP fall by 30 mm hg, DBP fall by 20 mm hgt within 3 minutes"
+mc08830,other,A,C,0,1,16,,"C. Ans. is 'c' i.e., Intraosseous"
+mc07354,onco,A,A,1,1,10,,A. A i.e. Kleinfelter syndrome
+mc10227,cardio,B,C,0,1,21,,C. Raised serum alkaline phosphatase is seen in osteomalacia and hyperthyroidism.
+mc08024,cardio,D,B,0,1,17,,B. The patient has high anion gap metabolic acidosis and metabolic alkalosis.
+mc06825,onco,B,C,0,1,16,,"C. Ans. is 'c' i.e., Caspase 3"
+mc10102,other,D,A,0,1,26,,A. A i.e. After 50 years Bone mineral density is recommended for women after age 50 years.
+mc08015,cardio,D,D,1,1,15,,D. Ans. D: Fulminant hepatitis due to hepatitis E infection
+mc07699,other,B,B,1,1,15,,"B. Ans. is 'b' i.e., Double wedguing"
+mc08474,cardio,B,B,1,1,40,,B. The patient has respiratory alkalosis because there is an increase in CO2 and a decrease in pH. The normal range for pH is between 7.35-7.45.
+mc10007,other,B,D,0,1,49,,"D. Juvenile periodontitis is caused by highly virulent bacteria that have acquired resistance to antibiotics and other antimicrobial agents. Juvenile periodontitis is also called as ""periodontal disease"" because it affects the gums and teeth."
+mc09088,other,A,C,0,1,26,,C. Gene involved in SCID is IL2RG. IL2RG gene encodes for IL-2 receptor alpha chain.
+mc10124,resp,B,B,1,1,16,,"B. Ans. is 'b' i.e., Concurrent chemoradiotherapy"
+mc08343,cardio,B,B,1,1,8,,B. Ans. Fat embolism
+mc09480,onco,D,A,0,1,11,,A. A i.e. Iron Deficiency Anemia
+mc10292,onco,B,C,0,1,13,,"C. Ans. is 'c' i.e., MPGN"
+mc08303,other,B,B,1,1,9,,B. B i.e. Oblique fiber
+mc09273,other,C,A,0,1,13,,A. A i.e. En bloc resection of maxilla
+mc08184,cardio,D,B,0,1,57,,B. Vigabatrin is an anti-epileptic drug that has been used to treat Lennox-Gastaut syndrome and other forms of epilepsy. It works by inhibiting GABA-A receptors in the brain. It was approved by FDA in 2013.
+mc07653,other,B,D,0,1,23,,D. Discontinuity defects are those where there is no continuity between the alveolar bone and soft tissue.
+mc06624,other,A,A,1,1,11,,A. Ans. A: Heterophile antibody test
+mc06332,other,A,C,0,1,14,,"C. Ans. is 'c' i.e., Lymphoma"
+mc07778,endo,C,C,1,1,17,,"C. Ans. is 'c' i.e., Succinate dehydrogenase"
+mc09944,other,C,C,1,1,70,,C. C i.e. Dabigatran Dabigatran is an oral direct thrombin inhibitor that has been approved in Europe and USA for the treatment of atrial fibrillation to reduce the risk of stroke. It was also approved as an oral direct thrombin inhibitor for the prevention of venous thromboembolism.
+mc09416,other,B,D,0,1,9,,D. D i.e. Tropicamide
+mc06602,other,B,A,0,1,13,,A. A i.e. Sagittal split ramus osteotomy
+mc08773,other,D,C,0,1,40,,"C. Mesiolingual developmental groove is seen in maxillary lateral incisors. It is also known as ""Lateral groove"" and it is a deep groove on mesial surface of tooth."
+mc08166,endo,A,A,1,1,56,,A. A: Pyruvate to Oxaloacetate Pyruvate + CO2 + H2O = Oxaloacetate + GTP This is an anaplerotic reaction because it increases the amount of pyruvate in the cell.
+mc08476,other,A,C,0,1,12,,C. Ans. C i.e. K-reamer
+mc10047,other,A,C,0,1,10,,C. C i.e. Infra Occlusion
+mc07541,other,A,A,1,1,17,,A. A i.e. Beveling of axiopulpal line angle
+mc06886,other,C,B,0,1,24,,B. Both zinc oxide eugenol and polycarboxylate cements have chemical bonds to tooth structure.
+mc07136,other,D,A,0,1,9,,A. A i.e. Curve of Wilson
+mc06540,other,A,C,0,1,10,,C. Ans. Malignant teratoma
+mc08934,other,B,A,0,1,25,,A. A is correct because it is an irreversible material and therefore will not return to its original shape after being deformed.
+mc07115,other,C,A,0,1,25,,A. A i.e. Remains as such The epithelium remains intact and is not affected in any way.
+mc09019,other,A,A,1,1,8,,A. A i.e. Abrasion
+mc06867,endo,D,A,0,1,10,,A. A i.e. Phosphatase
+mc08439,neuro,B,B,1,1,35,,"B. Bone better described as ""bat with extended wings"" is sphenoid. Sphenoid bone has 4 pairs of wing like processes called pterygoids."
+mc07838,other,C,C,1,1,19,,C. Cavernous Malformation is highly vascular tumor of brain and spinal cord in adults.
+mc08243,other,A,B,0,1,15,,"B. Ans. is 'b' i.e., Coicosteroids"
+mc09305,other,C,C,1,1,61,,C. The trivalent influenza vaccine contains: A/California/7/2004 (H1N1)pdm09; A/Brisbane/59/2008 (H3N2); and B/Victoria/65/2009.
+mc08494,other,C,B,0,1,14,,"B. Ans. is 'b' i.e., Hemorrhage"
+mc09968,other,B,A,0,1,11,,A. A i.e. Reverse blade of K file
+mc08446,onco,A,A,1,1,10,,A. A i.e. Paget's disease
+mc10285,cardio,D,D,1,1,29,,D. Hand washing is the most effective way to prevent cross infection. Hand washing prevents transmission of pathogens from hands to skin and mucous membranes.
+mc08657,resp,C,C,1,1,19,,"C. Ans. is 'c' i.e., Damage to both respiratory apparatus and respiratory centre"
+mc07195,other,A,B,0,1,14,,"B. Ans. is 'b' i.e., B lymphocytes"
+mc06997,other,A,B,0,1,19,,"B. The answer is ""Genetic"" because it is passed on to offspring through genes."
+mc09749,resp,B,B,1,1,7,,B. Ans. Metamerism
+mc08674,other,D,B,0,1,20,,"B. Ans. is 'b' i.e., 35% noncollagenous protein"
+mc09383,other,A,D,0,1,37,,D. Store platelets at 2-6 degrees. Platelets have a shelf life of only 5 days. Platelets should be stored at 2-6 degrees Celsius.
+mc09678,other,D,B,0,1,11,,B. Ans. Misoprostol and bed rest
+mc06745,other,C,C,1,1,31,,C. The sternocleidomastoid muscle has a similar morphology to the TMJ and can be used as an alternative for TMJ reconstruction.
+mc06822,other,D,A,0,1,9,,A. A i.e. Plastic Liquid Crystal
+mc08527,other,D,A,0,1,11,,A. A i.e. Fasciolopsis buski
+mc09205,other,B,D,0,1,7,,D. Ans. Small pox
+mc07517,endo,C,D,0,1,9,,D. Ans. Missed aboion
+mc07274,other,C,C,1,1,44,,C. The collagenous fibers in the PDL are arranged parallel to each other and perpendicular to the long axis of the tooth. The reticular fibers are located between the collagenous fibers and are not aligned with them.
+mc09754,other,B,B,1,1,10,,B. B i.e. Tell show do.
+mc08000,other,A,A,1,1,11,,A. A i.e. Kartagener's syndrome
+mc06884,other,A,B,0,1,21,,B. Trismus is caused by facial nerve irritation. Facial nerve irritation causes trismus.
+mc07896,other,C,D,0,1,21,,D. Caesarean section is indicated in this case as there is no chance of vaginal delivery.
+mc09923,onco,B,A,0,1,36,,"A. A i.e. Pleomorphic adenoma Pleomorphic adenomas are white, firm, and usually have a smooth surface. They may be sessile or pedunculated."
+mc06547,other,A,B,0,1,49,,B. The cotton applied to the pulp stumps in the formocresol pulpotomy technique is saturated with formocresol. This is because it allows the application of more formocresol and also prevents the formation of bubbles.
+mc09798,other,B,B,1,1,17,,"B. Ans. is 'b' i.e., Acute tubular necrosis"
+mc09166,other,C,C,1,1,13,,"C. Ans. is 'c' i.e., USG"
+mc08255,other,B,A,0,1,20,,"A. Ans. is 'a' i.e., They are sequestered in the spleen"
+mc07089,other,A,B,0,1,13,,B. MRI can be used for imaging of ICDs.
+mc08953,endo,D,C,0,1,16,,C. Ans. C i.e. SGPT of 200 units
+mc07887,other,B,B,1,1,9,,B. Ans. through umbilical vein
+mc06248,other,B,A,0,1,9,,A. A i.e. Artificial velum
+mc09779,other,B,B,1,1,103,,"B. Ans: B. Mandibular branch of facial nerveRef: Gray's Anatomy 41st edition, page no: 650Explanation: Excision of submandibular gland is done under local anesthesia and it is not an elective surgery. It is usually performed in case of infection or malignancy. The patient is placed in supine position with head turned towards opposite side. Incision is made at level of mandible just above angle of "
+mc06428,other,B,B,1,1,80,,B. New Zealand has been successful in implementing school-based oral health programs. The program was introduced in 1970 and since then it has been expanded to include all children from age 6 months to 5 years old. It includes: * Oral health education * Dental check-ups * Fluoride treatment * Sealants * Tooth brushing training * Parental involvement * School-based fluoride application campaigns
+mc07324,onco,C,A,0,1,17,,A. A i.e. Tuberculum impar and lateral lingual swellings
+mc08870,other,C,D,0,1,24,,D. Type III is less gold than type IV. Type III has higher percentage of silver and copper than type IV.
+mc09709,other,D,B,0,1,14,,B. Ans. Amniocentesis at 16 weeks
+mc06754,other,D,C,0,1,44,,C. The maxilla is not fully developed in children under 5 years and surgery can cause it to shorten. The maxilla is not fully developed in children under 5 years and surgery can cause it to shorten.
+mc09172,resp,B,B,1,1,12,,B. Narrow lip is not an obstruction to mouth breathing.
+mc09789,other,A,B,0,1,27,,B. Wedge wedge technique is used in cases where there is a wide buccolingual space between the tooth and the restoration.
+mc08422,other,A,B,0,1,12,,B. Serial technique is also known as crown down technique.
+mc07229,cardio,B,B,1,1,16,,"B. Ans. is 'b' i.e., 4:01"
+mc09666,other,C,C,1,1,15,,"C. Ans. is 'c' i.e., Pyridoxine"
+mc09842,other,A,C,0,1,15,,"C. Ans. is 'c' i.e., Tetracycline"
+mc10130,other,A,D,0,1,19,,D. Motivation of the patient has no impact on the prognosis of periodontal disease.
+mc06515,other,A,B,0,1,19,,B. Inhalation burn is characterized by blackish soot deposition in posterior pa of tongue.
+mc07654,other,A,D,0,1,39,,"D. Ans. is 'd' i.e., 4 mL/kg x %TBSA in first 8 hours followed by 2 mL/ kg/hour x %TBSA"
+mc06431,other,C,C,1,1,13,,"C. Ans. is 'c' i.e., Legionella"
+mc06774,neuro,D,C,0,1,36,,C. The upper half of the ramus and condyle are formed from hyaline cartilage. The lower half of the ramus is formed from fibrocartilage.
+mc08301,neuro,A,B,0,1,10,,B. B i.e. Mammillary body
+mc09997,other,D,C,0,1,22,,C. Odontoblasts are pseudopalisades arranged in rows along the length of the tooth.
+mc07275,resp,C,C,1,1,48,,C. Muscle spindles have two zones: central and peripheral. Central zone contains only type I fibers which do not contain myosin. Peripheral zone contains type IIa fibers that have high levels of myosin ATPase activity.
+mc08701,other,D,A,0,1,7,,A. A i.e. Radius
+mc07471,other,A,B,0,1,20,,B. Ans. Passive immunization soon after birth and active immunization at 1 year of age
+mc09995,other,A,B,0,1,78,,B. Step-back technique is used to reduce pain and swelling in acute injuries. It consists of three phases: 1. The patient lies on his/her side with the injured limb extended over the opposite shoulder. 2. The therapist places the hand on the affected area and applies pressure from behind the elbow. 3. The therapist moves the arm forward while applying pressure to the forearm.
+mc08033,other,D,C,0,1,20,,C. The recommended daily intake of iodine is 150 micrograms for pregnant women.
+mc09508,other,C,C,1,1,8,,C. Ans. Ethylene glycol
+mc08799,other,A,B,0,1,13,,B. B i.e. Abrasion of tooth by clasp
+mc08383,onco,A,A,1,1,14,,A. Ans. A i.e. Basal Cell Carcinoma
+mc08743,other,A,A,1,1,9,,A. A i.e. Middle meatus
+mc07478,other,A,B,0,1,30,,B. Phosphorus is lost in urine due to destruction of bone matrix. Osteosarcoma is a malignant tumor that destroys bone mass.
+mc06412,other,D,C,0,1,17,,C. C i.e. Results of future orthodontic treatment are improved anterior teeth
+mc08914,endo,B,D,0,1,19,,"D. Ans. is 'd' i.e., Glucose-6-phosphatase"
+mc09156,other,B,B,1,1,22,,"B. Ans. is 'b' i.e., Its formative cells are lost once it is completely formed"
+mc10028,onco,B,C,0,1,38,,C. Scaphocephaly is due to premature fusion of metopic suture. Metopic suture is the most anterior suture in skull and it fuses early in life.
+mc07706,other,C,C,1,1,49,,"C. The zygoma and zygomatic processes of maxilla have high density and hence they can obscure the roots of maxillary molar. Ref: Gray's Anatomy 40th edition, page no: 1235"

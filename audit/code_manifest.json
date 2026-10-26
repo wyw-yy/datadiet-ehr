@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-26T07:27:36+0800",
+  "generated_at": "2026-10-26T12:38:41+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 123,
+  "n_files": 125,
   "files": [
     {
       "path": "check_env.bat",
@@ -33,6 +33,12 @@
       "sha256": "de2ef1677de03302e5ef31bb71590254721ee9fdb2453c3d9c7ebddef7d870ed",
       "size": 3173,
       "mtime": "2026-10-24T22:34:32"
+    },
+    {
+      "path": "gen_eval.py",
+      "sha256": "bdf19a910dc5214bd9937a7e80a6733e241b88788df6882343ec6d7de6836045",
+      "size": 8294,
+      "mtime": "2026-10-26T12:04:26"
     },
     {
       "path": "prepare_data.py",
@@ -521,6 +527,12 @@
       "mtime": "2026-10-22T19:47:58"
     },
     {
+      "path": "tools/gen_report.py",
+      "sha256": "f2e452b51fc4f51a6547ddf9baf7b3c3e73f7b4dea8beecc71057030edb7fb18",
+      "size": 5397,
+      "mtime": "2026-10-26T12:37:12"
+    },
+    {
       "path": "tools/inspect_acts.py",
       "sha256": "fe233645245f3313395327a8fc16f4872c7c511789c5aaab54b7377d94789d67",
       "size": 644,
@@ -743,5 +755,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "7ce69407bd6ff87062c8b383c1a6c4fdb655a4b1b2773940684f5aebdd70ebe5"
+  "manifest_sha256": "fab2429e75d91b4f9849b7758a78ab18f0d208c34d0dc5cf5f3987fd3bc682fa"
 }

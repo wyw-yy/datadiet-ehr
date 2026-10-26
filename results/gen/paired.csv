@@ -1,0 +1,6 @@
+a,b,n,diff_pp,a_only,b_only,p
+full_s1,nait_r30_s1,500,-0.6,37,40,0.8199
+full_s1,random_r30_s1,500,0.8,39,35,0.7275
+nait_r30_s1,random_r30_s1,500,1.4,33,26,0.435
+base,full_s1,500,-2.2,45,56,0.3197
+nait_r30_s1,rand_len_r30_s1,500,1.4,30,23,0.4101
