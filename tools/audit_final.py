@@ -134,6 +134,13 @@ if hp.exists():
         for col in ("gpu_hours", "select_overhead_h", "net_saving_pct", "acc",
                     "train_h", "select_h"):
             add(r.get(col))
+    # 3-epoch 那一轮（独立的 _e3 后缀产物）
+    for r in read_csv(C.RESULTS / "e3_summary.csv"):
+        for col in ("acc", "delta_pp", "ci_lo_pp", "ci_hi_pp", "p"):
+            add(r.get(col))
+    for r in read_csv(C.RESULTS / "e3_paired.csv"):
+        for col in ("diff_pp", "p", "n"):
+            add(r.get(col))
     for r in read_csv(C.RESULTS / "robust.csv"):
         for col in ("delta_pp", "ci_lo_pp", "ci_hi_pp", "acc_full", "acc_sub"):
             add(r.get(col))
