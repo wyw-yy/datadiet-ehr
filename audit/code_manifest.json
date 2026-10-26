@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-26T12:38:41+0800",
+  "generated_at": "2026-10-26T18:10:28+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 125,
+  "n_files": 127,
   "files": [
     {
       "path": "check_env.bat",
@@ -18,9 +18,9 @@
     },
     {
       "path": "config.py",
-      "sha256": "0aca6c3318d160b8ff3dbe36bfc32dbe0430339dc2e97a8581b021c7ed54ea34",
-      "size": 3616,
-      "mtime": "2026-10-25T21:38:30"
+      "sha256": "17dff123f4e1b1ae605abb7fe8f2e7b7b8affc356b6bf99d49f11006ed5a3179",
+      "size": 3893,
+      "mtime": "2026-10-26T17:03:01"
     },
     {
       "path": "eval.py",
@@ -54,9 +54,9 @@
     },
     {
       "path": "R/00_setup.R",
-      "sha256": "18a9873a3e267d1785ed8fbefdcb0dd6e66239a3128243b3692ed115456ef0c6",
-      "size": 2629,
-      "mtime": "2026-10-25T21:38:42"
+      "sha256": "28c2373c4af10517149509bab48685a0ddd8e50df2b6077a9361ed56b5824859",
+      "size": 3066,
+      "mtime": "2026-10-26T17:04:35"
     },
     {
       "path": "R/01_equivalence.R",
@@ -443,6 +443,12 @@
       "mtime": "2026-10-25T23:22:02"
     },
     {
+      "path": "tools/after_full_e3.py",
+      "sha256": "33e0a09b4421c5333ebd1cca9787de9445f89653f164d4658c6802575431c101",
+      "size": 2794,
+      "mtime": "2026-10-26T18:09:06"
+    },
+    {
       "path": "tools/audit_check_manifest.py",
       "sha256": "8a3b0749f200517195eedc51a2c04bb50bb42a58040c59073c2635fdc8ecb054",
       "size": 2446,
@@ -501,6 +507,12 @@
       "sha256": "de255c7633ecff921abd9df41fcd83e7d6b4f29654c5e17bea1b73f1b769a632",
       "size": 3320,
       "mtime": "2026-10-22T18:28:58"
+    },
+    {
+      "path": "tools/e3_report.py",
+      "sha256": "6e45de678a32f9c7e4f9e2b3b06aca51d9012261197d16f8598479ae37c25449",
+      "size": 4626,
+      "mtime": "2026-10-26T18:09:17"
     },
     {
       "path": "tools/el2n_scores.py",
@@ -606,9 +618,9 @@
     },
     {
       "path": "tools/night_queue.py",
-      "sha256": "c767edac0d2bd6f8c9ed54052c1fde1c03b020928117d5965f61c3febb1e9d84",
-      "size": 7185,
-      "mtime": "2026-10-25T22:25:23"
+      "sha256": "d52d84a61ba1ed591ced666cfa00588a2af6ff895e061ab9c7e394ca9e348f2e",
+      "size": 7966,
+      "mtime": "2026-10-26T18:08:36"
     },
     {
       "path": "tools/paired_stats.py",
@@ -755,5 +767,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "fab2429e75d91b4f9849b7758a78ab18f0d208c34d0dc5cf5f3987fd3bc682fa"
+  "manifest_sha256": "d0a7ad020aa0613106c14a8cee0d9f2ce40bb4b6da0bbf01d560a415ecf487d1"
 }
