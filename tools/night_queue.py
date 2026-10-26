@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -85,6 +86,16 @@ def plan(name: str) -> list[tuple[str, float, int]]:
             q += [("nait", 0.30, s), ("random", 0.30, s), ("rand_len", 0.30, s)]
         return q
 
+    if name == "epoch3":
+        # 3 epoch 那一轮：1 epoch 时连"全量"都可能欠拟合，天花板压着差距。
+        # 只跑 3 个臂 x 3 个种子（full / nait@30 / random@30），配 DATADIET_RUN_TAG=e3 隔离 id。
+        q: list[tuple[str, float, int]] = []
+        for s in (1, 2, 3):
+            q.append(("full", 1.0, s))
+        for s in (1, 2, 3):
+            q += [("nait", 0.30, s), ("random", 0.30, s)]
+        return q
+
     if name == "el2n":
         # 经典基线：EL2N 打分后保留最难的 30%（Paul et al., 2021）。
         # 只跑 30% 这一档、三个种子——它回答的是"激活选择比经典基线强吗"。
@@ -108,7 +119,7 @@ def plan(name: str) -> list[tuple[str, float, int]]:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--plan", default="full",
-                    choices=["full", "quick", "seeds6", "scale", "el2n", "fill30"])
+                    choices=["full", "quick", "seeds6", "scale", "el2n", "fill30", "epoch3"])
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
@@ -128,7 +139,8 @@ def main() -> None:
     for i, (m, r, s) in enumerate(items, 1):
         eid = C.exp_id(m, r, s)
         cmd = [str(PY), str(ROOT / "run_one.py"), "--method", m,
-               "--ratio", str(r), "--seed", str(s), "--epochs", "1"]
+               "--ratio", str(r), "--seed", str(s),
+               "--epochs", os.environ.get("DATADIET_EPOCHS", "1")]
         head = f"[night {i}/{len(items)}] {eid}  ({time.strftime('%H:%M:%S')})"
         print(head, flush=True)
         with open(LOG, "a", encoding="utf-8") as lf:

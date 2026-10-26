@@ -71,10 +71,16 @@ DEPTS = ["cardio", "onco", "neuro", "resp", "endo", "other"]
 
 
 def exp_id(method: str, ratio: float, seed: int) -> str:
-    """Unique, sortable name for one training run. Matches R/00_setup.R."""
+    """Unique, sortable name for one training run. Matches R/00_setup.R.
+
+    DATADIET_RUN_TAG（如 "e3" 表示 3 epoch）会追加到 id 末尾，
+    这样同一 (method, ratio, seed) 在不同实验设置下不会互相覆盖。
+    """
+    tag = os.environ.get("DATADIET_RUN_TAG", "").strip()
+    suffix = f"_{tag}" if tag else ""
     if method == "full":
-        return f"full_s{seed}"
-    return f"{method}_r{int(round(ratio * 100)):02d}_s{seed}"
+        return f"full_s{seed}{suffix}"
+    return f"{method}_r{int(round(ratio * 100)):02d}_s{seed}{suffix}"
 
 
 def ensure_dirs() -> None:

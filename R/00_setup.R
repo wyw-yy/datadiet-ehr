@@ -8,7 +8,8 @@ if (!dir.exists(file.path(PROJ, "R"))) {
 }
 
 # 语言边界：Python 只往 results/ 写，R 只从 results/ 读
-RESULTS <- file.path(PROJ, "results")
+RESULTS <- Sys.getenv("DATADIET_RESULTS_DIR", unset = file.path(PROJ, "results"))
+# 3-epoch 那轮的 id 带 _e3 后缀，同一套脚本靠环境变量切换，不改代码
 FIG     <- file.path(PROJ, "paper", "figures")
 dir.create(FIG, recursive = TRUE, showWarnings = FALSE)
 
@@ -39,10 +40,14 @@ read_preds <- function(eid, task) {
            stringsAsFactors = FALSE)
 }
 
-# 与 config.py 的 exp_id() 对齐：full 就是 full_s<seed>，其余带比例
+# 与 config.py 的 exp_id() 对齐：full 就是 full_s<seed>，其余带比例。
+# DATADIET_RUN_TAG 会追加后缀（3-epoch 那轮用 e3），保证两轮 id 不撞、也不互相覆盖。
+RUN_TAG <- Sys.getenv("DATADIET_RUN_TAG", unset = "")
+
 exp_id <- function(method, ratio, seed) {
-  if (identical(method, "full")) sprintf("full_s%d", as.integer(seed))
-  else sprintf("%s_r%02d_s%d", method, round(ratio * 100), as.integer(seed))
+  suf <- if (nzchar(RUN_TAG)) paste0("_", RUN_TAG) else ""
+  if (identical(method, "full")) sprintf("full_s%d%s", as.integer(seed), suf)
+  else sprintf("%s_r%02d_s%d%s", method, round(ratio * 100), as.integer(seed), suf)
 }
 
 # 配对 bootstrap：输入逐题差值向量，返回均值的 95% CI
