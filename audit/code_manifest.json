@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-26T18:10:28+0800",
+  "generated_at": "2026-10-26T18:22:35+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 127,
+  "n_files": 130,
   "files": [
     {
       "path": "check_env.bat",
@@ -39,6 +39,12 @@
       "sha256": "bdf19a910dc5214bd9937a7e80a6733e241b88788df6882343ec6d7de6836045",
       "size": 8294,
       "mtime": "2026-10-26T12:04:26"
+    },
+    {
+      "path": "logs/chain_state.json",
+      "sha256": "19fe0d498b2eb90556866db2ae7075cc9bbf1baa37a017c36e316ccef61e649b",
+      "size": 58,
+      "mtime": "2026-10-26T18:21:11"
     },
     {
       "path": "prepare_data.py",
@@ -95,6 +101,12 @@
       "mtime": "2026-10-25T22:04:40"
     },
     {
+      "path": "R/07_pipeline.R",
+      "sha256": "b1661b4d3221f7854ec304b2ca0d098865b95cb4b55235818e699c4154f4b0ea",
+      "size": 3475,
+      "mtime": "2026-10-26T18:22:01"
+    },
+    {
       "path": "R/99_make_demo_data.R",
       "sha256": "922e96f606f54e2d04de7099ed55494fa227fcd30719807428f20125adcb88de",
       "size": 3228,
@@ -102,9 +114,9 @@
     },
     {
       "path": "R/run_all.R",
-      "sha256": "0d5d649dc22fa7acaabb1815f94a5f91916f3cb44e7a6960df423718c1b9d7b7",
-      "size": 1002,
-      "mtime": "2026-10-26T07:26:17"
+      "sha256": "2ee2cb98944d3565bfb520cb6842cec2b83ea6f174285bf53ddd86bd0415fe6c",
+      "size": 1021,
+      "mtime": "2026-10-26T18:22:29"
     },
     {
       "path": "requirements-lock.txt",
@@ -491,6 +503,12 @@
       "mtime": "2026-10-23T13:24:59"
     },
     {
+      "path": "tools/chain.py",
+      "sha256": "83b57f4e25f371e27040b9a58d60296100f146e6cc5dd3840a25f72fbdbc1e86",
+      "size": 8440,
+      "mtime": "2026-10-26T18:18:43"
+    },
+    {
       "path": "tools/check_leak.py",
       "sha256": "7feeff0571b5fd1d5a53a091d2f3030ab5aeaa44335a424bf5259aca8f7e560e",
       "size": 861,
@@ -767,5 +785,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "d0a7ad020aa0613106c14a8cee0d9f2ce40bb4b6da0bbf01d560a415ecf487d1"
+  "manifest_sha256": "b772698af38d47bab116ec5d6a6079546623ed37d2ca82d63203ca142d2ab8c5"
 }

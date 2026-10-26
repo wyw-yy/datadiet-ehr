@@ -11,7 +11,7 @@ if (dir.exists(.curve_archive)) Sys.setenv(DATADIET_CURVE_DIR = .curve_archive)
 
 steps <- c("R/01_equivalence.R", "R/02_curve.R",
            "R/03_robustness.R", "R/04_compute.R",
-           "R/05_multiple.R", "R/06_forest.R")
+           "R/05_multiple.R", "R/06_forest.R", "R/07_pipeline.R")
 
 for (s in steps) {
   cat("\n", strrep("=", 70), "\n>>> ", s, "\n", strrep("=", 70), "\n", sep = "")

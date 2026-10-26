@@ -84,6 +84,7 @@ def stage_e3(st) -> int:
 
 
 def stage_gen_medqa(st) -> int:
+    (ROOT / "results" / "gen").mkdir(parents=True, exist_ok=True)
     arms = ["none", "full_s1", "nait_r30_s1", "random_r30_s1"]
     for a in arms:
         rc = run([str(PY), "gen_eval.py", "--task", "medqa", "--limit", "500",
@@ -125,10 +126,24 @@ def stage_pool48k(st) -> int:
         rc = run(cmd, name, env)
         if rc != 0:
             return rc
+
+    # 归档式重跑最容易漏的一步：派生文件（eq_table / sample_stats / compute_table）
+    # 必须在新一轮里重新生成，否则收尾的 audit 会读不到文件而静默失败。
+    report = [
+        ([str(PY), "tools/report_numbers.py"], "48k_report_numbers"),
+        ([str(PY), "tools/export_sample_stats.py"], "48k_sample_stats"),
+        (["C:/Program Files/R/R-4.6.1/bin/x64/Rscript.exe", "R/run_all.R"], "48k_r"),
+        ([str(PY), "tools/make_table1.py"], "48k_table1"),
+    ]
+    for cmd, name in report:
+        rc = run(cmd, name, env48)
+        if rc != 0:
+            return rc
     return 0
 
 
 def stage_gen48k(st) -> int:
+    (ROOT / "results" / "gen").mkdir(parents=True, exist_ok=True)
     arms = ["none", "full_s1", "nait_r30_s1", "random_r30_s1"]
     for a in arms:
         rc = run([str(PY), "gen_eval.py", "--task", "medmcqa", "--limit", "500",
