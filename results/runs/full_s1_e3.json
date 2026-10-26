@@ -1,0 +1,16 @@
+{
+  "exp_id": "full_s1_e3",
+  "method": "full",
+  "ratio": 1.0,
+  "seed": 1,
+  "epochs": 3.0,
+  "n_samples": 24000,
+  "steps": 9000,
+  "max_len": 512,
+  "bs": 4,
+  "grad_accum": 2,
+  "train_seconds": 18768.9,
+  "loss_last": 1.6515,
+  "adapter": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\adapters\\full_s1_e3",
+  "pool_size": 24000
+}
