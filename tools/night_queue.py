@@ -89,10 +89,11 @@ def plan(name: str) -> list[tuple[str, float, int]]:
     if name == "epoch3":
         # 3 epoch 那一轮：1 epoch 时连"全量"都可能欠拟合，天花板压着差距。
         # 只跑 3 个臂 x 3 个种子（full / nait@30 / random@30），配 DATADIET_RUN_TAG=e3 隔离 id。
-        q: list[tuple[str, float, int]] = []
-        for s in (1, 2, 3):
-            q.append(("full", 1.0, s))
-        for s in (1, 2, 3):
+        # 时间账（实测 3.9 samp/s）：full 9000 step ≈ 5.1 h，30% 3000 step ≈ 1.7 h。
+        # 3 个 full 种子要 15 h，一夜装不下，所以 full 只跑 1 个种子，
+        # 把省下的时间给对比臂（nait/random 各 2 个种子）——判据看的是 nait vs random。
+        q: list[tuple[str, float, int]] = [("full", 1.0, 1)]
+        for s in (1, 2):
             q += [("nait", 0.30, s), ("random", 0.30, s)]
         return q
 
