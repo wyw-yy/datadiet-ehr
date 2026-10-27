@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-27T17:10:34+0800",
+  "generated_at": "2026-10-28T02:35:59+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 279,
+  "n_files": 287,
   "files": [
     {
       "path": "adapters_round2_24k/el2n_r30_s1/adapter_config.json",
@@ -594,9 +594,9 @@
     },
     {
       "path": "config.py",
-      "sha256": "17dff123f4e1b1ae605abb7fe8f2e7b7b8affc356b6bf99d49f11006ed5a3179",
-      "size": 3893,
-      "mtime": "2026-10-26T17:03:01"
+      "sha256": "04db3c54f311397d0b8cc41428d987c63c28a40ed44396df6a70e4dc80e52ba8",
+      "size": 4045,
+      "mtime": "2026-10-27T18:18:41"
     },
     {
       "path": "eval.py",
@@ -1308,9 +1308,9 @@
     },
     {
       "path": "select_subset.py",
-      "sha256": "f3ddd026f5288065069b02310936fe957058d51ec7d2238377f7a75e41e1cc46",
-      "size": 10575,
-      "mtime": "2026-10-23T18:31:19"
+      "sha256": "82ca84b7a223b1c3cf42bff6c0f7c17281c6f504f3affa8c3bcc1d2cb47ed483",
+      "size": 11208,
+      "mtime": "2026-10-27T18:18:36"
     },
     {
       "path": "setup_deps.bat",
@@ -1323,6 +1323,18 @@
       "sha256": "fa6add21a18e2f8d46c905344b13a028f75f433b43526948542ead2eee0f08c7",
       "size": 2514,
       "mtime": "2026-10-23T13:25:05"
+    },
+    {
+      "path": "softcopyright/源程序.txt",
+      "sha256": "7be4569abf8b40f8fd2149eab7326fe30a4f4c623523450da06f42a0942b9b84",
+      "size": 150018,
+      "mtime": "2026-10-27T18:45:37"
+    },
+    {
+      "path": "softcopyright/说明书.txt",
+      "sha256": "091f6931930145eb7adb6cbf2f1d775a3c4da388b2a1da6d08f705c86d93f649",
+      "size": 26909,
+      "mtime": "2026-10-27T18:45:37"
     },
     {
       "path": "subsets_round2_24k/subsets.json",
@@ -1343,6 +1355,12 @@
       "mtime": "2026-10-24T23:30:39"
     },
     {
+      "path": "tools/_ps_check.ps1",
+      "sha256": "d6692b61eb40c55967c3c5f26e79350467f386f606e123c58bf00e70fbf464b4",
+      "size": 649,
+      "mtime": "2026-10-27T18:35:11"
+    },
+    {
       "path": "tools/after_el2n_fill.py",
       "sha256": "31bbaf9ab9f2c12021088231886865183d6dd8d8c3c7851c781e559cbc4f3dab",
       "size": 3851,
@@ -1353,6 +1371,12 @@
       "sha256": "33e0a09b4421c5333ebd1cca9787de9445f89653f164d4658c6802575431c101",
       "size": 2794,
       "mtime": "2026-10-26T18:09:06"
+    },
+    {
+      "path": "tools/after_sweep.py",
+      "sha256": "c828694abe141c726fcfb30b4b4ea0efed5598d5a417a0531c94871e3650503d",
+      "size": 3623,
+      "mtime": "2026-10-27T20:55:42"
     },
     {
       "path": "tools/audit_check_manifest.py",
@@ -1499,6 +1523,12 @@
       "mtime": "2026-10-24T14:26:44"
     },
     {
+      "path": "tools/make_softcopyright.py",
+      "sha256": "94e4c2f628efd6cf1415cffa06be45ee4ac82bdcd8e10878f3d92533a5a8be15",
+      "size": 7274,
+      "mtime": "2026-10-27T18:45:37"
+    },
+    {
       "path": "tools/make_table1.py",
       "sha256": "acdd88d133a2493e33c1bf9063fbffdecb135494a255fa2f053f263ad2f149cd",
       "size": 7397,
@@ -1530,9 +1560,9 @@
     },
     {
       "path": "tools/night_queue.py",
-      "sha256": "b8ecf7e51e995542c44037089fc85ba1718a4a0c65639d652f7a45e694eed459",
-      "size": 8366,
-      "mtime": "2026-10-27T11:20:13"
+      "sha256": "1d1d5f7c0c78c450ef3d6ea852e692560effad8269866ebd0d8fdd24c95f6cfa",
+      "size": 11467,
+      "mtime": "2026-10-28T02:35:51"
     },
     {
       "path": "tools/paired_stats.py",
@@ -1619,6 +1649,12 @@
       "mtime": "2026-10-22T21:06:14"
     },
     {
+      "path": "tools/read_notice.py",
+      "sha256": "ee20060ee81b0581970bc36db9e6bb0250d1cc94579e9b62654b46c8683eeef8",
+      "size": 1359,
+      "mtime": "2026-10-27T17:51:41"
+    },
+    {
       "path": "tools/rehearse_ehr.py",
       "sha256": "4fff53c8ab87336137a7a42f87b132beff8e97abc3f102d03f0880af8da2ec1b",
       "size": 8527,
@@ -1635,6 +1671,18 @@
       "sha256": "ffff4b83d3babcf72d2c084aa0c1e5b429840eb665ee1ed5fb428349a7ec4286",
       "size": 6436,
       "mtime": "2026-10-24T22:45:01"
+    },
+    {
+      "path": "tools/shutdown_when_idle.py",
+      "sha256": "008b6fbcc5b74a2313b292b6e16be7d098366ead43a33d7207e0219a0107d95d",
+      "size": 5722,
+      "mtime": "2026-10-27T20:55:53"
+    },
+    {
+      "path": "tools/txt_to_pdf.ps1",
+      "sha256": "138cc1e5dc6c3b6a53ea55f27d816cf90f2a7a4cd38f0a13330ba67ecd9ca590",
+      "size": 2301,
+      "mtime": "2026-10-27T18:46:50"
     },
     {
       "path": "tools/verify.py",
@@ -1679,5 +1727,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "40c4a57b38acb87d7b921d343cacede0c943c73805b0acbce1d08d1a1d0ea679"
+  "manifest_sha256": "ce62b7b8c42103953a0a5d907a6f525d5f45e4332d0a2440b5b6687bfc85e564"
 }

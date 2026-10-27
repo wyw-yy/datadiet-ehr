@@ -117,7 +117,7 @@ def plan(name: str) -> list[tuple[str, float, int]]:
     if name == "abl48k":
         # 消融：分层配额是不是必要的一环（48k、30%、2 个种子）。
         # no_strat 用全局前 k%，不按科室配额；若它与 nait 打平，说明"分层"这一步没贡献。
-        return [("nait_nostrat", 0.30, s) for s in (1, 2)]
+        return [("nait_ns", 0.30, s) for s in (1, 2)]
 
     if name == "el2n":
         # 经典基线：EL2N 打分后保留最难的 30%（Paul et al., 2021）。

@@ -49,16 +49,16 @@
     "seed_min_pp": -0.71,
     "seed_max_pp": 0.16
   },
-  "compute_full_gpu_h": 2.047,
+  "compute_full_gpu_h": 2.133,
   "compute_nait_30": {
-    "gpu_hours": 1.069,
-    "net_saving_pct": 47.8
+    "gpu_hours": 1.095,
+    "net_saving_pct": 48.7
   },
   "compute_random_30": {
-    "gpu_hours": 0.614,
+    "gpu_hours": 0.64,
     "net_saving_pct": 70.0
   },
-  "n_runs": 13,
+  "n_runs": 21,
   "n_tasks": 2,
   "sample_stats_rows": 48000,
   "sample_stats_nait30": 14400

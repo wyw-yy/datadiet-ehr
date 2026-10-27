@@ -240,6 +240,12 @@ if hp.exists():
             continue
         canon2.add(f"{v:.2f}")
         canon2.add(f"{abs(v):.2f}")
+        # 文档里的正则只抓两位小数，所以 canon 里 3 位小数的数（0.614）在文档里
+        # 会变成 0.61 —— 这不是新数字，是同一个数被截断，按前缀补进 canon。
+        m3 = re.match(r"-?\d+\.\d{2}", str(c))
+        if m3:
+            canon2.add(m3.group(0))
+            canon2.add(m3.group(0).lstrip("-"))
 
     all_miss = {}
     for p in doc_dirs:

@@ -33,3 +33,11 @@ nait_r20_s1,nait,0.2,1,medqa,0.477612,1273,full
 nait_r20_s1,nait,0.2,1,medmcqa,0.454937,4183,full
 random_r20_s1,random,0.2,1,medqa,0.463472,1273,full
 random_r20_s1,random,0.2,1,medmcqa,0.447048,4183,full
+nait_r50_s1,nait,0.5,1,medqa,0.479969,1273,full
+nait_r50_s1,nait,0.5,1,medmcqa,0.449199,4183,full
+random_r50_s1,random,0.5,1,medqa,0.463472,1273,full
+random_r50_s1,random,0.5,1,medmcqa,0.454459,4183,full
+nait_r70_s1,nait,0.7,1,medqa,0.484682,1273,full
+nait_r70_s1,nait,0.7,1,medmcqa,0.461869,4183,full
+random_r70_s1,random,0.7,1,medqa,0.483896,1273,full
+random_r70_s1,random,0.7,1,medmcqa,0.454698,4183,full
