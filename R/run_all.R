@@ -4,10 +4,25 @@
 # 并把 00_setup.R 的 RESULTS 指向 results/demo。
 
 t0 <- Sys.time()
-# Fig.2 的剂量-反应曲线来自 12k pilot 轮（24k 主轮只跑了 30% 一档）。
-# 归档目录存在时才指过去，否则退回当前轮，免得换机器就报错。
+# Fig.2 需要多档保留率。优先用当前轮（48k 有 10/20/30/50/70 五档）；
+# 当前轮只有 30% 一档时，退回 12k pilot 轮的归档，免得画成单点图。
+.cur <- file.path(getwd(), "results", "metrics_long.csv")
+.nratio <- 0
+if (file.exists(.cur)) {
+  .m <- read.csv(.cur, stringsAsFactors = FALSE)
+  .nratio <- length(unique(.m$ratio[.m$method != "full"]))
+}
 .curve_archive <- file.path(getwd(), "results_round1_12k")
-if (dir.exists(.curve_archive)) Sys.setenv(DATADIET_CURVE_DIR = .curve_archive)
+if (.nratio >= 4) {
+  cat(sprintf("Fig.2 用当前轮（%d 档保留率）\n", .nratio))
+  Sys.unsetenv("DATADIET_CURVE_DIR")
+} else if (dir.exists(.curve_archive)) {
+  cat("Fig.2 退回 12k pilot 轮的归档\n")
+  Sys.setenv(DATADIET_CURVE_DIR = .curve_archive)
+}
+
+# 无 GPU 任务在跑时也别让 R 找系统临时目录（后台启动时那里可能已被回收）
+dir.create(file.path(getwd(), "tmp"), showWarnings = FALSE)
 
 steps <- c("R/01_equivalence.R", "R/02_curve.R",
            "R/03_robustness.R", "R/04_compute.R",

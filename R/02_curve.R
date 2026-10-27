@@ -78,11 +78,14 @@ draw <- function(mode, file) {
   # 图例单独铺在图底，不压任何曲线
   par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
   plot.new()
-  if (nzchar(curve_dir)) {
-    # 图顶留的 oma 是 0，mtext(outer=TRUE) 会被裁掉，所以写在覆盖层里
-    text(0.5, 0.975, "12k pool  ·  dose-response round (single seed except 30%)",
-         cex = 0.72, col = "grey35")
+  # 图顶留的 oma 是 0，mtext(outer=TRUE) 会被裁掉，所以写在覆盖层里。
+  # 这句必须写：除 30% 外都是单种子，单点摆动能到 ±1.5pp，不标注就是误导。
+  .note <- if (nzchar(curve_dir)) {
+    "12k pool  ·  exploratory: single seed at every ratio except 30%"
+  } else {
+    "48k pool  ·  exploratory: single seed at every ratio except 30% (30% has 6 seeds)"
   }
+  text(0.5, 0.975, .note, cex = 0.70, col = "grey35")
   ord  <- c("random", "el2n", "rand_len", "nait", "nait_dedup")
   lab  <- c("random", "el2n", "rand_len (length-matched)", "nait", "nait + dedup")
   keep <- intersect(ord, unique(agg$method))
