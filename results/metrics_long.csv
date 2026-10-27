@@ -27,3 +27,9 @@ random_r30_s6,random,0.3,6,medqa,0.476826,1273,full
 random_r30_s6,random,0.3,6,medmcqa,0.44896,4183,full
 nait_r10_s1,nait,0.1,1,medqa,0.475255,1273,full
 nait_r10_s1,nait,0.1,1,medmcqa,0.454937,4183,full
+random_r10_s1,random,0.1,1,medqa,0.479183,1273,full
+random_r10_s1,random,0.1,1,medmcqa,0.446091,4183,full
+nait_r20_s1,nait,0.2,1,medqa,0.477612,1273,full
+nait_r20_s1,nait,0.2,1,medmcqa,0.454937,4183,full
+random_r20_s1,random,0.2,1,medqa,0.463472,1273,full
+random_r20_s1,random,0.2,1,medmcqa,0.447048,4183,full

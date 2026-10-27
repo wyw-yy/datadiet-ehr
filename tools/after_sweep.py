@@ -68,7 +68,15 @@ def main() -> None:
     log("supervisor up: 等 48k 扫描队列跑完")
     while busy():
         time.sleep(60)
-    log("队列空了，启动消融臂 nait_ns")
+    log("队列空了，准备消融臂 nait_ns")
+
+    # 消融子集可能还没生成（select_subset --no-strat）。放在这里做：此刻没有训练在跑，
+    # 不会像上次那样把 CPU 和 GPU 挤在一起把机器拖到假死。
+    ns = ROOT / "data" / "subsets" / "subsets_ns.json"
+    if not ns.exists():
+        run([str(PY), "select_subset.py", "--no-strat", "--suffix", "_ns"], "select_ns")
+    else:
+        log(f"已存在 {ns.name}，跳过重算")
 
     run([str(PY), "tools/night_queue.py", "--plan", "abl48k"], "queue_abl")
 
