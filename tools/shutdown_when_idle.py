@@ -55,18 +55,28 @@ def ps(cmd: str) -> str:
 
 
 def heavy_running() -> bool:
-    pattern = "|".join(HEAVY)
-    ps_cmd = (
-        "Get-CimInstance Win32_Process | Where-Object { "
-        f"$_.CommandLine -match '{pattern}' "
-        "} | Select-Object -First 1 -ExpandProperty ProcessId"
-    )
-    if ps(ps_cmd).strip():
-        return True
-    # R 也算重活：它在写表和图
-    if ps("Get-Process Rscript -ErrorAction SilentlyContinue | "
-          "Select-Object -First 1 -ExpandProperty Id").strip():
-        return True
+    """用 psutil 直接读进程表。
+
+    原来用 PowerShell 的 `-match` 拼正则查询，引号一乱就返回非空字符串，
+    于是"永远在忙"——看门狗一次都没能关机。改成 psutil 后再没有这层转义。
+    """
+    try:
+        import psutil
+    except ImportError:
+        log("没有 psutil，退回 PowerShell 查询")
+        return bool(ps("Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "
+                       "'*train.py*' } | Select-Object -First 1 -ExpandProperty ProcessId").strip())
+
+    me = os.getpid()
+    for pr in psutil.process_iter(["pid", "name", "cmdline"]):
+        if pr.info["pid"] == me:
+            continue
+        name = (pr.info.get("name") or "").lower()
+        if name == "rscript.exe":
+            return True
+        cmdline = " ".join(pr.info.get("cmdline") or [])
+        if any(tok in cmdline for tok in HEAVY):
+            return True
     return False
 
 
