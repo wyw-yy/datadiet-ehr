@@ -1,73 +1,65 @@
 {
   "medmcqa|nait|0.3": {
-    "delta_pp": -0.53,
-    "ci_lo_pp": -1.19,
-    "ci_hi_pp": 0.1,
+    "delta_pp": -0.96,
+    "ci_lo_pp": -1.77,
+    "ci_hi_pp": 0.22,
     "n_seed": 6,
     "equiv_item": "TRUE",
     "equiv_seed": "TRUE",
-    "stouffer_p": 0.015,
-    "seed_min_pp": -0.98,
-    "seed_max_pp": -0.05,
-    "vs_random_pp": -0.38,
-    "vs_random_p": 0.0365,
+    "stouffer_p": 0.0,
+    "seed_min_pp": -1.58,
+    "seed_max_pp": -0.65,
+    "vs_random_pp": 0.5,
+    "vs_random_p": 0.016,
     "vs_random_same_sign": "FALSE"
   },
   "medmcqa|random|0.3": {
-    "delta_pp": -0.47,
-    "ci_lo_pp": -0.94,
-    "ci_hi_pp": 0.0,
+    "delta_pp": -1.45,
+    "ci_lo_pp": -2.39,
+    "ci_hi_pp": -0.53,
     "n_seed": 6,
-    "equiv_item": "TRUE",
+    "equiv_item": "FALSE",
     "equiv_seed": "TRUE",
-    "stouffer_p": 0.0199,
-    "seed_min_pp": -1.63,
-    "seed_max_pp": -0.1
+    "stouffer_p": 0.0,
+    "seed_min_pp": -1.89,
+    "seed_max_pp": -0.84
   },
   "medqa|nait|0.3": {
-    "delta_pp": -0.25,
-    "ci_lo_pp": -1.27,
-    "ci_hi_pp": 0.75,
+    "delta_pp": 0.04,
+    "ci_lo_pp": -2.52,
+    "ci_hi_pp": 1.26,
     "n_seed": 6,
-    "equiv_item": "TRUE",
+    "equiv_item": "FALSE",
     "equiv_seed": "TRUE",
-    "stouffer_p": 0.5045,
-    "seed_min_pp": -1.81,
-    "seed_max_pp": 0.31,
-    "vs_random_pp": 0.43,
-    "vs_random_p": 0.2431,
+    "stouffer_p": 0.8773,
+    "seed_min_pp": -0.63,
+    "seed_max_pp": 1.1,
+    "vs_random_pp": 0.27,
+    "vs_random_p": 0.4313,
     "vs_random_same_sign": "FALSE"
   },
   "medqa|random|0.3": {
-    "delta_pp": -0.27,
-    "ci_lo_pp": -1.07,
-    "ci_hi_pp": 0.55,
+    "delta_pp": -0.24,
+    "ci_lo_pp": -2.36,
+    "ci_hi_pp": 1.18,
     "n_seed": 6,
-    "equiv_item": "TRUE",
+    "equiv_item": "FALSE",
     "equiv_seed": "TRUE",
-    "stouffer_p": 0.4173,
-    "seed_min_pp": -1.26,
-    "seed_max_pp": 0.55
+    "stouffer_p": 0.5528,
+    "seed_min_pp": -0.71,
+    "seed_max_pp": 0.16
   },
-  "compute_full_gpu_h": 1.026,
-  "compute_el2n_30": {
-    "gpu_hours": 0.915,
-    "net_saving_pct": 10.8
-  },
+  "compute_full_gpu_h": 2.047,
   "compute_nait_30": {
-    "gpu_hours": 0.562,
-    "net_saving_pct": 45.2
-  },
-  "compute_rand_len_30": {
-    "gpu_hours": 0.308,
-    "net_saving_pct": 70.0
+    "gpu_hours": 1.069,
+    "net_saving_pct": 47.8
   },
   "compute_random_30": {
-    "gpu_hours": 0.308,
+    "gpu_hours": 0.614,
     "net_saving_pct": 70.0
   },
-  "n_runs": 27,
+  "n_runs": 13,
   "n_tasks": 2,
-  "sample_stats_rows": 24000,
-  "sample_stats_nait30": 7200
+  "sample_stats_rows": 48000,
+  "sample_stats_nait30": 14400
 }

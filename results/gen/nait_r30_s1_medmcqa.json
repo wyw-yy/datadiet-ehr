@@ -1,10 +1,10 @@
 {
   "n_items": 500,
-  "acc_strict": 0.492,
-  "format_ok_rate": 1.0,
-  "parse_rate": 1.0,
-  "n_tokens_p50": 86,
-  "n_tokens_max": 161,
+  "acc_strict": 0.47,
+  "format_ok_rate": 0.998,
+  "parse_rate": 0.998,
+  "n_tokens_p50": 68,
+  "n_tokens_max": 160,
   "n_flagged": 0,
   "flag_rate": 0.0,
   "tag": "nait_r30_s1",
@@ -13,5 +13,5 @@
   "limit": 500,
   "bs": 8,
   "max_new": 160,
-  "seconds": 477.5
+  "seconds": 430.9
 }

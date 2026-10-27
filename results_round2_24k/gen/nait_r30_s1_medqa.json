@@ -1,0 +1,17 @@
+{
+  "n_items": 500,
+  "acc_strict": 0.472,
+  "format_ok_rate": 0.992,
+  "parse_rate": 0.996,
+  "n_tokens_p50": 127,
+  "n_tokens_max": 162,
+  "n_flagged": 0,
+  "flag_rate": 0.0,
+  "tag": "nait_r30_s1",
+  "task": "medqa",
+  "adapter": "nait_r30_s1",
+  "limit": 500,
+  "bs": 8,
+  "max_new": 160,
+  "seconds": 529.4
+}

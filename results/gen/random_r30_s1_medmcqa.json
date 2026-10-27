@@ -1,9 +1,9 @@
 {
   "n_items": 500,
-  "acc_strict": 0.478,
+  "acc_strict": 0.494,
   "format_ok_rate": 1.0,
   "parse_rate": 1.0,
-  "n_tokens_p50": 43,
+  "n_tokens_p50": 25,
   "n_tokens_max": 160,
   "n_flagged": 0,
   "flag_rate": 0.0,
@@ -13,5 +13,5 @@
   "limit": 500,
   "bs": 8,
   "max_new": 160,
-  "seconds": 363.2
+  "seconds": 337.5
 }

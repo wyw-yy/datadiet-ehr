@@ -134,13 +134,43 @@ if hp.exists():
         for col in ("gpu_hours", "select_overhead_h", "net_saving_pct", "acc",
                     "train_h", "select_h"):
             add(r.get(col))
-    # 3-epoch 那一轮（独立的 _e3 后缀产物）
-    for r in read_csv(C.RESULTS / "e3_summary.csv"):
+    # 3-epoch 那一轮（独立的 _e3 后缀产物）。它随每轮归档搬走，所以要支持在归档目录里找。
+    def _archived(name):
+        for d in (C.RESULTS, C.PROJ / "results_round2_24k",
+                  C.PROJ / "results_round1_12k"):
+            f = d / name
+            if f.exists():
+                return read_csv(f)
+        return []
+
+    for r in _archived("e3_summary.csv"):
         for col in ("acc", "delta_pp", "ci_lo_pp", "ci_hi_pp", "p"):
             add(r.get(col))
-    for r in read_csv(C.RESULTS / "e3_paired.csv"):
+    _e3p = _archived("e3_paired.csv")
+    for r in _e3p:
         for col in ("diff_pp", "p", "n"):
             add(r.get(col))
+    # 文档里引用的"nait − random 均值"是按任务对逐种子差值取的均值，这里把它也算进允许集合
+    _by_task: dict[str, list[float]] = {}
+    for r in _e3p:
+        try:
+            _by_task.setdefault(r["task"], []).append(float(r["diff_pp"]))
+        except (KeyError, TypeError, ValueError):
+            pass
+    for _v in _by_task.values():
+        add(sum(_v) / len(_v))
+    _e3s = _archived("e3_summary.csv")
+    _acc: dict[str, list[tuple[str, float]]] = {}
+    for r in _e3s:
+        try:
+            _acc.setdefault(r["task"], []).append((r["arm"], float(r["acc"])))
+        except (KeyError, TypeError, ValueError):
+            pass
+    for _rows in _acc.values():
+        for _arm in ("nait", "random"):
+            _vals = [v for a, v in _rows if a.startswith(_arm)]
+            if _vals:
+                add(sum(_vals) / len(_vals))
     for r in read_csv(C.RESULTS / "robust.csv"):
         for col in ("delta_pp", "ci_lo_pp", "ci_hi_pp", "acc_full", "acc_sub"):
             add(r.get(col))

@@ -129,10 +129,12 @@ def stage_pool48k(st) -> int:
 
     # 归档式重跑最容易漏的一步：派生文件（eq_table / sample_stats / compute_table）
     # 必须在新一轮里重新生成，否则收尾的 audit 会读不到文件而静默失败。
+    # 顺序不能反：R 先算出 eq_table / compute_table，report_numbers 才有东西可汇总；
+    # 而 R 又依赖 export_sample_stats 产的 sample_stats.csv。
     report = [
-        ([str(PY), "tools/report_numbers.py"], "48k_report_numbers"),
         ([str(PY), "tools/export_sample_stats.py"], "48k_sample_stats"),
         (["C:/Program Files/R/R-4.6.1/bin/x64/Rscript.exe", "R/run_all.R"], "48k_r"),
+        ([str(PY), "tools/report_numbers.py"], "48k_report_numbers"),
         ([str(PY), "tools/make_table1.py"], "48k_table1"),
     ]
     for cmd, name in report:

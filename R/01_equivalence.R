@@ -61,7 +61,15 @@ equiv_flag <- function(lo, hi, delta = DELTA) (lo > -delta) && (hi < delta)
 per <- list(); k <- 1
 for (tk in TASKS) {
   for (sd in SEEDS) {
+    # 全量基线可能只跑了一个种子（48k / e3 轮就是这样）。那时用 full_s1 当共同参照，
+    # 并把 full_ref_seed 记进表里，免得读者以为每个种子都有独立的全量基线。
     fe <- exp_id("full", 1, sd)
+    ref_seed <- sd
+    .pf <- function(e, t) file.path(RESULTS, "preds", paste0(e, "_", t, ".csv.gz"))
+    if (!file.exists(.pf(fe, tk))) {
+      fe <- exp_id("full", 1, 1)
+      ref_seed <- 1
+    }
     for (mt in SUBS) {
       rs <- sort(unique(m$ratio[m$method == mt & m$seed == sd]))
       for (r in rs) {
@@ -71,7 +79,7 @@ for (tk in TASKS) {
         ci <- boot_ci(pr$d, B = B, seed = 7)   # 与跨种子汇总用同一个 RNG 种子：
                                                # 单种子时两处 CI 必须完全一致，否则表对不上
         per[[k]] <- data.frame(
-          task = tk, method = mt, ratio = r, seed = sd,
+          task = tk, method = mt, ratio = r, seed = sd, full_ref_seed = ref_seed,
           n_item = pr$n,
           acc_full = round(pr$acc_b, 4), acc_sub = round(pr$acc_a, 4),
           delta_pp = round(mean(pr$d) * 100, 2),

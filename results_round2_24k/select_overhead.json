@@ -1,0 +1,9 @@
+{
+  "nait": 0.2547,
+  "nait_dedup": 0.2547,
+  "el2n": 0.607,
+  "random": 0.0,
+  "rand_len": 0.0,
+  "full": 0.0,
+  "_note": "measured on this round: nait* = acts train + acts probe + scoring = 917s = 0.2547 GPU-h; el2n = one forward pass over 24k with full-vocab softmax = 36.4 min = 0.607 GPU-h; random/rand_len pay nothing."
+}

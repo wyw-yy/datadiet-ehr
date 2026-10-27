@@ -1,0 +1,16 @@
+{
+  "exp_id": "nait_r30_s6",
+  "method": "nait",
+  "ratio": 0.3,
+  "seed": 6,
+  "epochs": 1.0,
+  "n_samples": 7200,
+  "steps": 900,
+  "max_len": 512,
+  "bs": 4,
+  "grad_accum": 2,
+  "train_seconds": 2111.4,
+  "loss_last": 2.0872,
+  "adapter": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\adapters\\nait_r30_s6",
+  "pool_size": 24000
+}

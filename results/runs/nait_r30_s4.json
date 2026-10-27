@@ -4,13 +4,13 @@
   "ratio": 0.3,
   "seed": 4,
   "epochs": 1.0,
-  "n_samples": 7200,
-  "steps": 900,
+  "n_samples": 14400,
+  "steps": 1800,
   "max_len": 512,
   "bs": 4,
   "grad_accum": 2,
-  "train_seconds": 1366.3,
-  "loss_last": 1.9551,
+  "train_seconds": 2795.8,
+  "loss_last": 2.0422,
   "adapter": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\adapters\\nait_r30_s4",
-  "pool_size": 24000
+  "pool_size": 48000
 }

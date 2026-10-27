@@ -97,6 +97,14 @@ def plan(name: str) -> list[tuple[str, float, int]]:
             q += [("nait", 0.30, s), ("random", 0.30, s)]
         return q
 
+    if name == "k48":
+        # 48k 池上把对比臂补到 6 个种子：s1/s2 已有，接着 s3..s6。
+        # 判据看 nait vs random 的 Stouffer p 与符号一致性，两个种子说不清。
+        q: list[tuple[str, float, int]] = []
+        for s in (3, 4, 5, 6):
+            q += [("nait", 0.30, s), ("random", 0.30, s)]
+        return q
+
     if name == "el2n":
         # 经典基线：EL2N 打分后保留最难的 30%（Paul et al., 2021）。
         # 只跑 30% 这一档、三个种子——它回答的是"激活选择比经典基线强吗"。
@@ -120,7 +128,8 @@ def plan(name: str) -> list[tuple[str, float, int]]:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--plan", default="full",
-                    choices=["full", "quick", "seeds6", "scale", "el2n", "fill30", "epoch3"])
+                    choices=["full", "quick", "seeds6", "scale", "el2n", "fill30",
+                             "epoch3", "k48"])
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 

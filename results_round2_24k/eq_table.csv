@@ -1,0 +1,9 @@
+"task","method","ratio","n_seed","n_item","acc_full","acc_sub","delta_pp","ci_lo_pp","ci_hi_pp","seed_min_pp","seed_max_pp","seed_sd_pp","ci_seed_lo_pp","ci_seed_hi_pp","stouffer_p","equiv_item","equiv_seed","all_seeds_same_sign"
+"medmcqa","el2n",0.3,3,4183,0.4593,0.449,-1.04,-1.69,-0.37,-1.89,-0.29,0.81,-3.04,0.96,3e-04,TRUE,FALSE,TRUE
+"medmcqa","nait",0.3,6,4183,0.4598,0.4545,-0.53,-1.19,0.1,-0.98,-0.05,0.43,-0.98,-0.08,0.015,TRUE,TRUE,TRUE
+"medmcqa","rand_len",0.3,6,4183,0.4598,0.4583,-0.15,-0.72,0.44,-1.2,0.6,0.63,-0.81,0.51,0.5119,TRUE,TRUE,FALSE
+"medmcqa","random",0.3,6,4183,0.4598,0.4551,-0.47,-0.94,0,-1.63,-0.1,0.58,-1.08,0.14,0.0199,TRUE,TRUE,TRUE
+"medqa","el2n",0.3,3,1273,0.4826,0.4721,-1.05,-2.12,0.03,-2.91,0.55,1.74,-5.38,3.28,0.0417,FALSE,FALSE,FALSE
+"medqa","nait",0.3,6,1273,0.4809,0.4784,-0.25,-1.27,0.75,-1.81,0.31,0.8,-1.09,0.59,0.5045,TRUE,TRUE,FALSE
+"medqa","rand_len",0.3,6,1273,0.4809,0.4741,-0.68,-1.54,0.17,-1.73,0.16,0.83,-1.55,0.19,0.0282,TRUE,TRUE,FALSE
+"medqa","random",0.3,6,1273,0.4809,0.4781,-0.27,-1.07,0.55,-1.26,0.55,0.77,-1.08,0.53,0.4173,TRUE,TRUE,FALSE
