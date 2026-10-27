@@ -1,0 +1,645 @@
+DataDiet-EHR 临床训练子集选择与等效性评估软件 V1.0
+软件说明书（设计说明与用户手册）
+
+
+一、软件概述
+==============================
+
+DataDiet-EHR
+------------
+
+**用神经元激活挑出 30% 的临床训练样本，在效果不变差的前提下省掉一半以上的训练算力。**
+
+这是一个可复现的实验装置，不是一次性的脚本堆。核心主张与判据在 docs/PREREG.md 里**事先锁死**，
+报告口径在 RESULTS.md，与提案的逐条对账在 docs/ALIGNMENT.md。
+
+---
+
+
+它到底做了什么
+--------
+
+
+医学题库/病历    ┌──────────────┐   全量 48,000 条 ──► LoRA 训练 ──► MedQA + MedMCQA 考试
+（48,000 条）──►│ 采 5 层激活  │                                 │
+                │ 减池内均值    │──► 与目标域质心算余弦 ──► 分层配额 ──► 14,400 条 ──► LoRA 训练 ──► 同一张考卷
+                │ L2 归一化     │                                            │
+                └──────────────┘                                   两组成绩逐题配对比较（TOST，δ=2pp）
+
+
+对照臂：random（同样条数、纯随机）、rand_len（同样条数、**长度分布与 nait 一致**）、
+nait_dedup（先去近重复再选）。
+
+---
+
+
+30 秒上手（Windows）
+---------------
+
+bat
+:: 1. 环境（一次性）：双击，装依赖并验证 GPU
+check_env.bat
+
+:: 2. 一条命令跑通冒烟（约 2 分钟）
+.venv\Scripts\python.exe run_one.py --smoke --method full --seed 1
+
+:: 3. 跑实验（每个 run 约 10–45 分钟，8GB 显存够）
+.venv\Scripts\python.exe run_one.py --method nait --ratio 0.30 --seed 1
+.venv\Scripts\python.exe run_one.py --method random --ratio 0.30 --seed 1
+.venv\Scripts\python.exe run_one.py --method rand_len --ratio 0.30 --seed 1
+
+:: 4. 出表出图（R 侧，零第三方包依赖）
+Rscript R\run_all.R
+
+:: 5. 三道自检（数据 / 真实性 / 交叉核对）
+.venv\Scripts\python.exe tools\verify.py
+.venv\Scripts\python.exe tools\audit_run.py
+.venv\Scripts\python.exe tools\audit_final.py
+
+
+Linux/macOS：把 .venv\Scripts\ 换成 .venv/bin/，其余相同。
+
+---
+
+
+目录
+--------
+
+| 路径 | 是什么 |
+|---|---|
+| config.py | 唯一的参数表：模型、池规模、种子、层号、阈值、任务 |
+| prepare_data.py | 原始数据 → 统一 JSONL（去重、按科室打标、切训练/探针/考题） |
+| collect_acts.py | 采激活（response 段 token 均值，5 层） |
+| select_subset.py | 去均值 → 打分 → 去重 → 分层配额 → data/subsets/*.json |
+| train.py | LoRA SFT，只对 response 算 loss，长度分桶批处理 |
+| eval.py | 单次前向读 " A".." D" 的 logprob，不算生成 |
+| run_one.py | 一条命令 = 选子集→训练→评测→写 results/*.csv |
+| tools/ | 检查器（verify/audit_*）、进度窗口、下载器、长度匹配基线 |
+| R/ | 分析与出图，**base R 零依赖**，只读 results/ |
+| docs/ | PREREG.md（判据）、PROTOCOL.md（协议）、ALIGNMENT.md（对账） |
+| audit/ | 代码哈希、产物哈希、每次选择的输入输出哈希 |
+
+---
+
+
+现在的结果（两轮，48 个 run）
+------------------
+
+| 项 | 数字 |
+|---|---|
+| 30% 保留 vs 全量（24k 池，3 seeds） | **−0.60 / −0.71pp**（MedQA / MedMCQA），逐题 95%CI 均不足 ±2pp |
+| nait vs random | **+0.00 / −0.48pp**（p=0.98 / 0.07）→ 无可检测优势 |
+| nait vs rand_len（长度匹配） | **+0.29 / −0.42pp**（p=0.57 / 0.10）→ 长度不是机制 |
+| 算力净省 | nait **47.8%**、random 70.0%（EL2N 的 10.8% 来自 24k 轮）（都含各自的选择前向） |
+| 去重保留率 | 97.32%（这批数据几乎没有语义级重复） |
+
+> 第一轮 12k 池上曾有"nait 比长度匹配对照领先 1.13pp、6 个种子同号、p=0.001"的结果，24k 池上没有复现，按预注册判据**作废**。
+
+详细表格与"能写/不能写"清单：RESULTS.md。**已知五条 limitation 见 docs/ALIGNMENT.md 末尾。**
+
+---
+
+
+你需要知道的三个坑
+---------
+
+1. **R 侧一律 base R。** 不要 install.packages()——本机装不上，脚本也不依赖它。
+2. **pip 打完 Successfully installed 后进程可能不退出。** 后台跑 + 看日志 + import 验证，别等退出码。
+3. **8GB 显存跑 3B 模型不可行**（实测 0.65 样本/秒，且显存换页）。默认基座是 1.5B；3B 需要 ≥12GB。
+
+---
+
+
+换自己的数据
+--------
+
+只要满足三个条件就能直接换（不用改代码）：
+
+1. 每条样本有 instruction 与 response 字段（JSONL）；
+2. 有标准答案的评测集（四选一：question/options/answer）；
+3. 训练集与评测集**不重叠**（按病人/文档 id 切分）。
+
+改 config.py 的路径与规模，然后 prepare_data.py → collect_acts.py → select_subset.py → run_one.py。
+
+---
+
+
+引用与许可
+--------
+
+代码 MIT（见 LICENSE）。数据请遵守各自许可：MedMCQA（CC BY 4.0）、MedQA（MIT）、
+ChatDoctor-HealthCareMagic-100k（学术用途，见原仓库）。**本项目不含任何院内病历数据。**
+
+方法参考：*Neuron-Aware Data Selection in Instruction Tuning for Large Language Models*
+（Nait, ICLR 2026）——本仓库复现其**选择机制**，未与官方实现做逐步对齐（官方无可运行代码）。
+
+二、可复现协议
+==============================
+
+选择协议 v1.0（可复现规格）
+----------------
+
+> 这份文件就是提案里承诺的「可复现协议」本身：别人拿到同样数据，照这 6 步做，应该得到同样的子集。
+> 实现代码：collect_acts.py（步骤 A）、select_subset.py（步骤 B–F）。
+> 落盘审计：results/select_stats.json、results/sample_stats.csv、data/subsets/subsets.json。
+
+---
+
+
+0. 适用范围
+--------
+
+| 项 | 值 |
+|---|---|
+| 训练池 | 24,000 条指令样本（data/processed/train.jsonl） |
+| 参考集（probe） | 2,000 条，**不参与训练**，只用来定义"目标域长什么样" |
+| 基座模型 | Qwen2.5-1.5B-Instruct（bf16） |
+| 输出 | 五档子集（10/20/30/50/70%）× 两个变体（nait, nait_dedup） |
+| 端到端耗时 | 采集 400 s（池）+ 66 s（probe）+ 打分 14 s ≈ **480 s** |
+
+---
+
+
+1. 输入契约
+--------
+
+train.jsonl / probe.jsonl，每行一个 JSON：
+
+json
+{"id": "t00000", "dept": "other", "instruction": "病人问...", "response": "医生答..."}
+
+
+- id 全项目唯一，作为子集的唯一键（不要用行号）
+- dept ∈ {cardio, onco, neuro, resp, endo, other}，用于分层配额
+- instruction / response 已清洗（模板句、近重复已删）
+
+---
+
+
+2. 步骤 A：激活采集
+------------
+
+1. 用基座模型的 chat template 拼成 system + user(instruction) + assistant(response)；
+2. 前向一次，取 **第 {8, 12, 16, 20, 24} 层**的隐藏状态（0-based decoder layer 输出）；
+3. **只对 response 的 token 位置取均值**（问题部分不算，避免把提问风格当成"能力信号"）；
+4. 结果张量 feats 形状 (N, 5, 1536)，float32，存 cache/acts/acts_{split}.npz（键：ids, feats）。
+
+> 实测：池 24,000 条 → 348 MB，7,867 tok/s，800 秒（12k 池时是 174 MB / 400 秒）。
+
+---
+
+
+3. 步骤 B：去均值（各向异性校正）
+-------------------
+
+LLM 的隐状态普遍"指向同一方向"：任意两条样本的余弦相似度中位数就有 0.9 以上。
+**若不去均值，任何固定重复阈值都会失效**（我们实测：不去均值时 0.95 阈值把 85% 判成重复）。
+
+
+μ_l = mean_i(feats[i, l, :])            # 每层一个向量，只在训练池上统计
+x̃   = x − μ_l                            # 再 L2 归一化
+
+
+**注意**：μ 只能用训练池算，probe 必须减同一个 μ（否则两边不在同一坐标系）。
+
+---
+
+
+4. 步骤 C：激活得分
+------------
+
+
+ā_i,l = 归一化(x̃_i,l)                        # 第 i 条样本第 l 层
+c_l   = 归一化( mean_j( x̃_probe[j,l] ) )      # probe 在第 l 层的质心
+s_i   = (1/L) · Σ_l  cos(ā_i,l , c_l)         # L = 5
+
+
+s_i 越大 = 这条样本的"神经活动模式"越像目标域的平均样子。
+
+实测分布（24,000 条）：中位 **+0.002** / p99 0.242（12k 池上是中位 −0.006 / p99 0.244）。
+（注意：中位数接近 0 是正常的——这是"相对质心的相似度"，不是绝对相似度。）
+
+---
+
+
+5. 步骤 D：去重（`nait_dedup` 才做，`nait` 不做）
+-------------------------------------
+
+
+按现有顺序遍历样本（顺序 = 训练池原始顺序）：
+  若与已保留集合中任意一条的余弦 > 0.95 → 丢弃
+  否则保留
+
+
+实现要点：分块流式（chunk=1024），避免 24,000² 的布尔矩阵（2.3 GB 显存/内存）。
+
+**实测**：保留 23,623 / 24,000 = **98.43%**（阈值 0.95）。这批数据几乎没有语义级近重复，
+所以 nait 与 nait_dedup 在 30% 上几乎等价（−0.33pp vs +0.53pp，都在等效界内）。
+最近邻余弦分位：p50 0.643 / p75 0.748 / p90 0.877 / p95 0.936 / p99 0.979。
+
+> 关于 0.95 这个阈值：它对应"每 1,000 对里删掉约 3 对"，是保守设置。
+> **不要为了"让两条线分开"去调它**——我们的数据里语义级近重复本来就只有约 3%，
+> 冗余主要发生在模板措辞层面，已在清洗阶段删除。这是要如实写进论文的结论。
+
+---
+
+
+6. 步骤 E：分层配额
+------------
+
+
+对每个保留档位 n = round(ratio × N)：
+  对每个科室 d：配额 n_d = 该科室在池中的条数 × ratio（取整，余数补给 other）
+  科室内部：按 s_i 降序取满 n_d 条
+
+
+**理由**：不同科室的激活分布不同；若纯按全局得分取，会把小科室（onco 637 条）整体挤掉，
+跨科室稳健性就无从谈起。
+
+池子科室分布：other 5,947 / neuro 1,850 / cardio 1,357 / endo 1,127 / resp 1,082 / onco 637。
+
+---
+
+
+7. 步骤 F：冻结与审计
+-------------
+
+一次运行必须同时产出以下四个文件，缺一不可：
+
+| 文件 | 内容 |
+|---|---|
+| data/subsets/subsets.json | 每个 (method, 档位) 的 id 列表，可直接喂给训练脚本 |
+| results/select_stats.json | 层集合、去重阈值、保留率、得分分位、随机对余弦分位、各档规模、科室分布 |
+| results/sample_stats.csv | **每样本一行**：id / dept / act_score / act_rank / 是否入选各档 |
+| results/select_overhead.json | 这次选择前向的实测 GPU-hours（供算力净账使用） |
+
+**随机性**：本协议中唯一的随机性是步骤 D 的遍历顺序（用原始顺序，不打乱）；
+seed 只影响下游训练。因此**同一份数据 + 同一份代码 = 同一份子集**，可逐 id 比对。
+
+---
+
+
+8. 参数总表（复现时照抄）
+--------------
+
+| 参数 | 值 | 出处 |
+|---|---|---|
+| 层 | 8, 12, 16, 20, 24 | select_subset.py: LAYERS |
+| 池规模 | 24,000 | config.N_POOL |
+| probe 规模 | 2,000 | config.N_PROBE |
+| token 聚合 | response 段均值 | collect_acts.py |
+| 去重余弦阈值 | 0.95 | select_subset.py: DEDUP_COS |
+| 去重分块 | 1024 | greedy_kept_streaming(chunk=1024) |
+| 分层键 | dept | stratified_pick() |
+| 档位 | 10 / 20 / 30 / 50 / 70 % | RATIOS |
+| 数据切分种子 | 42 | prepare_data.py |
+
+---
+
+
+9. 复现自检（做到这几条才算复现成功）
+--------------------
+
+在新机器上跑完，检查这 4 个数是否落在区间内：
+
+| 指标 | 期望 |
+|---|---|
+| 池内样本数 | 24,000 |
+| 去重保留率 | ≥ 98%（我们 98.43%——这批数据几乎没有语义级近重复） |
+| sample_stats.csv 的 nait_30 入选数 | 恰好 7,200（30% × 24,000） |
+| 得分中位数 | −0.02 ~ 0.02（我们 +0.0019） |
+| 随机对余弦 p50 | −0.05 ~ 0.05（我们 −0.014；若接近 1.0 说明忘了去均值） |
+
+任何一条偏离，说明数据切分或层号对不上，**不要往下跑训练**。
+
+---
+
+
+9.5 配套对照臂：长度匹配随机（`rand_len`）
+----------------------------
+
+审计发现 nait 选中的样本比池子平均长 **12.3%**（188.1 vs 166.8 字符）。为了把"激活信号"和"偏爱长文本"分开，
+协议附带一条对照臂：
+
+| 项 | 做法 |
+|---|---|
+| 目标分布 | 取 nait 在该比例下选中样本的**长度分布**（20 个等频分位桶） |
+| 抽样 | 在每个长度桶内按相同配额随机抽（seed 固定 42，不重复） |
+| 产物 | data/subsets/subsets_randlen.json、results/select_stats_randlen.json |
+| 验收 | 与该比例 nait 的平均长度差 **< 2%**（实测 ≤1.25%），条数完全相同 |
+| 命令 | .venv\Scripts\python.exe tools\make_randlen.py |
+
+**判读规则**：若 rand_len 与 nait 表现无差异，则"激活选择"的真实解释必须降级为"长度/信息量代理"。
+配套一次选择的耗时与 nait 相同（都要先采激活），因此算力净账不变。
+
+---
+
+
+9.6 统计口径（与 `docs/PREREG.md` 绑定）
+-------------------------------
+
+- **禁止**把多个种子的配对计数相加再做一次 McNemar（同一批题被数多遍，违反独立性）。
+- 每个种子单独检验 → 跨种子用 Stouffer 合并（带符号）→ 同时报种子间极差与标准差。
+- 等效性两个口径都要给：equiv_item（条件于所跑种子）与 equiv_seed（外推到新种子）。
+- 实现：R/01_equivalence.R，输出 results/eq_table.csv、eq_per_seed.csv、eq_contrast.csv。
+
+---
+
+
+10. 设计中被放弃的选项（写论文时供消融讨论）
+------------------------
+
+| 曾考虑 | 放弃原因 |
+|---|---|
+| 用每层 90 分位做二值化再算相似度 | 二值化丢掉了幅度信息，且阈值本身要再调一个超参；实测余弦更稳 |
+| 全局得分取满（不分层） | 小科室被整体挤掉，跨科室稳健性无法评估 |
+| 用问题段（instruction）的激活 | 更像"提问风格"而非医学能力，probe 与池的提问分布不同会引入偏置 |
+| 固定 0.95 用在不做去均值的原始激活上 | 会删掉 85% 的样本（各向异性），见步骤 B |
+
+三、程序接口说明
+==============================
+
+协议 API —— 六个函数，从原始病历到可审计的子集
+---------------------------
+
+这份文档面向"想在自己的数据上跑同一套协议"的人。
+所有函数都是纯函数（不读全局状态、不写磁盘），输入输出都是普通 Python 对象，
+因此可以单独测试、单独引用。
+
+代码位置：prepare_mimic.py（前三节）、tools/select_subset.py（第四节）、tools/make_randlen.py（第五节）。
+
+---
+
+
+1. `icd_to_dept(code) -> str`
+-----------------------------
+
+把 ICD-9/ICD-10 编码映射到六个科室桶之一。
+
+python
+icd_to_dept("I50.9")   # -> "cardio"
+icd_to_dept("C34.1")   # -> "onco"
+icd_to_dept("999.9")   # -> "other"
+
+
+规则：先看首字母（C/D → onco，E → endo，F/G → neuro，I → cardio，J → resp），
+再看三位数字段；匹配不到一律 other，**不猜**。
+为什么重要：科室分布在论文里是分层配额的依据，猜错会让"分层"名不副实。
+
+
+2. `extract_section(text, headings) -> str`
+----------------------------------------
+
+从一份出院小结里抽出"住院经过"（hospital course）那一段。
+
+python
+extract_section(note_text, ["HOSPITAL COURSE", "住院经过", "Brief Hospital Course"])
+
+
+行为：
+- 大小写不敏感，容忍 6 种常见标题变体；
+- 从标题起到下一个已知章节标题为止；
+- **少于 200 字符视为抽取失败并返回空串**（调用方计入 skipped_short，不静默补内容）。
+
+这个"宁可跳过也不编"的选择是为了让失败可见：演练时它一次抓出了 196 份全是空的结果。
+
+
+3. `split_by_subject(rows, frac=(0.7, 0.15, 0.15), seed=42) -> dict`
+----------------------------------------
+
+按 subject_id 切 train/probe/eval，**同一个病人的所有记录只进一个集合**。
+
+python
+{"train": [...], "probe": [...], "eval": [...]}
+
+
+为什么不能用随机行切分：同一病人的多次入院小结高度相似，
+行级切分会让"考题"以近乎原文的形式出现在训练集里，分数虚高。
+产物里同时写 mimic_split.json（含 seed、每集合行数、跳过的短文数），
+便于别人复算这个切分。
+
+
+4. `make_pair(row, dept=None) -> dict`
+--------------------------------------
+
+把一条病历整理成训练/评测用的 (instruction, response) 对。
+
+python
+{"id": "mt00012", "dept": "cardio",
+ "instruction": "患者 68 岁男性，主诉……（问题）",
+ "response": "…（答案）"}
+
+
+id 前缀区分来源：mt = MIMIC train、mp = MIMIC probe、me = MIMIC eval。
+
+
+5. `nait_scores(feats, mu=None) -> ndarray`
+----------------------------------------
+
+按 Nait（Chen et al., ICLR 2026）的机制给每个样本打"目标域代表性"分。
+
+python
+scores = nait_scores(acts)          # acts: (N, L, D) 每层取 response token 的均值
+
+
+步骤：
+1. **减去池内均值**（mu 缺省时现算）：feats - mu。
+   这一步不能省——原始隐藏态高度各向异性，实测随机两条的余弦中位数就有 0.95，
+   不减均值的话"去重"会把 85% 的样本判成重复。
+2. 逐层 L2 归一化，与目标域质心求余弦，跨层取平均。
+
+
+6. `greedy_kept_streaming(tr_norm, order, thr, chunk=1024) -> ndarray`
+----------------------------------------
+
+按得分从高到低扫，保留与已保留集合余弦都 < thr 的样本（流式去重）。
+
+python
+keep = greedy_kept_streaming(normed_feats, order=np.argsort(-scores), thr=0.95)
+
+
+内存是 O(chunk × kept) 而不是 O(N²)：24,000 条样本时前者约 30 MB，
+后者（朴素布尔矩阵）是 576 MB。返回布尔掩码。
+
+---
+
+
+最小复现路径
+--------
+
+bash
+python prepare_mimic.py --src /path/to/mimic --out data/processed_mimic
+python tools/collect_acts.py --split train      # 采激活
+python tools/collect_acts.py --split probe
+python tools/select_subset.py --probe-split probe --suffix ""
+python tools/make_randlen.py                    # 长度匹配对照
+python tools/run_one.py --method nait --ratio 0.30 --seed 1
+Rscript R/run_all.R
+
+
+每一步的产物与校验见 docs/PROTOCOL.md；数字怎么来的见 docs/CLAIM_EVIDENCE.md。
+
+四、数据说明
+==============================
+
+数据卡（Data Card）
+--------------
+
+本仓库**不含任何院内电子病历，也不含任何可识别个人身份的信息（PHI）**。
+下面每一份数据都能追溯到公开来源，各自的许可与使用条件写在表里。
+
+最后更新：2026-10-25
+
+---
+
+
+1. 当前主线：MedMCQA（训练池 + 同域评测）
+---------------------------
+
+| 项 | 内容 |
+|---|---|
+| 来源 | openlifescienceai/medmcqa（HuggingFace Datasets），源自 AIIMS 医学入学考试题库 |
+| 许可 | MIT（数据集卡片声明） |
+| 我们用到的文件 | data/raw/medmcqa-train/train.parquet（182,822 行，85.9 MB）、data/raw/medmcqa/data/{test,validation}-00000-of-00001.parquet（10,333 行，2.3 MB） |
+| 字段 | id, question, opa..opd, cop, choice_type, exp, subject_name, topic_name |
+| 训练池 | 从 **train split** 抽 24,000 条（--pool domain，seed 42）；与 test/validation **不重叠** |
+| probe | 同一次抽样里的 2,000 条，**不参与训练**，只用来定义"目标域的平均激活长什么样" |
+| 评测 | test+validation 里 0 <= cop <= 3 的 **4,183** 条（丢弃 cop=-1 的无答案题） |
+| 科室标签 | subject_name 21 个取值 → 六桶（cardio/onco/neuro/resp/endo/other），映射表在 prepare_data.py 的 SUBJECT_DEPT |
+| 已知问题 | ① 评测集里有 20 组重复题干（40 题，0.96%），未剔除，但影响可忽略；② 答案分布轻微偏斜（A 32.2% / B 25.9% / C 22.1% / D 19.7%）；③ 评测集 other 占比 66%，训练池 57% —— 分布不完全对齐 |
+| 泄漏检查 | tools/check_leak.py：评测与训练池题干重叠 1 条（medmcqa），medqa 0 条，train/probe 6 条（去重口径放过，已记录） |
+
+
+2. 跨任务评测：MedQA（USMLE Step 1）
+----------------------------
+
+| 项 | 内容 |
+|---|---|
+| 来源 | GBaker/MedQA-USMLE-4-options（HuggingFace），文件 phrases_no_exclude_test.jsonl |
+| 许可 | 依原数据集卡片；仅用于学术评测 |
+| 规模 | 1,273 条，2.1 MB |
+| 字段 | question, answer, options{A..D}, meta_info="step1", answer_idx（字母） |
+| 用途 | **跨任务迁移**：模型从 MedMCQA 训练池学，考 MedQA。不作为主终点 |
+| 已知问题 | 与训练池领域相近但题型不同（USMLE 题干更长、情景更复杂），所以掉点比 MedMCQA 大方差更大 |
+
+
+3. 已弃用（留作跨域对照）：HealthCareMagic-100k
+-----------------------------------
+
+| 项 | 内容 |
+|---|---|
+| 来源 | lavita/ChatDoctor-HealthCareMagic-100k，112,165 条真实医患问答 |
+| 许可 | 依原数据集卡片（源自公开网页问答，已由发布方清洗） |
+| 为什么弃用 | **训练域不对**：这是患者口语问诊，模型学到的是"你该去看医生"，不是"选 A/B/C/D"。实测 base 1.5B MedQA 0.4776 → 用它 SFT 后 **0.4399（掉 3.8pp）** |
+| 现在怎么用 | 作为"训练域错配会掉多少"的对照臂数据；结果归档在 results_round1_12k/ |
+| 注意 | 早期 R 侧用的**合成假数据**已单独归档到 results/_archive_demo_synthetic/，标注"不得引用" |
+
+
+4. 计划中（尚未获取）：MIMIC-IV + MIMIC-IV-Note
+-------------------------------------
+
+| 项 | 内容 |
+|---|---|
+| 来源 | PhysioNet，需注册 + CITI 培训 + DUA（PI 必须是导师） |
+| 许可 | PhysioNet Credentialed Health Data License；**不得再分发** |
+| 计划用法 | prepare_mimic.py：instruction = 患者背景（年龄/性别/主诉/主诊断）+ "写出住院经过这一节"；response = 出院小结的 Brief Hospital Course 原文；dept = 主诊断 ICD-10 章节 → 六桶 |
+| 切分 | **按 subject_id**，同一个人绝不跨集合；切分清单落 processed_mimic/mimic_split.json |
+| 评测口径 | 参考文本生成（ROUGE / BERTScore）+ 人工抽检 300 条，**不是**四选一准确率 |
+| 合规红线 | 派生产物只留本机、**不入库**（.gitignore 已有 data/processed_mimic/）、不上传、不出院；论文只报聚合统计 |
+| 演练状态 | 已用合成"假病历"端到端跑通（tools/rehearse_ehr.py，六组检查全绿） |
+
+
+5. 合成数据（仅测试用，不是数据集）
+-------------------
+
+| 文件 | 用途 | 是否可引用 |
+|---|---|---|
+| tools/make_fake_ehr.py 生成的 data/raw/_fake_ehr/ | 演练 MIMIC 流水线（章节切分、按病人切分、去标识化、ICD→科室） | ❌ 编的，不得用于任何结论 |
+| results/_archive_demo_synthetic/ | 早期 R 分析层的假数据 | ❌ 已归档并标注 |
+
+---
+
+
+许可与再分发
+--------
+
+- 代码：MIT（见 LICENSE）
+- 数据：**不随本仓库分发**。使用者需自行遵守各自数据集的许可；MIMIC 另有 DUA 约束。
+- 本仓库的 results/preds/ 只包含模型对公开题库的预测（题目 ID + 选项 + 是否正确），不含原文以外的敏感信息。
+
+
+变更记录
+--------
+
+- 2026-10-25：新增本文件；补 mimic_split.json 与逐样本 row_subject 映射（用于证明病人级切分）。
+
+五、评测与统计口径
+==============================
+
+生成式评估（已实现并跑完，2026-10-26）
+------------------------
+
+选择题评测（eval.py）只比较 " A".." D" 四个 token 的 logprob：快、确定、可复现，
+但它测不出两件事——**模型是不是真的会"写"答案**，以及**它写的东西安不安全**。
+这一份是补上的那一支。
+
+
+协议（`gen_eval.py`）
+-----------------
+
+| 项 | 值 |
+|---|---|
+| 题量 | 500 题（MedMCQA 评测集，--seed 7 固定抽样，各 arm 同一批题） |
+| 解码 | 贪心（do_sample=False），最多 160 new token |
+| 提示 | system + 题干四选项 + "先给一个字母，再一句话解释" |
+| 抽取 | 去 markdown 装饰后取开头字母；开头没有就取文中第一个 A–D |
+| 指标 | 严格准确率、格式合规率、可抽取率、输出长度、危险表述红旗 |
+| 成本 | 每 arm 3–8 分钟（输出越长越慢），六个 arm 共 31 分钟 |
+
+危险表述用四条正则查：擅自停药 / 超量用药 / 劝人不必就医 / 武断诊断。
+
+
+结果
+--------
+
+| arm | 准确率 | 格式合规 | 中位 token | 带引用/页码 |
+|---|---|---|---|---|
+| base | 46.4% | 100% | 37 | 0.0% |
+| full_s1 | 48.6% | 100% | 18 | 4.0% |
+| **nait_r30_s1** | **49.2%** | 100% | 55 | **50.6%** |
+| random_r30_s1 | 47.8% | 100% | 30 | 11.2% |
+| rand_len_r30_s1 | 47.8% | 100% | 26 | 7.2% |
+| el2n_r30_s1 | 46.8% | 100% | 9 | 2.6% |
+
+配对 McNemar：full−nait −0.6pp (p=0.82)、nait−random +1.4pp (p=0.44)、
+nait−rand_len +1.4pp (p=0.41)、base−full −2.2pp (p=0.32)。**危险表述红旗：0 条。**
+
+
+三条结论
+--------
+
+1. **口径没有骗人**：生成式准确率与 logprob 准确率几乎重合，主表结论不是评测方式的假象。
+2. **没有格式崩塌**：六个 arm 100% 合规，el2n 中位只写 9 个 token 也照样规范。
+3. **nait 学到的是"引经据典"**：50.6% 的回答带 Ref. / Harrison / Page 2340，其它 arm 3–11%。
+   回池核对：nait 选中的 30% 里 52.7% 的参考答案带引用，其余 70% 只有 27.9%；长度中位 704 vs 491。
+   → **激活相似度挑的是文本装置（引用、页码、书名），不是题目价值**。
+
+
+局限（写 limitation 时要带）
+--------------------
+
+- 红旗检测是关键词匹配，不是临床安全评审；0 条红旗只能说明"没有明显危险措辞"。
+- 500 题的配对检验只能分辨约 3pp 以上的差异；更小的差别它测不出来。
+- 只测了 MedMCQA；MedQA 的生成式评测还没跑（同一套脚本，四个 arm 约 20 分钟）。
+
+
+复现
+--------
+
+bash
+.venv\Scripts\python.exe gen_eval.py --task medmcqa --limit 500 --bs 8 --seed 7 --adapter none
+.venv\Scripts\python.exe gen_eval.py --task medmcqa --limit 500 --bs 8 --seed 7 --adapter nait_r30_s1
+.venv\Scripts\python.exe tools\gen_report.py --task medmcqa
+
+
+产物：results/gen/<tag>_medmcqa.csv、results/gen/summary.csv、results/gen/paired.csv。

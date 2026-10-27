@@ -162,7 +162,8 @@ def stratified_pick(cand_idx, cand_scores, depts, target_n):
     return np.array(sorted(chosen), dtype=np.int32)
 
 
-def main(limit=None, do_dedup=True, probe_split="probe", suffix=""):
+def main(limit=None, do_dedup=True, probe_split="probe", suffix="",
+         stratified=True):
     t0 = time.time()
     ids, feats = load_acts("train")
     pids, pfeats = load_acts(probe_split)
@@ -187,7 +188,10 @@ def main(limit=None, do_dedup=True, probe_split="probe", suffix=""):
     for ratio in C.RATIOS:
         target = int(round(ratio * n))
         key = str(int(round(ratio * 100)))
-        out[m_sel][key] = [ids[i] for i in stratified_pick(order, score[order], depts, target)]
+        # 消融臂（--no-strat）直接取全局最高分，不按科室配额。
+        pick = (stratified_pick(order, score[order], depts, target)
+                if stratified else order[:target])
+        out[m_sel][key] = [ids[i] for i in pick]
 
     if do_dedup:
         kept = greedy_kept_streaming(tr_norm, order, C.DEDUP_COS)
@@ -230,6 +234,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--no-dedup", action="store_true")
+    ap.add_argument("--no-strat", action="store_true",
+                    help="消融：不做科室分层配额，直接取全局前 k%（产物 method=nait_ns）")
     ap.add_argument("--probe-split", default="probe",
                     help="which acts_<split>.npz to build the centroid from "
                          "(probe = source domain, probe_domain = target domain)")
@@ -237,4 +243,5 @@ if __name__ == "__main__":
                     help="'' -> subsets.json / nait + nait_dedup; "
                          "'_dp' -> subsets_dp.json / nait_dp + nait_dedup_dp")
     a = ap.parse_args()
-    main(a.limit, not a.no_dedup, a.probe_split, a.suffix)
+    main(a.limit, not a.no_dedup, a.probe_split, a.suffix,
+         stratified=not a.no_strat)

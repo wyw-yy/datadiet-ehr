@@ -37,3 +37,6 @@ desktop.ini
 #   results/          逐题预测、指标表、审计 JSON（几十 MB）
 #   paper/            图与表
 #   audit/            哈希清单与选择日志
+
+# 软著 PDF 体积大、可随时重生成（tools/make_softcopyright.py + tools/txt_to_pdf.ps1）
+softcopyright/*.pdf

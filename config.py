@@ -41,7 +41,8 @@ MAX_LEN = 512            # tokens per training example (pool: p50=256, p90=366, 
 # ------------------------------------------------------------- experiment grid
 RATIOS  = [0.10, 0.20, 0.30, 0.50, 0.70]
 SEEDS   = [1, 2, 3]
-METHODS = ["full", "random", "rand_len", "nait", "nait_dedup", "nait_dp", "nait_dedup_dp", "el2n"]
+METHODS = ["full", "random", "rand_len", "nait", "nait_dedup", "nait_dp",
+           "nait_dedup_dp", "nait_ns", "el2n"]
 # nait*, nait_dedup*      : centroid from the SOURCE-domain probe (held-out patient chat)
 # nait_dp, nait_dedup_dp  : centroid from the TARGET-domain probe (held-out medical MCQ)
 #   -> the second pair is the setup Nait (Chen et al., ICLR 2026) actually uses;
@@ -56,6 +57,7 @@ SUBSET_FILES = {
     "nait_dedup_dp": "subsets_dp.json",
     "rand_len":      "subsets_randlen.json",
     "el2n":          "subsets_el2n.json",
+    "nait_ns":       "subsets_ns.json",
 }
 
 

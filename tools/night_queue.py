@@ -105,6 +105,20 @@ def plan(name: str) -> list[tuple[str, float, int]]:
             q += [("nait", 0.30, s), ("random", 0.30, s)]
         return q
 
+    if name == "sweep48k":
+        # 48k 池上的剂量-反应扫描（1 个种子）：回答"随机在哪一档掉出等效界"。
+        # 30% 与 full 已有 6 个种子，这里只补 10/20/50/70 四个点，两个臂各一条。
+        # 时间账（48k 实测 ~5.5 samp/s）：4,800 条约 15 min、24,000 条约 67 min、33,600 条约 95 min。
+        q: list[tuple[str, float, int]] = []
+        for r in (0.10, 0.20, 0.50, 0.70):
+            q += [("nait", r, 1), ("random", r, 1)]
+        return q
+
+    if name == "abl48k":
+        # 消融：分层配额是不是必要的一环（48k、30%、2 个种子）。
+        # no_strat 用全局前 k%，不按科室配额；若它与 nait 打平，说明"分层"这一步没贡献。
+        return [("nait_nostrat", 0.30, s) for s in (1, 2)]
+
     if name == "el2n":
         # 经典基线：EL2N 打分后保留最难的 30%（Paul et al., 2021）。
         # 只跑 30% 这一档、三个种子——它回答的是"激活选择比经典基线强吗"。
@@ -125,13 +139,68 @@ def plan(name: str) -> list[tuple[str, float, int]]:
     return q
 
 
+THREAD_CAP = {          # 训练/评测都不许吃满整机，留出桌面与 I/O 的余量
+    "OMP_NUM_THREADS": "4",
+    "MKL_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+}
+
+
+HEAVY_PAT = ("train.py", "night_queue", "select_subset")
+
+
+def other_heavy_running(own_pid: int | None = None) -> bool:
+    r"""有没有别的重活在跑（训练 / 队列 / 选子集）？
+
+    用 psutil 而不是 powershell：Windows 的 .venv/Scripts/python.exe 是个
+    转向器，会用"同一条命令行 + 新 pid"再起一个基座 python。所以要沿父进程链
+    把"我自己和我的祖先"整体排除，否则队列一启动就把自己当成既有重活。
+    """
+    me = own_pid if own_pid is not None else os.getpid()
+    try:
+        import psutil
+    except Exception:
+        return False
+    proc = {}
+    for pr in psutil.process_iter(["pid", "ppid", "cmdline"]):
+        try:
+            proc[pr.info["pid"]] = (pr.info["ppid"], " ".join(pr.info["cmdline"] or []))
+        except Exception:
+            continue
+    mine, cur, seen = set(), me, set()
+    while cur and cur not in seen:
+        mine.add(cur)
+        seen.add(cur)
+        cur = proc.get(cur, (0, ""))[0]
+    for pid, (_ppid, cmd) in proc.items():
+        if pid in mine:
+            continue
+        if any(pat in cmd for pat in HEAVY_PAT):
+            return True
+    return False
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--plan", default="full",
                     choices=["full", "quick", "seeds6", "scale", "el2n", "fill30",
+                             "sweep48k", "abl48k",
                              "epoch3", "k48"])
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
+
+    if not a.dry_run and other_heavy_running(os.getpid()):
+        print("[night] 已有训练/队列/选子集进程在跑，拒绝叠加启动（先等它结束）")
+        print(f"[night] debug: 我的 pid={os.getpid()}")
+        dbg = subprocess.run(
+            ["powershell", "-NoProfile", "-Command",
+             "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | "
+             "Select-Object ProcessId, CommandLine | Format-List | Out-String"],
+            capture_output=True, text=True, timeout=60)
+        print("[night] debug: 当前 python 进程：")
+        print((dbg.stdout or "")[:800])
+        raise SystemExit(2)
 
     have = done_ids()
     items = [t for t in plan(a.plan) if C.exp_id(*t) not in have]
@@ -161,8 +230,11 @@ def main() -> None:
         RUN_LOGS.mkdir(exist_ok=True)
         run_log = RUN_LOGS / f"{eid}.log"
         try:
+            env = dict(os.environ)
+            for k, v in THREAD_CAP.items():
+                env.setdefault(k, v)
             with open(run_log, "w", encoding="utf-8") as lf:
-                p = subprocess.run(cmd, cwd=ROOT, stdout=lf, stderr=subprocess.STDOUT)
+                p = subprocess.run(cmd, cwd=ROOT, stdout=lf, stderr=subprocess.STDOUT, env=env)
             if p.returncode != 0:
                 tail = run_log.read_text(encoding="utf-8", errors="replace").strip().splitlines()[-4:]
                 raise RuntimeError(f"run_one exit {p.returncode}: " + " | ".join(tail))

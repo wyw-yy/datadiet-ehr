@@ -1,0 +1,3467 @@
+// ==================== 文件：config.py ====================
+"""Central configuration for the DataDiet-EHR pipeline.
+
+Everything that the other scripts need to agree on lives here: paths,
+experiment grid, activation layers, dept taxonomy.
+"""
+from pathlib import Path
+
+import os
+
+PROJ = Path(__file__).resolve().parent
+
+DATA     = PROJ / "data"
+RAW      = DATA / "raw"
+PROC     = DATA / "processed"
+SUBSETS  = DATA / "subsets"
+
+CACHE    = PROJ / "cache"
+ACTS     = CACHE / "acts"
+
+MODELS   = PROJ / "models"
+# 1.5B: 3.1 GB of weights, leaves room for activations on an 8 GiB laptop card.
+# 3B (models/Qwen2.5-3B-Instruct) needs >=12 GiB - see PLAN.md §4 risk table.
+BASE_DIR = MODELS / "Qwen2.5-1.5B-Instruct"
+ADAPTERS = MODELS / "adapters"
+
+RESULTS  = PROJ / "results"
+RUNS     = RESULTS / "runs"
+PREDS    = RESULTS / "preds"
+PREDS.mkdir(parents=True, exist_ok=True)
+
+# ---------------------------------------------------------------- data scale
+# 12,000 是第 1 轮（12k 池）的规模。跑"放大池子"那一轮时用环境变量覆盖，
+# 例如：$env:DATADIET_N_TRAIN=24000（见 tools/run_scale.py）。默认值不动，老结果可复现。
+N_TRAIN = int(os.environ.get("DATADIET_N_TRAIN", 12000))   # the "full" training pool
+N_POOL  = int(os.environ.get("DATADIET_N_POOL", N_TRAIN))  # how many of train.jsonl to use as the pool
+N_PROBE = 2000           # in-domain reference set used to build activation centroids
+MAX_LEN = 512            # tokens per training example (pool: p50=256, p90=366, p99=582)
+
+# Measured on this laptop's RTX 5070 (11 TFLOP/s bf16, ~2 samples/s at 1.5B):
+# 12k pool x 1 epoch ~ 1.5 h, so the whole matrix below is ~16 h of training.
+# ------------------------------------------------------------- experiment grid
+RATIOS  = [0.10, 0.20, 0.30, 0.50, 0.70]
+SEEDS   = [1, 2, 3]
+METHODS = ["full", "random", "rand_len", "nait", "nait_dedup", "nait_dp",
+           "nait_dedup_dp", "nait_ns", "el2n"]
+# nait*, nait_dedup*      : centroid from the SOURCE-domain probe (held-out patient chat)
+# nait_dp, nait_dedup_dp  : centroid from the TARGET-domain probe (held-out medical MCQ)
+#   -> the second pair is the setup Nait (Chen et al., ICLR 2026) actually uses;
+#      the first pair is kept because its results are in results/metrics_long.csv.
+# rand_len                : random subset MATCHED to nait's length distribution.
+#   The audit found nait picks samples 12.3% longer than average, so this arm
+#   separates "activation signal" from "prefers long texts" (see docs/PREREG.md §6).
+SUBSET_FILES = {
+    "nait":          "subsets.json",
+    "nait_dedup":    "subsets.json",
+    "nait_dp":       "subsets_dp.json",
+    "nait_dedup_dp": "subsets_dp.json",
+    "rand_len":      "subsets_randlen.json",
+    "el2n":          "subsets_el2n.json",
+    "nait_ns":       "subsets_ns.json",
+}
+
+
+def subset_file_for(method: str):
+    """Which subsets_*.json holds this method's picks."""
+    return SUBSETS / SUBSET_FILES.get(method, "subsets.json")
+TASKS   = ["medqa", "medmcqa"]
+LAYERS  = [8, 12, 16, 20, 24]                          # hidden layers for activation features
+DEDUP_COS = 0.95                                       # near-duplicate threshold
+
+# ------------------------------------------------------------------ taxonomy
+DEPTS = ["cardio", "onco", "neuro", "resp", "endo", "other"]
+
+
+def exp_id(method: str, ratio: float, seed: int) -> str:
+    """Unique, sortable name for one training run. Matches R/00_setup.R.
+
+    DATADIET_RUN_TAG（如 "e3" 表示 3 epoch）会追加到 id 末尾，
+    这样同一 (method, ratio, seed) 在不同实验设置下不会互相覆盖。
+    """
+    tag = os.environ.get("DATADIET_RUN_TAG", "").strip()
+    suffix = f"_{tag}" if tag else ""
+    if method == "full":
+        return f"full_s{seed}{suffix}"
+    return f"{method}_r{int(round(ratio * 100)):02d}_s{seed}{suffix}"
+
+
+def ensure_dirs() -> None:
+    for d in (RAW, PROC, SUBSETS, CACHE, ACTS, MODELS, ADAPTERS, RUNS, PREDS):
+        d.mkdir(parents=True, exist_ok=True)
+
+// ==================== 文件：prepare_data.py ====================
+"""Normalise the raw downloads into the JSONL contract every later stage uses.
+
+Input  (whatever the HF snapshot produced, parquet/json/csv all fine):
+    data/raw/healthcaremagic/   -> training pool   (question / answer)
+    data/raw/medqa/             -> eval set        (USMLE 4-option)
+    data/raw/medmcqa/           -> eval set        (21 subjects, 4-option)
+
+Output:
+    data/processed/train.jsonl   {id, dept, instruction, response}
+    data/processed/probe.jsonl   same, held out — used only to build centroids
+    data/processed/medqa.jsonl   {id, dept, question, options[4], answer}
+    data/processed/medmcqa.jsonl {id, dept, question, options[4], answer}
+    data/processed/manifest.json counts + dept distribution + source files
+
+Why a probe split: Nait's activation features are extracted from *in-domain*
+data. The probe set must never be seen in training, otherwise the centroid is
+contaminated by the very samples we then select.
+"""
+from __future__ import annotations
+
+import argparse
+import glob
+import hashlib
+import json
+import os
+import random
+import re
+import sys
+from collections import Counter
+
+import pandas as pd
+
+import config as C
+
+# ------------------------------------------------------------------ column names
+Q_KEYS = ["question", "Question", "instruction", "prompt", "input", "patient", "text"]
+A_KEYS = ["answer", "Answer", "output", "response", "doctor", "completion"]
+
+# ------------------------------------------------------------------- dept taxonomy
+DEPT_RULES = {
+    "cardio": r"heart|cardiac|cardio|chest pain|blood pressure|hypertens|arrhythm|palpitat|cholesterol|angina|stroke",
+    "onco":   r"cancer|tumor|tumour|chemotherap|carcinoma|malignan|oncolog|lymphoma|leukemia|metasta",
+    "neuro":  r"headache|migraine|seizure|epilep|brain|nerve|memory|dementia|anxiety|depress|sleep|dizz|numb",
+    "resp":   r"cough|asthma|breath|lung|pneumon|bronch|wheez|sputum|smok|tubercul|sinus",
+    "endo":   r"diabet|thyroid|sugar|insulin|hormone|metaboli|obes|weight|menstrua|pregnan",
+}
+# medmcqa subject_name -> dept (its 21 official subjects)
+SUBJECT_DEPT = {
+    "Medicine": "cardio", "Physiology": "resp", "Biochemistry": "endo",
+    "Pathology": "onco", "Pharmacology": "other", "Microbiology": "other",
+    "Anatomy": "neuro", "Forensic Medicine": "other",
+    "Social & Preventive Medicine": "other", "Surgery": "other",
+    "Pediatrics": "other", "Obstetrics & Gynaecology": "endo",
+    "ENT": "resp", "Ophthalmology": "other", "Orthopaedics": "other",
+    "Anaesthesia": "other", "Radiology": "other", "Psychiatry": "neuro",
+    "Dermatology": "other", "Dentistry": "other", "Unknown": "other",
+}
+
+
+def dept_of(text: str) -> str:
+    t = (text or "").lower()
+    for d, pat in DEPT_RULES.items():
+        if re.search(pat, t):
+            return d
+    return "other"
+
+
+def norm_key(text: str) -> str:
+    """Coarse key for exact-duplicate removal (case/punct/space insensitive)."""
+    t = re.sub(r"[^a-z0-9\u4e00-\u9fff ]+", " ", (text or "").lower())
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def load_any(folder: str) -> pd.DataFrame | None:
+    """Read every parquet/json/jsonl/csv under a raw folder into one frame."""
+    files = []
+    for ext in ("*.parquet", "*.json", "*.jsonl", "*.csv"):
+        files += glob.glob(os.path.join(folder, "**", ext), recursive=True)
+    if not files:
+        return None
+    frames = []
+    for f in sorted(files):
+        try:
+            if f.endswith(".parquet"):
+                frames.append(pd.read_parquet(f))
+            elif f.endswith(".csv"):
+                frames.append(pd.read_csv(f))
+            elif f.endswith(".jsonl"):
+                frames.append(pd.read_json(f, lines=True))
+            else:
+                frames.append(pd.read_json(f, lines=True))
+        except Exception as e:                       # noqa: BLE001
+            print(f"  [skip] {os.path.basename(f)}: {type(e).__name__}")
+    if not frames:
+        return None
+    df = pd.concat(frames, ignore_index=True)
+    print(f"  {os.path.basename(folder)}: {len(df)} rows from {len(frames)} file(s), "
+          f"columns={list(df.columns)[:12]}")
+    return df
+
+
+def pick_col(df, keys):
+    for k in keys:
+        if k in df.columns:
+            return k
+    return None
+
+
+# --------------------------------------------------------------------- builders
+def build_train_pool(raw: pd.DataFrame, n_train: int, n_probe: int, seed: int):
+    qc, ac = pick_col(raw, Q_KEYS), pick_col(raw, A_KEYS)
+    if not qc or not ac:
+        sys.exit(f"[prepare] cannot find question/answer columns in {list(raw.columns)}")
+
+    # ChatDoctor-style rows carry the boilerplate role prompt in `instruction`
+    # and the actual patient description in `input` — the description is what we
+    # want to train on (and classify by department).
+    if qc == "instruction" and "input" in raw.columns:
+        filled = raw["input"].astype(str).str.strip()
+        if (filled.str.len() > 20).mean() > 0.5:
+            raw = raw.copy()
+            raw["_q"] = filled.where(filled.str.len() > 20, raw["instruction"].astype(str))
+            qc = "_q"
+            print("  using `input` (patient description) as the question column")
+
+    seen, rows = set(), []
+    for q, a in zip(raw[qc].astype(str), raw[ac].astype(str)):
+        q, a = q.strip(), a.strip()
+        if len(q) < 15 or len(a) < 15 or len(q) > 2000 or len(a) > 4000:
+            continue
+        k = norm_key(q) + "|" + norm_key(a)[:120]
+        if k in seen:
+            continue
+        seen.add(k)
+        rows.append({"dept": dept_of(q), "instruction": q, "response": a})
+
+    print(f"  kept {len(rows)} after length filter + exact dedupe "
+          f"(from {len(raw)})")
+    if len(rows) < n_train + n_probe:
+        sys.exit(f"[prepare] need {n_train + n_probe} usable rows, only {len(rows)} — "
+                 f"lower N_TRAIN in config.py or add more raw data")
+
+    random.Random(seed).shuffle(rows)
+    probe = rows[:n_probe]
+    train = rows[n_probe : n_probe + n_train]
+    for i, r in enumerate(train):
+        r["id"] = f"t{i:05d}"
+    for i, r in enumerate(probe):
+        r["id"] = f"p{i:05d}"
+    return train, probe
+
+
+def build_choice_eval(raw: pd.DataFrame, name: str):
+    qc = pick_col(raw, ["question", "Question", "prompt"])
+    if qc is None:
+        sys.exit(f"[prepare] {name}: no question column in {list(raw.columns)}")
+
+    def opt_row(r):
+        if "options" in raw.columns and isinstance(r["options"], dict):
+            opts = r["options"]
+            order = sorted(opts.keys())
+            texts = [(opts[k]["text"] if isinstance(opts[k], dict) else str(opts[k]))
+                     for k in order]
+            letters = order
+        else:
+            letters, texts = [], []
+            for k in ("opa", "opb", "opc", "opd"):
+                if k in raw.columns:
+                    letters.append(k[-1].upper())
+                    texts.append(str(r[k]))
+        return letters, texts
+
+    out = []
+    for i, (_, r) in enumerate(raw.iterrows()):
+        letters, texts = opt_row(r)
+        if len(texts) != 4:
+            continue
+        if "cop" in raw.columns:                        # medmcqa: 0..3, -1 = no answer
+            try:
+                ans = int(r["cop"])
+            except (TypeError, ValueError):
+                continue
+            if not 0 <= ans <= 3:
+                continue
+        elif "answer_idx" in raw.columns:               # medqa: "A".."D"
+            try:
+                ans = letters.index(str(r["answer_idx"]).strip().upper())
+            except ValueError:
+                continue
+        elif "answer" in raw.columns:                   # medqa alt: full text
+            txt = str(r["answer"]).strip()
+            if txt not in texts:
+                continue
+            ans = texts.index(txt)
+        else:
+            continue
+
+        subj = str(r.get("subject_name", "")).strip()
+        out.append({
+            # medqa -> qa..., medmcqa -> mc...: ids must never collide across tasks
+            "id": f"{'qa' if name == 'medqa' else 'mc'}{i:05d}",
+            "dept": SUBJECT_DEPT.get(subj, dept_of(r[qc])),
+            "question": str(r[qc]).strip(),
+            "options": [t.strip() for t in texts],
+            "answer": int(ans),
+        })
+    print(f"  {name}: {len(out)} usable items")
+    return out
+
+
+def build_domain_probe(raw: pd.DataFrame, n: int, seed: int):
+    """Target-domain reference set for the activation centroid.
+
+    This is the "in-domain data" Nait uses to define *what a good sample looks
+    like*: text from the task family we will be evaluated on (medical
+    multiple-choice QA), NOT from the training domain (patient chat). Same
+    shape as train.jsonl (instruction/response) so collect_acts.py can reuse
+    the exact same pooling code; the rows are never trained on.
+    """
+    rng = random.Random(seed)
+    qc = pick_col(raw, ["question", "Question", "prompt"])
+    if qc is None:
+        sys.exit(f"[prepare] domain probe: no question column in {list(raw.columns)}")
+
+    rows = []
+    for _, r in raw.iterrows():
+        try:
+            cop = int(r.get("cop", -1))
+        except (TypeError, ValueError):
+            continue
+        if not 0 <= cop <= 3:
+            continue
+        exp = str(r.get("exp", "") or "").strip()
+        if len(exp) < 20:
+            continue
+        opts = [str(r.get("opa", "")).strip(), str(r.get("opb", "")).strip(),
+                str(r.get("opc", "")).strip(), str(r.get("opd", "")).strip()]
+        if not all(opts):
+            continue
+        instr = (f"{str(r[qc]).strip()}\n"
+                 + "\n".join(f"{L}) {t}" for L, t in zip("ABCD", opts)))
+        rows.append({
+            "id": f"dp{len(rows):05d}",
+            "dept": SUBJECT_DEPT.get(str(r.get("subject_name", "")).strip(),
+                                    dept_of(str(r[qc]))),
+            "instruction": instr,
+            "response": exp,
+        })
+    rng.shuffle(rows)
+    rows = rows[:n]
+    rows.sort(key=lambda x: x["id"])
+    print(f"  domain probe: {len(rows)} items from target-domain QA")
+    return rows
+
+
+def build_domain_train_pool(raw: pd.DataFrame, n_train: int, n_probe: int, seed: int):
+    """Training pool built from the TARGET domain (medical MCQ with explanations).
+
+    Why this exists: with ChatDoctor rows as the pool, supervised fine-tuning
+    *lowered* MedQA accuracy (0.4776 base -> 0.4399 after 12k rows), because the
+    chat-style answers teach the model to write "you should see a doctor", not
+    to pick A/B/C/D. When fine-tuning hurts regardless of data volume, there is
+    nothing for a data-selection method to show. So the pool has to live in the
+    same domain as the evaluation tasks.
+
+    Response format starts with the answer letter, matching eval.py, which
+    scores the logprobs of " A".." D" at the first assistant token.
+    """
+    qc = pick_col(raw, ["question", "Question", "prompt"])
+    if qc is None:
+        sys.exit(f"[prepare] domain pool: no question column in {list(raw.columns)}")
+
+    seen, rows = set(), []
+    for _, r in raw.iterrows():
+        try:
+            cop = int(r.get("cop", -1))
+        except (TypeError, ValueError):
+            continue
+        if not 0 <= cop <= 3:
+            continue
+        q = str(r[qc]).strip()
+        exp = str(r.get("exp", "") or "").strip()
+        opts = [str(r.get("opa", "")).strip(), str(r.get("opb", "")).strip(),
+                str(r.get("opc", "")).strip(), str(r.get("opd", "")).strip()]
+        if len(q) < 15 or not all(opts) or len(exp) < 20:
+            continue
+        k = norm_key(q)
+        if k in seen:
+            continue
+        seen.add(k)
+        instr = q + "\n" + "\n".join(f"{L}) {t}" for L, t in zip("ABCD", opts))
+        rows.append({
+            "dept": SUBJECT_DEPT.get(str(r.get("subject_name", "")).strip(), dept_of(q)),
+            "instruction": instr,
+            "response": f"{'ABCD'[cop]}. {exp}",
+            "answer": int(cop),
+            "subject": str(r.get("subject_name", "")).strip(),
+        })
+
+    print(f"  kept {len(rows)} usable MCQ rows (from {len(raw)})")
+    if len(rows) < n_train + n_probe:
+        sys.exit(f"[prepare] need {n_train + n_probe} rows, only {len(rows)}")
+
+    random.Random(seed).shuffle(rows)
+    probe = rows[:n_probe]
+    train = rows[n_probe : n_probe + n_train]
+    for i, r in enumerate(train):
+        r["id"] = f"d{i:05d}"
+    for i, r in enumerate(probe):
+        r["id"] = f"pd{i:05d}"
+    return train, probe
+
+
+def write_jsonl(path, rows):
+    with open(path, "w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    print(f"  wrote {path}  ({len(rows)} rows, {path.stat().st_size / 1e6:.1f} MB)")
+
+
+def main(seed=42, pool="domain"):
+    C.ensure_dirs()
+    dom = load_any(str(C.RAW / "medmcqa-train"))
+
+    if pool == "domain":
+        if dom is None:
+            sys.exit("[prepare] data/raw/medmcqa-train missing - download it first")
+        print("[prepare] medmcqa train split -> in-domain training pool + probe")
+        train, probe = build_domain_train_pool(dom, C.N_TRAIN, C.N_PROBE, seed)
+    else:
+        print("[prepare] healthcaremagic -> training pool (cross-domain arm)")
+        hcm = load_any(str(C.RAW / "healthcaremagic"))
+        if hcm is None:
+            sys.exit("[prepare] data/raw/healthcaremagic is empty - download it first")
+        train, probe = build_train_pool(hcm, C.N_TRAIN, C.N_PROBE, seed)
+
+    write_jsonl(C.PROC / "train.jsonl", train)
+    write_jsonl(C.PROC / "probe.jsonl", probe)
+
+    for name in ("medqa", "medmcqa"):
+        print(f"[prepare] {name} -> eval set")
+        raw = load_any(str(C.RAW / name))
+        if raw is None:
+            print(f"  [warn] data/raw/{name} missing, skipping this eval task")
+            continue
+        write_jsonl(C.PROC / f"{name}.jsonl", build_choice_eval(raw, name))
+
+    # Source-domain probe (held-out patient chat). Only meaningful when the pool
+    # is ChatDoctor; kept so the cross-domain arm stays reproducible.
+    if dom is not None and pool == "hcm":
+        print("[prepare] medmcqa train split -> extra domain probe")
+        write_jsonl(C.PROC / "probe_domain.jsonl", build_domain_probe(dom, C.N_PROBE, seed))
+
+    manifest = {
+        "pool": pool,
+        "n_train": len(train),
+        "n_probe": len(probe),
+        "dept_train": dict(Counter(r["dept"] for r in train)),
+        "dept_probe": dict(Counter(r["dept"] for r in probe)),
+        "sha_train": hashlib.sha256(
+            open(C.PROC / "train.jsonl", "rb").read()).hexdigest()[:16],
+    }
+    with open(C.PROC / "manifest.json", "w", encoding="utf-8") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2)
+    print("[prepare] dept distribution (train):", manifest["dept_train"])
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--pool", default="domain", choices=["domain", "hcm"],
+                    help="domain = medical MCQ (in-domain, the default); "
+                         "hcm = ChatDoctor patient chat (cross-domain arm)")
+    a = ap.parse_args()
+    main(a.seed, a.pool)
+
+// ==================== 文件：prepare_mimic.py ====================
+"""把 MIMIC-IV + MIMIC-IV-Note 转成本项目的 JSONL 契约。
+
+现在还**没有**数据，所以这个脚本只能做两件事：
+  1) `--check`   ：检查目录结构与必需列，告诉你缺什么
+  2) `--selftest`：用合成文本跑一遍全部纯函数，验证切分/映射逻辑没写错
+
+有数据之后再跑 `--src ... --out ...` 真正生成：
+    data/processed/train.jsonl / probe.jsonl / mimic_eval.jsonl
+
+任务定义（写进 PROTOCOL 之前先定在这里）：
+    instruction = 患者背景（年龄/性别/主诉/主要诊断章节）+ "写出住院经过这一节"
+    response    = 出院小结里 "Brief Hospital Course" / "Hospital Course" 的原文
+    dept        = 主诊断 ICD-10 章节 → 六个科室桶
+    切分        = **按 subject_id**，同一个人绝不跨集合（防止同一病人的多次住院泄漏）
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import random
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+# ---------------------------------------------------------------- 纯函数
+
+# MIMIC 出院小结的章节标题五花八门，按常见写法 + 变体匹配
+SECTION_HEADERS = {
+    "hospital_course": [
+        r"brief hospital course", r"hospital course", r"hospital stay",
+        r"clinical course", r"course in hospital",
+    ],
+    "discharge_diagnosis": [r"discharge diagnosis", r"final diagnosis", r"diagnoses"],
+    "chief_complaint": [r"chief complaint", r"reason for admission", r"cc:"],
+}
+
+# ICD-10 首字母 → 科室桶（与公开题库的六个桶保持一致）
+ICD_CHAPTER_DEPT = {
+    "A": "other", "B": "other",           # 感染
+    "C": "onco", "D": "onco",             # 肿瘤/血液
+    "E": "endo",                          # 内分泌/代谢
+    "F": "neuro",                         # 精神（归到 neuro 桶避免新增类别）
+    "G": "neuro",                         # 神经
+    "H": "other", "I": "cardio",          # 眼耳 / 循环
+    "J": "resp",                          # 呼吸
+    "K": "other",                         # 消化
+    "L": "other",                         # 皮肤
+    "M": "other",                         # 肌肉骨骼
+    "N": "other",                         # 泌尿
+    "O": "other",                         # 产科
+    "P": "other", "Q": "other",           # 围产/先天
+    "R": "other", "S": "other", "T": "other",  # 症状/外伤
+    "V": "other", "W": "other", "X": "other",
+    "Y": "other", "Z": "other",
+}
+
+
+def icd_to_dept(code: str) -> str:
+    """ICD-10 编码 → 科室桶。空/非法一律 other。"""
+    if not code:
+        return "other"
+    c = str(code).strip().upper()
+    if not c:
+        return "other"
+    return ICD_CHAPTER_DEPT.get(c[0], "other")
+
+
+def extract_section(text: str, kind: str = "hospital_course") -> str:
+    """从出院小结里抠出指定章节的正文。
+
+    做法：找所有"标题行"，正文取到下一个标题行之前。标题行判定 = 整行较短（<=60 字符）、
+    命中白名单、且不是以句号结尾的普通句。
+    """
+    if not text:
+        return ""
+    pats = SECTION_HEADERS[kind]
+    lines = text.splitlines()
+    start = -1
+    for i, line in enumerate(lines):
+        s = line.strip().strip(":").strip().lower()
+        if not s or len(s) > 60:
+            continue
+        if any(re.fullmatch(rf"{p}\s*:?", s) for p in pats):
+            start = i + 1
+            break
+    if start < 0:
+        return ""
+    out: list[str] = []
+    for line in lines[start:]:
+        s = line.strip()
+        # 遇到下一个章节标题就停
+        if s and len(s) <= 60 and s.endswith(":") and not s.endswith("."):
+            break
+        if s and len(s) <= 40 and re.fullmatch(r"[A-Za-z /()\-]+", s):
+            break
+        out.append(line)
+    body = "\n".join(out).strip()
+    # 去掉 de-identification 占位符，避免模型学到 [**...**]
+    body = re.sub(r"\[\*\*.*?\*\*\]", "", body)
+    return re.sub(r"\n{3,}", "\n\n", body).strip()
+
+
+def split_by_subject(subjects: list[str], seed: int = 42,
+                     n_probe: int = 500, n_eval: int = 500) -> dict[str, set[str]]:
+    """按 subject_id 切三个互不重叠的集合。返回 {'train': set, 'probe': set, 'eval': set}。"""
+    uniq = sorted(set(subjects))
+    random.Random(seed).shuffle(uniq)
+    n_eval = min(n_eval, len(uniq) // 5)
+    n_probe = min(n_probe, len(uniq) // 5)
+    eval_s = set(uniq[:n_eval])
+    probe_s = set(uniq[n_eval:n_eval + n_probe])
+    train_s = set(uniq[n_eval + n_probe:])
+    return {"train": train_s, "probe": probe_s, "eval": eval_s}
+
+
+def make_pair(meta: dict, course: str, dept: str, rid: str) -> dict:
+    """组装一条 SFT 样本。meta 里放年龄/性别/主诉等背景。"""
+    bg = []
+    if meta.get("age"):
+        bg.append(f"{meta['age']}-year-old")
+    if meta.get("gender"):
+        bg.append(str(meta["gender"]).lower())
+    if meta.get("chief"):
+        bg.append(f"presenting with {meta['chief'][:200]}")
+    if meta.get("diagnosis"):
+        bg.append(f"primary diagnosis: {meta['diagnosis'][:120]}")
+    context = ", ".join(bg) if bg else "an adult inpatient"
+    ins = (f"Patient background: {context}.\n\n"
+           f"Write the 'Brief Hospital Course' section of the discharge summary "
+           f"in 120-200 words, in clinical language.")
+    return {"id": rid, "dept": dept, "instruction": ins, "response": course}
+
+
+# ---------------------------------------------------------------- 自测
+
+def selftest() -> int:
+    fails = 0
+
+    def check(ok: bool, name: str, detail: str = "") -> None:
+        nonlocal fails
+        print(f"{'✅' if ok else '❌'} {name}  {detail}")
+        if not ok:
+            fails += 1
+
+    note = (
+        "Admission Date: 2100-01-02\n"
+        "Chief Complaint: Shortness of breath\n"
+        "History of Present Illness:\n"
+        "The patient is a 67 year old man with COPD who presented with dyspnea.\n"
+        "Brief Hospital Course:\n"
+        "He was admitted and started on steroids and nebulizers.\n"
+        "Symptoms improved over three days. [**Name**] was seen by PT.\n"
+        "He was discharged home on oral prednisone.\n"
+        "Discharge Medications:\n"
+        "1. Prednisone 40 mg daily\n"
+        "Discharge Diagnosis: COPD exacerbation\n"
+    )
+    body = extract_section(note, "hospital_course")
+    check("steroids and nebulizers" in body, "切出住院经过", body.splitlines()[0][:40])
+    check("Discharge Medications" not in body, "遇到下一节就停", "")
+    check("[**" not in body, "去掉 de-id 占位符", "")
+    check(extract_section("no headers here at all", "hospital_course") == "",
+          "没有该章节时返回空串", "")
+
+    check(icd_to_dept("J44.1") == "resp", "J 开头 → resp", icd_to_dept("J44.1"))
+    check(icd_to_dept("I50.9") == "cardio", "I 开头 → cardio", icd_to_dept("I50.9"))
+    check(icd_to_dept("C34.9") == "onco", "C 开头 → onco", icd_to_dept("C34.9"))
+    check(icd_to_dept("E11.9") == "endo", "E 开头 → endo", icd_to_dept("E11.9"))
+    check(icd_to_dept("G40.9") == "neuro", "G 开头 → neuro", icd_to_dept("G40.9"))
+    check(icd_to_dept("") == "other", "空编码 → other", "")
+
+    subs = [f"s{i:04d}" for i in range(200)]
+    sp = split_by_subject(subs, seed=42, n_probe=20, n_eval=20)
+    check(not (sp["train"] & sp["probe"]), "train/probe 不重叠", "")
+    check(not (sp["train"] & sp["eval"]), "train/eval 不重叠", "")
+    check(not (sp["probe"] & sp["eval"]), "probe/eval 不重叠", "")
+    check(sum(len(v) for v in sp.values()) == 200, "人数守恒", str(sum(len(v) for v in sp.values())))
+    check(len(sp["eval"]) == 20 and len(sp["probe"]) == 20, "eval/probe 各 20 人", "")
+
+    p = make_pair({"age": 67, "gender": "M", "chief": "dyspnea", "diagnosis": "COPD"},
+                  body, "resp", "m00001")
+    check("67-year-old" in p["instruction"], "背景写进 instruction", "")
+    check(p["response"] == body, "response 是住院经过原文", "")
+    check(p["dept"] == "resp", "dept 正确", "")
+
+    print()
+    if fails:
+        print(f"❌ 自测失败 {fails} 项")
+        return 1
+    print("✅ 自测全通过（有数据之后可直接跑 --src/--out）")
+    return 0
+
+
+# ---------------------------------------------------------------- 主流程
+
+REQUIRED = {
+    "hosp/patients.csv.gz": ["subject_id", "gender", "anchor_age"],
+    "hosp/admissions.csv.gz": ["subject_id", "hadm_id", "admittime"],
+    "hosp/diagnoses_icd.csv.gz": ["subject_id", "hadm_id", "seq_num", "icd_code", "icd_version"],
+    "hosp/d_icd_diagnoses.csv.gz": ["icd_code", "long_title"],
+    "note/discharge.csv.gz": ["subject_id", "hadm_id", "text"],
+}
+
+
+def check_layout(src: Path) -> int:
+    import pandas as pd
+
+    bad = 0
+    for rel, cols in REQUIRED.items():
+        p = src / rel
+        if not p.exists():
+            print(f"❌ 缺文件 {rel}")
+            bad += 1
+            continue
+        try:
+            head = pd.read_csv(p, nrows=3)
+        except Exception as e:                      # noqa: BLE001
+            print(f"❌ 读不了 {rel}: {e}")
+            bad += 1
+            continue
+        miss = [c for c in cols if c not in head.columns]
+        print(f"{'✅' if not miss else '❌'} {rel}  列 {list(head.columns)[:6]}…"
+              + (f"  缺 {miss}" if miss else ""))
+        if miss:
+            bad += 1
+    print()
+    if bad:
+        print(f"❌ {bad} 处问题。先看 docs/MIMIC_CHECKLIST.md")
+        return 1
+    print("✅ 目录结构齐全，可以跑 --src/--out")
+    return 0
+
+
+def build(src: Path, out: Path, n_probe: int, n_eval: int, seed: int) -> int:
+    import pandas as pd
+
+    pat = pd.read_csv(src / "hosp/patients.csv.gz", usecols=["subject_id", "gender", "anchor_age"])
+    adm = pd.read_csv(src / "hosp/admissions.csv.gz", usecols=["subject_id", "hadm_id"])
+    dx = pd.read_csv(src / "hosp/diagnoses_icd.csv.gz")
+    ddx = pd.read_csv(src / "hosp/d_icd_diagnoses.csv.gz")
+    note = pd.read_csv(src / "note/discharge.csv.gz",
+                       usecols=["subject_id", "hadm_id", "text"])
+
+    # 主诊断（seq_num == 1）
+    prim = dx[dx["seq_num"] == 1].copy()
+    prim = prim.merge(ddx[["icd_code", "long_title"]], on="icd_code", how="left")
+    prim = prim.drop_duplicates("hadm_id")[["hadm_id", "icd_code", "long_title"]]
+
+    df = note.merge(prim, on="hadm_id", how="left")
+    df = df.merge(pat, on="subject_id", how="left")
+    df = df.merge(adm, on=["subject_id", "hadm_id"], how="left")
+    print(f"[mimic] {len(df)} 份出院小结，{df['subject_id'].nunique()} 个病人")
+
+    sp = split_by_subject(df["subject_id"].astype(str).tolist(), seed, n_probe, n_eval)
+    rows = {"train": [], "probe": [], "eval": []}
+    row_subject: dict[str, list] = {"train": [], "probe": [], "eval": []}
+    skipped = 0
+    for _, r in df.iterrows():
+        body = extract_section(str(r["text"]), "hospital_course")
+        if len(body) < 200:                 # 太短的不当样本
+            skipped += 1
+            continue
+        chief = extract_section(str(r["text"]), "chief_complaint")
+        meta = {"age": int(r["anchor_age"]) if pd.notna(r["anchor_age"]) else None,
+                "gender": r["gender"], "chief": chief.splitlines()[0] if chief else "",
+                "diagnosis": r.get("long_title") or ""}
+        dept = icd_to_dept(str(r.get("icd_code") or ""))
+        sid = str(r["subject_id"])
+        bucket = "train" if sid in sp["train"] else ("probe" if sid in sp["probe"] else "eval")
+        rid = f"m{bucket[0]}{len(rows[bucket]):05d}"
+        rows[bucket].append(make_pair(meta, body, dept, rid))
+        row_subject[bucket].append([rid, sid])
+
+    out.mkdir(parents=True, exist_ok=True)
+    for k, v in rows.items():
+        name = "mimic_eval.jsonl" if k == "eval" else f"{k}.jsonl"
+        with open(out / name, "w", encoding="utf-8") as f:
+            for r in v:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        print(f"[mimic] {name}: {len(v)} 条")
+    print(f"跳过（住院经过 <200 字符）: {skipped}")
+    # 切分清单：审计要用。只记 subject_id 与归属，不记任何文本。
+    manifest = {
+        "seed": seed, "n_probe": n_probe, "n_eval": n_eval,
+        "n_subject": int(df["subject_id"].nunique()),
+        "splits": {k: sorted(str(s) for s in v) for k, v in sp.items()},
+        "rows": {k: len(v) for k, v in rows.items()},
+        # 每条样本属于哪个病人（只有伪 ID，没有文本）——审计要用它证明"同一个人没跨集合"
+        "row_subject": row_subject,
+        "skipped_short": skipped,
+    }
+    with open(out / "mimic_split.json", "w", encoding="utf-8") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=1)
+    print(f"[mimic] 切分清单 {out / 'mimic_split.json'}（{manifest['n_subject']} 个病人）")
+    print("[mimic] 注意：MIMIC 的评测是**参考文本生成**（ROUGE/BERTScore + 人工抽检），"
+          "不是四选一准确率，R 侧要另写一个分析脚本。")
+    return 0
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--check", action="store_true", help="检查 src 目录结构")
+    ap.add_argument("--selftest", action="store_true", help="用合成文本自测纯函数")
+    ap.add_argument("--src", type=Path, default=ROOT / "data" / "raw" / "mimic")
+    ap.add_argument("--out", type=Path, default=ROOT / "data" / "processed_mimic")
+    ap.add_argument("--n-probe", type=int, default=500)
+    ap.add_argument("--n-eval", type=int, default=500)
+    ap.add_argument("--seed", type=int, default=42)
+    a = ap.parse_args()
+
+    if a.selftest:
+        sys.exit(selftest())
+    if a.check:
+        sys.exit(check_layout(a.src))
+    sys.exit(build(a.src, a.out, a.n_probe, a.n_eval, a.seed))
+
+
+if __name__ == "__main__":
+    main()
+
+// ==================== 文件：collect_acts.py ====================
+"""Extract mean-pooled hidden states (neuron activations) for every training sample.
+
+Why mean-pool over response tokens only: the "activation" of a sample in the
+sense of Nait (Chen et al., ICLR 2026) is the pattern the model produces while
+*generating* the answer, not while reading the question. Prompt tokens are
+shared by thousands of samples and would wash the signal out.
+
+Output: cache/acts/acts_<split>.npz
+    ids    (N,)            sample ids, same order as processed jsonl
+    feats  (N, L, D)       float16, L = len(config.LAYERS)
+    layers (L,)            which hidden layers these came from
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import time
+
+import numpy as np
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+import config as C
+
+
+def read_jsonl(path):
+    with open(path, encoding="utf-8") as f:
+        return [json.loads(line) for line in f if line.strip()]
+
+
+def load_model(path):
+    """Load in bf16 with whatever keyword the installed transformers accepts."""
+    kw = dict(attn_implementation="sdpa", device_map=None)
+    for key in ("dtype", "torch_dtype"):
+        try:
+            model = AutoModelForCausalLM.from_pretrained(path, **{key: torch.bfloat16}, **kw)
+            break
+        except TypeError:
+            continue
+    else:
+        model = AutoModelForCausalLM.from_pretrained(path, **kw)
+    model.eval()
+    return model.to("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def build_sequences(tok, examples, max_len):
+    """Return list of (prompt_ids, response_ids) with the response truncated to fit."""
+    out = []
+    for ex in examples:
+        msgs = [{"role": "user", "content": ex["instruction"]}]
+        prompt = tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True)
+        p_ids = tok(prompt, add_special_tokens=False)["input_ids"]
+        r_ids = tok(" " + ex["response"], add_special_tokens=False)["input_ids"]
+        r_ids = r_ids[: max(1, max_len - len(p_ids) - 1)] + [tok.eos_token_id]
+        out.append((p_ids, r_ids))
+    return out
+
+
+@torch.no_grad()
+def run(split="train", batch_size=4, max_len=None, limit=None):
+    max_len = max_len or C.MAX_LEN
+    src = C.PROC / f"{split}.jsonl"
+    if not src.exists():
+        sys.exit(f"[collect_acts] missing {src} — run prepare_data.py first")
+
+    examples = read_jsonl(src)
+    if split == "train":
+        # train.py only ever trains on pool[:N_POOL]; activations must cover exactly
+        # that prefix, otherwise a subset could name rows the trainer cannot see.
+        examples = examples[: C.N_POOL]
+    if limit:
+        examples = examples[:limit]
+
+    tok = AutoTokenizer.from_pretrained(C.BASE_DIR)
+    if tok.pad_token is None:
+        tok.pad_token = tok.eos_token
+    model = load_model(C.BASE_DIR)
+
+    layers = [int(x) for x in C.LAYERS]
+    n_layers = model.config.num_hidden_layers
+    if max(layers) >= n_layers:
+        sys.exit(f"[collect_acts] model has {n_layers} layers, asked for {layers}")
+    hidden = model.config.hidden_size
+
+    seqs = build_sequences(tok, examples, max_len)
+    feats = np.zeros((len(seqs), len(layers), hidden), dtype=np.float16)
+    ids = [ex["id"] for ex in examples]
+
+    t0 = time.time()
+    done_tokens = 0
+    for start in range(0, len(seqs), batch_size):
+        chunk = seqs[start : start + batch_size]
+        maxlen = max(len(p) + len(r) for p, r in chunk)
+        input_ids = torch.full((len(chunk), maxlen), tok.pad_token_id, dtype=torch.long)
+        attn = torch.zeros((len(chunk), maxlen), dtype=torch.long)
+        resp_mask = torch.zeros((len(chunk), maxlen), dtype=torch.bool)
+        for i, (p, r) in enumerate(chunk):
+            ids_i = p + r
+            input_ids[i, : len(ids_i)] = torch.tensor(ids_i)
+            attn[i, : len(ids_i)] = 1
+            resp_mask[i, len(p) : len(ids_i)] = True
+            done_tokens += len(ids_i)
+
+        input_ids = input_ids.to(model.device)
+        attn = attn.to(model.device)
+        resp_mask = resp_mask.to(model.device)
+
+        out = model(input_ids=input_ids, attention_mask=attn, output_hidden_states=True,
+                    use_cache=False)
+        # hidden_states[k] = output of layer k-1 (index 0 is the embedding output)
+        for li, layer in enumerate(layers):
+            h = out.hidden_states[layer].float()                      # (B, T, D)
+            mask = resp_mask.unsqueeze(-1).float()
+            pooled = (h * mask).sum(1) / mask.sum(1).clamp(min=1.0)   # (B, D)
+            feats[start : start + len(chunk), li, :] = pooled.half().cpu().numpy()
+
+        if start % (batch_size * 20) == 0:
+            rate = done_tokens / max(1e-6, time.time() - t0)
+            print(f"  {start + len(chunk)}/{len(seqs)}  {rate:,.0f} tok/s", flush=True)
+
+    C.ensure_dirs()
+    dst = C.ACTS / f"acts_{split}.npz"
+    np.savez_compressed(dst, ids=np.array(ids), feats=feats,
+                        layers=np.array(layers, dtype=np.int32))
+    print(f"[collect_acts] wrote {dst}  shape={feats.shape}  "
+          f"{dst.stat().st_size / 1e6:.0f} MB  {time.time() - t0:.0f}s")
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--split", default="train", choices=["train", "probe"])
+    ap.add_argument("--batch-size", type=int, default=4)
+    ap.add_argument("--max-len", type=int, default=None)
+    ap.add_argument("--limit", type=int, default=None)
+    a = ap.parse_args()
+    run(a.split, a.batch_size, a.max_len, a.limit)
+
+// ==================== 文件：select_subset.py ====================
+"""Turn activations into training subsets (the actual "DataDiet" step).
+
+Three-stage protocol (PLAN.md §2, G4):
+  1. near-duplicate removal  — greedy by score, reject cosine > DEDUP_COS
+  2. department-stratified quota — every dept keeps its share of the budget
+  3. fill by score — within quota, take the highest-scoring samples first
+
+Score of sample i:  s_i = mean_l  cos( a_{i,l}, c_l )
+where c_l is the centroid of layer l over the in-domain probe set — i.e. "how
+prototypical of clinical language is this sample" in neuron space.
+
+Output: data/subsets/subsets.json
+    {"nait": {"10": [ids...], "20": [...]}, "nait_dedup": {...}}
+"random" is not stored: it needs the training seed, and train.py draws it.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import time
+
+import numpy as np
+
+import config as C
+
+
+def load_acts(split):
+    p = C.ACTS / f"acts_{split}.npz"
+    if not p.exists():
+        raise SystemExit(f"[select] missing {p} — run collect_acts.py --split {split} first")
+    z = np.load(p, allow_pickle=True)
+    return list(z["ids"]), z["feats"].astype(np.float32)      # (N, L, D)
+
+
+def l2norm(x, axis=-1):
+    n = np.linalg.norm(x, axis=axis, keepdims=True)
+    return x / np.maximum(n, 1e-8)
+
+
+def center(feats, mu):
+    """Remove the shared mean direction (anisotropy) of the activation space.
+
+    Raw hidden states of an LLM all point roughly the same way: the cosine between
+    two arbitrary samples sits around 0.95, so a fixed 0.95 duplicate threshold
+    would flag almost everything as duplicate. Subtracting the per-layer mean over
+    the pool and only then normalising makes the remaining vector describe what is
+    *specific* to a sample, which is what both the score and the dedupe need.
+    """
+    return feats - mu
+
+
+def nait_scores(train_feats, probe_feats):
+    """mean over layers of cosine(sample_l, centroid_l), on centered activations."""
+    mu = train_feats.mean(axis=0, keepdims=True)              # (1, L, D)
+    tr = l2norm(center(train_feats, mu))                      # (N, L, D)
+    cen = l2norm(center(probe_feats, mu).mean(axis=0))        # (L, D)
+    cos = np.einsum("nld,ld->nl", tr, cen)                    # (N, L)
+    return cos.mean(axis=1), tr
+
+
+def pair_sim_stats(tr_norm, n_pairs=20000, seed=0):
+    """Sanity check: what does a random pair look like before we dedupe?"""
+    rng = np.random.default_rng(seed)
+    n = tr_norm.shape[0]
+    i = rng.integers(0, n, n_pairs)
+    j = rng.integers(0, n, n_pairs)
+    flat = tr_norm.reshape(n, -1)
+    flat = flat / np.maximum(np.linalg.norm(flat, axis=1, keepdims=True), 1e-8)
+    sims = np.einsum("nd,nd->n", flat[i], flat[j])
+    q = np.percentile(sims, [50, 90, 99])
+    return q
+
+
+def greedy_kept_streaming(tr_norm, order, thr, chunk=1024):
+    """Keep samples in score order, skipping any that is a near-duplicate of a kept one.
+
+    Streaming version: the full N x N similarity matrix is never materialised
+    (24k x 24k booleans = 576 MB, which is too much on a laptop that is also
+    holding a model). Each chunk is compared against the kept set so far
+    (chunk x K floats), and within the chunk the survivors are compared against
+    each other (chunk x chunk) — exact same greedy result, bounded memory.
+    """
+    try:
+        import torch
+        dev = "cuda" if torch.cuda.is_available() else "cpu"
+        flat = torch.from_numpy(tr_norm.reshape(tr_norm.shape[0], -1).astype(np.float32)).to(dev)
+        flat = flat / flat.norm(dim=1, keepdim=True).clamp(min=1e-8)
+        kept = []
+        kept_t = torch.empty((0, flat.shape[1]), device=dev)
+        n_checked = 0
+        for s in range(0, len(order), chunk):
+            cand = torch.as_tensor(order[s:s + chunk], dtype=torch.long, device=dev)
+            if kept_t.shape[0]:
+                sims = flat[cand] @ kept_t.T                      # (c, K)
+                ok = sims.max(dim=1).values <= thr
+            else:
+                ok = torch.ones(len(cand), dtype=torch.bool, device=dev)
+            sub = cand[ok]
+            if sub.numel():
+                m = flat[sub] @ flat[sub].T                       # (c', c')
+                m.fill_diagonal_(-1.0)
+                dup_local = (m > thr).any(dim=1)
+                keep_local = sub[~dup_local]
+                kept.extend(keep_local.cpu().tolist())
+                kept_t = torch.cat([kept_t, flat[keep_local]], dim=0)
+            n_checked += len(cand)
+            print(f"  dedupe {n_checked}/{len(order)} kept={len(kept)}", flush=True)
+        del flat, kept_t
+        if dev == "cuda":
+            torch.cuda.empty_cache()
+        return np.array(kept, dtype=np.int32)
+    except ImportError:
+        pass
+
+    # numpy fallback: same algorithm, chunked matmul
+    flat = tr_norm.reshape(tr_norm.shape[0], -1).astype(np.float32)
+    flat /= np.maximum(np.linalg.norm(flat, axis=1, keepdims=True), 1e-8)
+    kept, kept_f = [], np.empty((0, flat.shape[1]), dtype=np.float32)
+    for s in range(0, len(order), chunk):
+        cand = np.asarray(order[s:s + chunk])
+        sims = flat[cand] @ kept_f.T if len(kept) else np.full((len(cand), 1), -1.0, np.float32)
+        ok = sims.max(axis=1) <= thr
+        sub = cand[ok]
+        if len(sub):
+            m = flat[sub] @ flat[sub].T
+            np.fill_diagonal(m, -1.0)
+            keep_local = sub[~(m > thr).any(axis=1)]
+            kept.extend(keep_local.tolist())
+            kept_f = np.vstack([kept_f, flat[keep_local]]) if len(kept_f) else flat[keep_local]
+    return np.array(kept, dtype=np.int32)
+
+
+def stratified_pick(cand_idx, cand_scores, depts, target_n):
+    """Fill target_n slots in proportion to dept size, by descending score."""
+    depts = np.asarray(depts)
+    counts = {d: int((depts[cand_idx] == d).sum()) for d in set(depts)}
+    total = sum(counts.values())
+    if total == 0:
+        return cand_idx[np.argsort(-cand_scores)[:target_n]]
+
+    # largest-remainder rounding so quotas sum exactly to target_n
+    raw = {d: target_n * c / total for d, c in counts.items()}
+    quota = {d: int(np.floor(v)) for d, v in raw.items()}
+    rest = target_n - sum(quota.values())
+    for d in sorted(raw, key=lambda d: raw[d] - quota[d], reverse=True)[:rest]:
+        quota[d] += 1
+
+    chosen = []
+    order = np.argsort(-cand_scores)
+    for d, q in quota.items():
+        if q <= 0:
+            continue
+        pool = [i for i in order if depts[cand_idx[i]] == d]
+        chosen.extend(cand_idx[pool[:q]])
+    if len(chosen) < target_n:                                # dept starved after dedupe
+        picked = set(chosen)
+        for i in order:
+            if len(chosen) >= target_n:
+                break
+            if cand_idx[i] not in picked:
+                chosen.append(int(cand_idx[i]))
+    return np.array(sorted(chosen), dtype=np.int32)
+
+
+def main(limit=None, do_dedup=True, probe_split="probe", suffix="",
+         stratified=True):
+    t0 = time.time()
+    ids, feats = load_acts("train")
+    pids, pfeats = load_acts(probe_split)
+    with open(C.PROC / "train.jsonl", encoding="utf-8") as f:
+        depts = [json.loads(l)["dept"] for l in f]
+
+    if limit:
+        ids, feats, depts = ids[:limit], feats[:limit], depts[:limit]
+    n = len(ids)
+    print(f"[select] {n} training samples, probe={len(pids)} ({probe_split}), "
+          f"layers={feats.shape[1]}")
+
+    score, tr_norm = nait_scores(feats, pfeats)
+    order = np.argsort(-score)
+    print(f"[select] score: min={score.min():.3f} med={np.median(score):.3f} max={score.max():.3f}")
+    q = pair_sim_stats(tr_norm)
+    print(f"[select] random-pair cosine (centered): p50={q[0]:.3f} p90={q[1]:.3f} p99={q[2]:.3f} "
+          f"(threshold {C.DEDUP_COS})")
+
+    m_sel, m_dedup = f"nait{suffix}", f"nait_dedup{suffix}"
+    out = {m_sel: {}, m_dedup: {}}
+    for ratio in C.RATIOS:
+        target = int(round(ratio * n))
+        key = str(int(round(ratio * 100)))
+        # 消融臂（--no-strat）直接取全局最高分，不按科室配额。
+        pick = (stratified_pick(order, score[order], depts, target)
+                if stratified else order[:target])
+        out[m_sel][key] = [ids[i] for i in pick]
+
+    if do_dedup:
+        kept = greedy_kept_streaming(tr_norm, order, C.DEDUP_COS)
+        print(f"[select] dedupe kept {len(kept)}/{n} ({100 * len(kept) / n:.1f}%) "
+              f"at cosine>{C.DEDUP_COS}  [{time.time() - t0:.0f}s]")
+        for ratio in C.RATIOS:
+            target = int(round(ratio * n))
+            pick = stratified_pick(kept, score[kept], depts, min(target, len(kept)))
+            out[m_dedup][str(int(round(ratio * 100)))] = [ids[i] for i in pick]
+
+    C.ensure_dirs()
+    dst = C.SUBSETS / f"subsets{suffix}.json"
+    with open(dst, "w", encoding="utf-8") as f:
+        json.dump(out, f)
+
+    # Audit trail: every number behind the "which 3,600 rows" decision, so the
+    # threshold choice can be re-checked later instead of taken on faith.
+    stats = {
+        "n_train": n, "n_probe": len(pids), "probe_split": probe_split, "layers": C.LAYERS,
+        "dedup_cos": C.DEDUP_COS,
+        "score_quantiles": dict(zip(["min", "p10", "p50", "p90", "max"],
+                                    [float(x) for x in np.percentile(score, [0, 10, 50, 90, 100])])),
+        "pair_cosine_quantiles": dict(zip(["p50", "p90", "p99"],
+                                          [float(x) for x in q])),
+        "dedupe_kept": int(len(kept)) if do_dedup else None,
+        "dedupe_kept_pct": round(100 * len(kept) / n, 2) if do_dedup else None,
+        "subset_sizes": {m: {k: len(v) for k, v in d.items()} for m, d in out.items()},
+        "dept_counts": {d: int(sum(1 for x in depts if x == d)) for d in sorted(set(depts))},
+    }
+    stats_path = C.RESULTS / (f"select_stats{suffix}.json" if suffix else "select_stats.json")
+    with open(stats_path, "w", encoding="utf-8") as f:
+        json.dump(stats, f, ensure_ascii=False, indent=2)
+    print(f"[select] wrote {stats_path}")
+    for m in out:
+        print(f"  {m}: " + "  ".join(f"{k}%={len(v)}" for k, v in out[m].items()))
+    print(f"[select] wrote {dst}  {time.time() - t0:.0f}s")
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--no-dedup", action="store_true")
+    ap.add_argument("--no-strat", action="store_true",
+                    help="消融：不做科室分层配额，直接取全局前 k%（产物 method=nait_ns）")
+    ap.add_argument("--probe-split", default="probe",
+                    help="which acts_<split>.npz to build the centroid from "
+                         "(probe = source domain, probe_domain = target domain)")
+    ap.add_argument("--suffix", default="",
+                    help="'' -> subsets.json / nait + nait_dedup; "
+                         "'_dp' -> subsets_dp.json / nait_dp + nait_dedup_dp")
+    a = ap.parse_args()
+    main(a.limit, not a.no_dedup, a.probe_split, a.suffix,
+         stratified=not a.no_strat)
+
+// ==================== 文件：train.py ====================
+"""LoRA fine-tuning of Qwen2.5-Instruct on a (possibly reduced) clinical set.
+
+One call = one training run. Everything the analysis layer needs is written to
+results/runs/<exp_id>.json so run_one.py can append it to the CSVs R reads.
+
+    python train.py --method nait --ratio 0.30 --seed 1 --epochs 1
+    python train.py --method full --seed 1 --epochs 1
+    python train.py --method random --ratio 0.30 --seed 1 --epochs 1 --limit 200   # smoke
+
+Speed notes (RTX 5070 Laptop, 8 GiB):
+  * tokenise once and cache to data/cache/ - the tokenizer is not the bottleneck
+    but re-running the chat template 24k times per run is pure waste;
+  * length-bucketed batches: padding to the max length of a random batch costs
+    30-40% of the FLOPs when the pool p50 is 256 tokens;
+  * --no-gc drops gradient checkpointing (~30% faster) and OOMs above bs 2 on 3B.
+
+Conventions (must match R/00_setup.R):
+    exp_id = full_s<seed>            for the full-data baseline
+           = <method>_r<RR>_s<seed>  otherwise
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import random
+import time
+from pathlib import Path
+
+import torch
+
+import config as C
+
+SYSTEM = ("You are a helpful medical assistant. Answer the patient's question "
+          "accurately and concisely.")
+
+
+# --------------------------------------------------------------------------- data
+def read_jsonl(path: Path) -> list[dict]:
+    rows = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                rows.append(json.loads(line))
+    return rows
+
+
+def pick_rows(method: str, ratio: float, seed: int, limit: int | None) -> tuple[list[dict], dict]:
+    """Resolve the subset for this (method, ratio, seed) and return its rows."""
+    pool = read_jsonl(C.PROC / "train.jsonl")
+    pool = pool[: C.N_POOL]
+    meta = {"pool_size": len(pool)}
+
+    if method == "full":
+        rows = pool
+    elif method == "random":
+        rng = random.Random(seed)                      # seed-dependent, reproducible
+        n = int(round(ratio * len(pool)))
+        idx = sorted(rng.sample(range(len(pool)), n))
+        rows = [pool[i] for i in idx]
+    else:
+        subset_file = C.subset_file_for(method)
+        if not subset_file.exists():
+            raise SystemExit(f"[train] missing {subset_file} - run select_subset.py first")
+        with open(subset_file, encoding="utf-8") as f:
+            subsets = json.load(f)
+        key = str(int(round(ratio * 100)))
+        if method not in subsets or key not in subsets[method]:
+            raise SystemExit(f"[train] no subset {method}/{key} in {subset_file}")
+        want = set(subsets[method][key])
+        rows = [r for r in pool if r["id"] in want]
+
+    if limit:
+        rows = rows[:limit]
+        meta["pool_size"] = len(pool)
+    meta["n_samples"] = len(rows)
+    return rows, meta
+
+
+def encode(rows: list[dict], tok, max_len: int) -> list[dict]:
+    """Chat-template every row once; loss only on the response tokens."""
+    out = []
+    for i, r in enumerate(rows):
+        msgs_p = [{"role": "system", "content": SYSTEM},
+                  {"role": "user", "content": r["instruction"]}]
+        msgs_f = msgs_p + [{"role": "assistant", "content": r["response"]}]
+        prompt = tok.apply_chat_template(msgs_p, tokenize=False, add_generation_prompt=True)
+        full = tok.apply_chat_template(msgs_f, tokenize=False, add_generation_prompt=False)
+        p_ids = tok(prompt, add_special_tokens=False)["input_ids"]
+        f_ids = tok(full, add_special_tokens=False)["input_ids"]
+        if len(f_ids) > max_len:
+            f_ids = f_ids[:max_len]
+        n_p = min(len(p_ids), len(f_ids))
+        labels = [-100] * n_p + f_ids[n_p:]
+        out.append({"input_ids": f_ids, "labels": labels, "id": r["id"]})
+        if (i + 1) % 5000 == 0:
+            print(f"  encoded {i + 1}/{len(rows)}", flush=True)
+    return out
+
+
+def encode_cached(rows: list[dict], tok, max_len: int, tag: str) -> list[dict]:
+    """Cache the tokenised subset; key = ids + max_len (so a new subset re-encodes)."""
+    h = hashlib.sha1(("%d|" % max_len + ",".join(r["id"] for r in rows)).encode()).hexdigest()[:16]
+    path = C.CACHE / f"sft_{tag}_{h}.pt"
+    if path.exists():
+        try:
+            return torch.load(path, weights_only=False)
+        except Exception:                                  # noqa: BLE001 - stale cache
+            pass
+    enc = encode(rows, tok, max_len)
+    torch.save(enc, path)
+    return enc
+
+
+def make_batches(enc: list[dict], bs: int, seed: int) -> list[list[int]]:
+    """Length-bucketed batches: sort by length, cut into blocks of bs, shuffle blocks."""
+    order = sorted(range(len(enc)), key=lambda i: len(enc[i]["input_ids"]))
+    batches = [order[i:i + bs] for i in range(0, len(order), bs)]
+    random.Random(seed).shuffle(batches)
+    return batches
+
+
+def collate(items, pad_id):
+    L = max(len(b["input_ids"]) for b in items)
+    ids, lab, att = [], [], []
+    for b in items:
+        n = len(b["input_ids"])
+        ids.append(b["input_ids"] + [pad_id] * (L - n))
+        lab.append(b["labels"] + [-100] * (L - n))
+        att.append([1] * n + [0] * (L - n))
+    return (torch.tensor(ids), torch.tensor(lab), torch.tensor(att))
+
+
+# ------------------------------------------------------------------------- model
+def load_base():
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    base = str(C.BASE_DIR)
+    tok = AutoTokenizer.from_pretrained(base, trust_remote_code=True)
+    if tok.pad_token is None:
+        tok.pad_token = tok.eos_token
+    kw = dict(trust_remote_code=True, device_map={"": 0})
+    try:
+        model = AutoModelForCausalLM.from_pretrained(base, dtype=torch.bfloat16, **kw)
+    except TypeError:                                   # transformers v4
+        model = AutoModelForCausalLM.from_pretrained(base, torch_dtype=torch.bfloat16, **kw)
+    model.config.use_cache = False
+    return model, tok
+
+
+def attach_lora(model):
+    from peft import LoraConfig, get_peft_model
+    cfg = LoraConfig(r=16, lora_alpha=32, lora_dropout=0.05, bias="none",
+                     task_type="CAUSAL_LM",
+                     target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
+                                     "gate_proj", "up_proj", "down_proj"])
+    model = get_peft_model(model, cfg)
+    model.print_trainable_parameters()
+    return model
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--method", required=True, choices=C.METHODS)
+    ap.add_argument("--ratio", type=float, default=1.0)
+    ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--epochs", type=float, default=1.0)
+    ap.add_argument("--max-len", type=int, default=C.MAX_LEN)
+    # bs=4 × accum=2：与前 6 个 run 保持一致（换 batch 结构会给跨种子的比较引入混杂）。
+    # 8 GB 卡上 bs=4 峰值 ~7.4 GiB，只要插着电源就能跑满功耗。
+    ap.add_argument("--bs", type=int, default=4)
+    ap.add_argument("--grad-accum", type=int, default=2)
+    ap.add_argument("--lr", type=float, default=1e-4)
+    ap.add_argument("--limit", type=int, default=None, help="cap the number of training rows (smoke test)")
+    ap.add_argument("--no-gc", action="store_true", help="disable gradient checkpointing (faster, more VRAM)")
+    ap.add_argument("--no-save", action="store_true", help="do not keep the adapter weights")
+    a = ap.parse_args()
+
+    C.ensure_dirs()
+    eid = C.exp_id(a.method, a.ratio, a.seed)
+    out_dir = C.ADAPTERS / eid
+    rows, meta = pick_rows(a.method, a.ratio, a.seed, a.limit)
+    if not rows:
+        raise SystemExit("[train] empty training set")
+    print(f"[train] {eid}: {len(rows)} samples, {a.epochs} epoch(s), max_len={a.max_len}, "
+          f"bs={a.bs}x{a.grad_accum}", flush=True)
+
+    model, tok = load_base()
+    model = attach_lora(model)
+    if not a.no_gc:
+        model.gradient_checkpointing_enable()
+    model.train()
+
+    enc = encode_cached(rows, tok, a.max_len, tag=eid if not a.limit else f"limit{a.limit}")
+    batches = make_batches(enc, a.bs, a.seed)
+    steps_per_epoch = max(1, math.ceil(len(batches) / a.grad_accum))
+    total_steps = max(1, int(math.ceil(steps_per_epoch * a.epochs)))
+    opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=a.lr)
+    sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=a.lr, total_steps=total_steps,
+                                                pct_start=0.05)
+
+    t0 = time.time()
+    step, seen, losses = 0, 0, []
+    stop = False
+    for ep in range(int(math.ceil(a.epochs))):
+        random.Random(a.seed + ep).shuffle(batches)
+        for i, idx in enumerate(batches):
+            ids, lab, att = collate([enc[j] for j in idx], tok.pad_token_id)
+            ids, lab, att = ids.cuda(), lab.cuda(), att.cuda()
+            out = model(input_ids=ids, attention_mask=att, labels=lab)
+            loss = out.loss / a.grad_accum
+            loss.backward()
+            losses.append(float(out.loss.detach()))
+            seen += ids.shape[0]
+            if (i + 1) % a.grad_accum == 0:
+                torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
+                opt.step()
+                sched.step()
+                opt.zero_grad(set_to_none=True)
+                step += 1
+                if step % 10 == 0 or step == total_steps:
+                    avg = sum(losses[-min(len(losses), 20):]) / min(len(losses), 20)
+                    el = time.time() - t0
+                    print(f"  step {step}/{total_steps}  loss {avg:.4f}  "
+                          f"{seen} samples  {seen / max(el, 1e-9):.2f} samp/s  "
+                          f"{el / 60:.1f} min", flush=True)
+                if step >= total_steps:
+                    stop = True
+                    break
+        if stop:
+            break
+
+    train_s = time.time() - t0
+    try:
+        print(f"[train] peak {torch.cuda.max_memory_allocated() / 2**30:.2f} GiB allocated, "
+              f"{torch.cuda.max_memory_reserved() / 2**30:.2f} GiB reserved", flush=True)
+    except Exception:
+        pass
+    if not a.no_save:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        model.save_pretrained(str(out_dir))
+        tok.save_pretrained(str(out_dir))
+
+    rec = {"exp_id": eid, "method": a.method, "ratio": float(a.ratio), "seed": a.seed,
+           "epochs": a.epochs, "n_samples": len(rows), "steps": step,
+           "max_len": a.max_len, "bs": a.bs, "grad_accum": a.grad_accum,
+           "train_seconds": round(train_s, 1),
+           "loss_last": round(sum(losses[-20:]) / max(1, min(len(losses), 20)), 4),
+           "adapter": None if a.no_save else str(out_dir), **meta}
+    (C.RUNS / f"{eid}.json").parent.mkdir(parents=True, exist_ok=True)
+    with open(C.RUNS / f"{eid}.json", "w", encoding="utf-8") as f:
+        json.dump(rec, f, indent=2)
+    print(f"[train] done in {train_s / 60:.1f} min -> {C.RUNS / (eid + '.json')}", flush=True)
+
+
+if __name__ == "__main__":
+    main()
+
+// ==================== 文件：eval.py ====================
+"""Score a model on MedQA / MedMCQA with a single forward pass per question.
+
+Instead of generating text and regex-matching an option letter, we read the
+logits at the answer position and compare the probabilities of the four option
+tokens. It is deterministic, ~30x cheaper than generation, and it degrades
+gracefully (a model that always says "A" still gets scored as saying "A").
+
+The prompt goes through the model's chat template with add_generation_prompt=True,
+so the scored position is exactly the first assistant token - the same position
+the SFT loss was computed on.
+
+    python eval.py --task medqa                       # base model
+    python eval.py --task medqa --adapter models/adapters/nait_r30_s1
+    python eval.py --task medqa --limit 100 --out /tmp/preds.csv.gz
+
+Output columns: item_id, dept, pred, correct, pA, pB, pC, pD
+"""
+from __future__ import annotations
+
+import argparse
+import gzip
+import json
+import time
+from pathlib import Path
+
+import torch
+
+import config as C
+
+LETTERS = ["A", "B", "C", "D"]
+
+
+def read_jsonl(path: Path) -> list[dict]:
+    rows = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                rows.append(json.loads(line))
+    return rows
+
+
+def build_messages(r: dict) -> list[dict]:
+    opts = "\n".join(f"{LETTERS[i]}. {o}" for i, o in enumerate(r["options"][:4]))
+    user = (f"Question: {r['question']}\n\n{opts}\n\n"
+            f"Reply with the single letter of the correct option.")
+    return [{"role": "system", "content": "You are a medical expert answering a multiple-choice question."},
+            {"role": "user", "content": user}]
+
+
+def option_token_ids(tok):
+    """Token ids for ' A'..' D' (Qwen tokenises a leading space as its own token)."""
+    ids = []
+    for L in LETTERS:
+        for cand in (f" {L}", L):
+            t = tok(cand, add_special_tokens=False)["input_ids"]
+            if len(t) == 1:
+                ids.append(t[0])
+                break
+        else:
+            raise SystemExit(f"[eval] cannot encode option letter {L} as a single token")
+    return ids
+
+
+def load_model(base: Path, adapter: str | None):
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    if adapter:
+        from peft import PeftModel
+        tok = AutoTokenizer.from_pretrained(adapter, trust_remote_code=True)
+    else:
+        tok = AutoTokenizer.from_pretrained(str(base), trust_remote_code=True)
+    tok.pad_token = tok.pad_token or tok.eos_token
+    tok.padding_side = "left"              # left pad: the answer sits at the last position
+    kw = dict(trust_remote_code=True, device_map={"": 0})
+    try:
+        model = AutoModelForCausalLM.from_pretrained(str(base), dtype=torch.bfloat16, **kw)
+    except TypeError:
+        model = AutoModelForCausalLM.from_pretrained(str(base), torch_dtype=torch.bfloat16, **kw)
+    if adapter:
+        model = PeftModel.from_pretrained(model, adapter)
+    model.eval()
+    model.config.use_cache = False
+    return model, tok
+
+
+@torch.inference_mode()
+def score_batch(model, tok, prompts: list[str], opt_ids: list[int], max_len: int):
+    enc = tok(prompts, add_special_tokens=False, return_tensors="pt",
+              padding=True, truncation=True, max_length=max_len)
+    ids = enc["input_ids"].cuda()
+    att = enc["attention_mask"].cuda()
+    logits = model(input_ids=ids, attention_mask=att).logits[:, -1, :].float()
+    logp = torch.log_softmax(logits, dim=-1)[:, opt_ids]      # (B, 4)
+    p = torch.softmax(logits, dim=-1)[:, opt_ids]
+    return logp.tolist(), p.tolist()
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--task", required=True, choices=["medqa", "medmcqa"])
+    ap.add_argument("--adapter", default=None)
+    ap.add_argument("--out", default=None, help="csv.gz path (default results/preds/<exp>.csv.gz)")
+    ap.add_argument("--exp-id", default=None)
+    ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--max-len", type=int, default=1024)
+    ap.add_argument("--bs", type=int, default=16)
+    a = ap.parse_args()
+
+    src = C.PROC / f"{a.task}.jsonl"
+    rows = read_jsonl(src)
+    if a.limit:
+        rows = rows[: a.limit]
+    if not rows:
+        raise SystemExit(f"[eval] {src} is empty")
+
+    out = Path(a.out) if a.out else C.PREDS / f"{a.exp_id or 'base'}_{a.task}.csv.gz"
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    model, tok = load_model(C.BASE_DIR, a.adapter)
+    opt_ids = option_token_ids(tok)
+    prompts = [tok.apply_chat_template(build_messages(r), tokenize=False,
+                                       add_generation_prompt=True) for r in rows]
+    print(f"[eval] {a.task}: {len(rows)} items, adapter={a.adapter or 'none'}, bs={a.bs} -> {out}",
+          flush=True)
+
+    t0 = time.time()
+    lines = ["item_id,dept,pred,correct,pA,pB,pC,pD"]
+    n_ok = 0
+    for start in range(0, len(rows), a.bs):
+        chunk = rows[start:start + a.bs]
+        lp, p = score_batch(model, tok, prompts[start:start + a.bs], opt_ids, a.max_len)
+        for k, r in enumerate(chunk):
+            pred = LETTERS[max(range(4), key=lambda j: lp[k][j])]
+            # answer is the 0-based option index (prepare_data stores ints)
+            ok = int(LETTERS.index(pred) == int(r["answer"]))
+            n_ok += ok
+            lines.append(f"{r['id']},{r.get('dept', 'other')},{pred},{ok},"
+                         + ",".join(f"{x:.6f}" for x in p[k]))
+        done = start + len(chunk)
+        if done % (a.bs * 5) < a.bs or done == len(rows):
+            el = time.time() - t0
+            print(f"  {done}/{len(rows)}  acc {n_ok / done:.4f}  "
+                  f"{done / max(el, 1e-9):.1f} items/s", flush=True)
+
+    with gzip.open(out, "wt", encoding="utf-8", newline="") as f:
+        f.write("\n".join(lines) + "\n")
+    acc = n_ok / len(rows)
+    print(f"[eval] accuracy {acc:.4f} ({n_ok}/{len(rows)}) -> {out}", flush=True)
+    print(f"ACCURACY={acc:.6f}")
+
+
+if __name__ == "__main__":
+    main()
+
+// ==================== 文件：gen_eval.py ====================
+"""gen_eval.py —— 生成式评估：让模型"写出"答案，而不是只读首 token 概率。
+
+为什么要有这一版：选择题评测（eval.py）只比较 " A".." D" 四个 token 的 logprob，
+模型可能只是学会了"别的位置别乱说话"，并没有真的会答题。
+这一版让它自由生成（贪心、最多 160 token），再从文本里抽答案，
+能看出三件事：①抽得出答案吗（格式合规率）②抽出来对不对（准确率）
+③有没有危险表述（关键词红旗）。
+
+用法（项目根目录）：
+    .venv\\Scripts\\python.exe gen_eval.py --task medmcqa --limit 500 --adapter none
+    .venv\\Scripts\\python.exe gen_eval.py --task medmcqa --limit 500 --adapter nait_r30_s1
+产物：
+    results/gen/<tag>_<task>.csv        逐题记录
+    results/gen/<tag>_<task>.json       汇总指标
+"""
+
+import argparse
+import json
+import os
+import re
+import time
+
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+import config as C
+
+LETTERS = "ABCD"
+
+SYSTEM = (
+    "You are a careful medical exam assistant. "
+    "Answer multiple-choice questions by choosing the single best option. "
+    "Reply with the option letter first, then one short sentence explaining why."
+)
+
+INSTRUCTION = (
+    "Question:\n{question}\n\n"
+    "A. {a}\nB. {b}\nC. {c}\nD. {d}\n\n"
+    "Answer with exactly one letter (A, B, C, or D) followed by a period, "
+    "then one sentence of reasoning."
+)
+
+# 生成文本里的危险表述（只在生成式评测里查，选择题评测没有正文可查）
+RED_FLAGS = [
+    (r"\b(stop|quit|discontinue)\s+(taking\s+)?(your\s+)?(medication|medicine|drugs?|insulin)\b",
+     "建议擅自停药"),
+    (r"\b(take|use)\s+(\d+|two|three|four|five|ten)\s+(times|tablets|pills|capsules)\b",
+     "超量用药"),
+    (r"\bno\s+need\s+to\s+(see|visit|consult)\s+(a\s+)?(doctor|physician|clinician)\b",
+     "劝人不必就医"),
+    (r"\b(you\s+(definitely|certainly)\s+have|it\s+is\s+definitely)\b",
+     "武断诊断"),
+]
+
+
+def load(task, limit, adapter, seed=0):
+    """读题目 + 按 seed 抽样（固定，保证不同 arm 评的是同一批题）。"""
+    path = os.path.join(C.PROC, f"{task}.jsonl")
+    items = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                items.append(json.loads(line))
+    if seed:
+        import random
+        rnd = random.Random(seed)
+        rnd.shuffle(items)
+    return items[:limit] if limit else items
+
+
+def build_prompt(tok, it):
+    opts = it["options"]
+    user = INSTRUCTION.format(
+        question=it["question"].strip(),
+        a=opts[0].strip(), b=opts[1].strip(),
+        c=opts[2].strip(), d=opts[3].strip(),
+    )
+    msgs = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}]
+    return tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True)
+
+
+def parse_answer(text):
+    """从生成文本抽答案：优先"开头就是一个字母"，退而求其次找第一个 A–D。"""
+    t = text.strip()
+    t = re.sub(r"^[\s*#`>\-]+", "", t)          # 去掉 markdown 装饰
+    m = re.match(r"^([A-Da-d])\s*[\.\):、,，]?", t)
+    if m:
+        return m.group(1).upper(), True          # (答案, 是否规范开头)
+    m = re.search(r"\b([A-D])\b", t)
+    return (m.group(1), False) if m else ("", False)
+
+
+def flags_of(text):
+    hits = [why for pat, why in RED_FLAGS if re.search(pat, text, re.IGNORECASE)]
+    return hits
+
+
+def summarise(rows):
+    n = len(rows)
+    acc = sum(r["correct"] for r in rows) / n if n else 0.0
+    fmt = sum(r["format_ok"] for r in rows) / n if n else 0.0
+    parsed = sum(1 for r in rows if r["pred"]) / n if n else 0.0
+    toks = sorted(r["n_tokens"] for r in rows)
+    flagged = sum(1 for r in rows if r["flags"])
+    return {
+        "n_items": n,
+        "acc_strict": round(acc, 4),
+        "format_ok_rate": round(fmt, 4),
+        "parse_rate": round(parsed, 4),
+        "n_tokens_p50": toks[len(toks) // 2] if toks else 0,
+        "n_tokens_max": toks[-1] if toks else 0,
+        "n_flagged": flagged,
+        "flag_rate": round(flagged / n, 4) if n else 0.0,
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--task", default="medmcqa", choices=["medmcqa", "medqa"])
+    ap.add_argument("--adapter", default="none", help="none 或 models/adapters 下的名字")
+    ap.add_argument("--limit", type=int, default=500)
+    ap.add_argument("--bs", type=int, default=8)
+    ap.add_argument("--max-new", type=int, default=160)
+    ap.add_argument("--seed", type=int, default=0, help="抽样种子，0 表示不抽样")
+    ap.add_argument("--out-dir", default=os.path.join(C.RESULTS, "gen"))
+    args = ap.parse_args()
+
+    tag = "base" if args.adapter in ("none", "", None) else args.adapter
+    os.makedirs(args.out_dir, exist_ok=True)
+    csv_path = os.path.join(args.out_dir, f"{tag}_{args.task}.csv")
+    json_path = os.path.join(args.out_dir, f"{tag}_{args.task}.json")
+    if os.path.exists(json_path):
+        print(f"[skip] {json_path} 已存在（想重跑就删掉它）")
+        return
+
+    t0 = time.time()
+    tok = AutoTokenizer.from_pretrained(str(C.BASE_DIR), trust_remote_code=True)
+    if tok.pad_token is None:
+        tok.pad_token = tok.eos_token
+    tok.padding_side = "left"
+
+    model = AutoModelForCausalLM.from_pretrained(
+        str(C.BASE_DIR), dtype=torch.bfloat16, device_map={"": "cuda"},
+        trust_remote_code=True,
+    )
+    if tag != "base":
+        from peft import PeftModel
+        model = PeftModel.from_pretrained(model, str(C.ADAPTERS / tag))
+    model.eval()
+
+    items = load(args.task, args.limit, args.adapter, args.seed)
+    print(f"[gen] {tag} on {args.task}: {len(items)} items, bs={args.bs}")
+
+    rows = []
+    gen_kw = dict(max_new_tokens=args.max_new,
+                  do_sample=False, temperature=None, top_p=None, top_k=None,
+                  pad_token_id=tok.pad_token_id)
+
+    with torch.inference_mode():
+        for i in range(0, len(items), args.bs):
+            chunk = items[i:i + args.bs]
+            prompts = [build_prompt(tok, it) for it in chunk]
+            enc = tok(prompts, return_tensors="pt", padding=True,
+                      truncation=True, max_length=C.MAX_LEN).to("cuda")
+            out = model.generate(**enc, **gen_kw)
+            gen = out[:, enc["input_ids"].shape[1]:]
+            texts = tok.batch_decode(gen, skip_special_tokens=True)
+            for it, txt in zip(chunk, texts):
+                pred, fmt_ok = parse_answer(txt)
+                rows.append({
+                    "item_id": it["id"],
+                    "dept": it.get("dept", ""),
+                    "answer": LETTERS[int(it["answer"])],
+                    "pred": pred,
+                    "correct": int(pred == LETTERS[int(it["answer"])]),
+                    "format_ok": int(fmt_ok),
+                    "n_tokens": len(tok(txt, add_special_tokens=False)["input_ids"]),
+                    "flags": ";".join(flags_of(txt)),
+                    "text": txt.replace("\n", " ").strip()[:400],
+                })
+            done = len(rows)
+            if done % (args.bs * 5) == 0 or done == len(items):
+                el = time.time() - t0
+                print(f"  {done}/{len(items)}  {done / el:.2f} item/s  "
+                      f"elapsed {el / 60:.1f} min  eta {(len(items) - done) / max(done / el, 1e-9) / 60:.1f} min",
+                      flush=True)
+
+    import csv
+    with open(csv_path, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        w.writeheader()
+        w.writerows(rows)
+
+    s = summarise(rows)
+    s.update({"tag": tag, "task": args.task, "adapter": args.adapter,
+              "limit": args.limit, "bs": args.bs, "max_new": args.max_new,
+              "seconds": round(time.time() - t0, 1)})
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(s, f, ensure_ascii=False, indent=2)
+    print(f"[gen] {tag}/{args.task}: acc_strict={s['acc_strict']:.4f} "
+          f"fmt={s['format_ok_rate']:.3f} parse={s['parse_rate']:.3f} "
+          f"flags={s['n_flagged']} p50_tokens={s['n_tokens_p50']}")
+    print(f"[gen] 写出 {csv_path}")
+
+
+if __name__ == "__main__":
+    main()
+
+// ==================== 文件：run_one.py ====================
+"""One experiment = one command: pick subset -> train -> evaluate -> log.
+
+    python run_one.py --method nait --ratio 0.30 --seed 1
+    python run_one.py --method full --seed 1
+    python run_one.py --method nait --ratio 0.30 --seed 1 --smoke      # 200 train / 100 eval items
+
+It writes (and R/ reads):
+    results/adapters/<exp_id>/                 LoRA weights
+    results/runs/<exp_id>.json                 timing + bookkeeping
+    results/preds/<exp_id>_<task>.csv.gz       per-item predictions
+    results/metrics_long.csv                   one row per (exp_id, task)
+    results/compute.csv                        one row per exp_id
+
+Rows are upserted, so re-running the same experiment replaces its numbers
+instead of duplicating them.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import config as C
+
+PY = sys.executable
+
+
+def sh(cmd: list[str]) -> None:
+    print("  $ " + " ".join(cmd), flush=True)
+    r = subprocess.run(cmd, cwd=str(C.PROJ))
+    if r.returncode != 0:
+        raise SystemExit(f"[run_one] step failed ({r.returncode}): {' '.join(cmd)}")
+
+
+def upsert(path: Path, key: dict, row: dict, fields: list[str]) -> None:
+    rows = []
+    if path.exists():
+        with open(path, encoding="utf-8", newline="") as f:
+            rows = list(csv.DictReader(f))
+    rows = [r for r in rows if any(str(r.get(k)) != str(v) for k, v in key.items())]
+    rows.append({k: row.get(k, "") for k in fields})
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fields)
+        w.writeheader()
+        w.writerows(rows)
+
+
+def select_overhead(method: str) -> float:
+    """Amortised cost of the selection pass (measured once, stored by the pipeline)."""
+    p = C.RESULTS / "select_overhead.json"
+    if method == "full":
+        return 0.0
+    if p.exists():
+        with open(p, encoding="utf-8") as f:
+            return float(json.load(f).get(method, 0.0))
+    return 0.0
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--method", required=True, choices=C.METHODS)
+    ap.add_argument("--ratio", type=float, default=1.0)
+    ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--epochs", type=float, default=1.0)
+    ap.add_argument("--tasks", default=",".join(C.TASKS))
+    ap.add_argument("--smoke", action="store_true", help="200 train rows, 100 eval items")
+    ap.add_argument("--limit-train", type=int, default=None)
+    ap.add_argument("--limit-eval", type=int, default=None)
+    ap.add_argument("--reuse", action="store_true", help="skip training if the adapter exists")
+    a = ap.parse_args()
+
+    C.ensure_dirs()
+    eid = C.exp_id(a.method, a.ratio, a.seed)
+    tasks = [t for t in a.tasks.split(",") if t]
+    limit_train = 200 if a.smoke else a.limit_train
+    limit_eval = 100 if a.smoke else a.limit_eval
+    adapter = C.ADAPTERS / eid
+
+    t0 = time.time()
+    print(f"=== {eid}  tasks={tasks}  smoke={a.smoke}", flush=True)
+
+    if a.reuse and adapter.exists():
+        print("[run_one] adapter exists, skipping training", flush=True)
+        train_s = float(json.load(open(C.RUNS / f"{eid}.json", encoding="utf-8"))["train_seconds"]) \
+            if (C.RUNS / f"{eid}.json").exists() else 0.0
+    else:
+        cmd = [PY, "train.py", "--method", a.method, "--ratio", str(a.ratio),
+               "--seed", str(a.seed), "--epochs", str(a.epochs)]
+        if limit_train:
+            cmd += ["--limit", str(limit_train)]
+        # NB: even in smoke mode we keep the adapter - the point of the smoke test is
+        # to exercise the adapter -> eval path, which is exactly what would break.
+        sh(cmd)
+        rec = json.load(open(C.RUNS / f"{eid}.json", encoding="utf-8"))
+        train_s = float(rec["train_seconds"])
+
+    eval_s = 0.0
+    for task in tasks:
+        preds = C.PREDS / f"{eid}_{task}.csv.gz"
+        cmd = [PY, "eval.py", "--task", task, "--exp-id", eid,
+               "--out", str(preds)]
+        if adapter.exists():
+            cmd += ["--adapter", str(adapter)]
+        if limit_eval:
+            cmd += ["--limit", str(limit_eval)]
+        te = time.time()
+        sh(cmd)
+        eval_s += time.time() - te
+
+        acc = None
+        n_items = 0
+        if preds.exists():
+            import gzip
+            with gzip.open(preds, "rt", encoding="utf-8") as f:
+                rd = list(csv.DictReader(f))
+            n_items = len(rd)
+            acc = sum(int(r["correct"]) for r in rd) / max(n_items, 1)
+        if acc is None:
+            raise SystemExit(f"[run_one] {preds} was not written")
+
+        upsert(C.RESULTS / "metrics_long.csv",
+               {"exp_id": eid, "task": task},
+               {"exp_id": eid, "method": a.method, "ratio": a.ratio, "seed": a.seed,
+                "task": task, "value": round(acc, 6), "n_items": n_items,
+                "split": "smoke" if a.smoke else "full"},
+               ["exp_id", "method", "ratio", "seed", "task", "value", "n_items", "split"])
+        print(f"[run_one] {task}: acc={acc:.4f} on {n_items} items", flush=True)
+
+    gpu_hours = (train_s + eval_s) / 3600.0
+    upsert(C.RESULTS / "compute.csv",
+           {"exp_id": eid},
+           {"exp_id": eid, "method": a.method, "ratio": a.ratio, "seed": a.seed,
+            "gpu_hours": round(gpu_hours, 4),
+            "select_overhead_h": round(select_overhead(a.method), 4),
+            "train_seconds": round(train_s, 1), "eval_seconds": round(eval_s, 1)},
+           ["exp_id", "method", "ratio", "seed", "gpu_hours", "select_overhead_h",
+            "train_seconds", "eval_seconds"])
+
+    print(f"[run_one] {eid} done in {(time.time() - t0) / 60:.1f} min  "
+          f"(train {train_s / 60:.1f} + eval {eval_s / 60:.1f})", flush=True)
+
+
+if __name__ == "__main__":
+    main()
+
+// ==================== 文件：tools/night_queue.py ====================
+"""Run a queue of experiments back to back, skipping whatever is already done.
+
+Why a python driver instead of a .bat: the queue is data (a list of
+(method, ratio, seed) triples), it can skip finished runs, and it keeps going
+after a single failure instead of dying at the first error at 3am.
+
+Usage:
+    python tools/night_queue.py                 # the default overnight plan
+    python tools/night_queue.py --plan quick    # only the three 30% arms
+    python tools/night_queue.py --dry-run
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+import config as C  # noqa: E402
+
+PY = ROOT / ".venv" / "Scripts" / "python.exe"
+LOG = ROOT / "night.log"
+RUN_LOGS = ROOT / "logs"
+
+
+def done_ids() -> set[str]:
+    p = C.RESULTS / "metrics_long.csv"
+    if not p.exists():
+        return set()
+    out = set()
+    with open(p, encoding="utf-8") as f:
+        next(f, None)
+        for line in f:
+            out.add(line.split(",", 1)[0])
+    return out
+
+
+def plan(name: str) -> list[tuple[str, float, int]]:
+    """(method, ratio, seed) triples, in priority order."""
+    if name == "quick":
+        return [("full", 1.0, 1), ("nait", 0.3, 1), ("random", 0.3, 1)]
+
+    if name == "seeds6":
+        # 目标：把 30% 这一档从 3 个种子补到 6 个，并加长度匹配对照臂。
+        # 顺序上先补 full（最长、也是所有差值的分母），后面全是 3600 条的短 run。
+        q: list[tuple[str, float, int]] = []
+        for s in (2, 3, 4, 5, 6):
+            q.append(("full", 1.0, s))
+        for s in (2, 3, 4, 5, 6):
+            q.append(("nait", 0.30, s))
+        for s in (2, 3, 4, 5, 6):
+            q.append(("random", 0.30, s))
+        for s in (1, 2, 3, 4, 5, 6):
+            q.append(("rand_len", 0.30, s))
+        # nait_dedup 在 MedQA 上是单种子的 −1.18pp，补两个种子看是不是噪声
+        for s in (2, 3):
+            q.append(("nait_dedup", 0.30, s))
+        return q
+
+    if name == "scale":
+        # "放大池子"那一轮：24k 池、1 epoch、3 种子、4 个臂（12 run）。
+        # 假设：池子越大冗余越重，随机基线越吃亏，选择算法才可能拉开差距。
+        # 顺序：先跑最长的 full（它是所有差值的分母），再跑三个 30% 臂。
+        q: list[tuple[str, float, int]] = []
+        for s in (1, 2, 3):
+            q.append(("full", 1.0, s))
+        for s in (1, 2, 3):
+            q += [("nait", 0.30, s), ("random", 0.30, s), ("rand_len", 0.30, s)]
+        return q
+
+    if name == "fill30":
+        # 按 PREREG 第 5 节：正式跑要 6 个种子。这一轮只补 30% 这一档的 s4–6，
+        # 让主终点（子集 vs 全量）从 3 个种子变 6 个。顺序先 full（它是所有差值的分母），
+        # 再跑三个 30% 臂（每条 7,200 条，约 20 min）。
+        # el2n 保持 3 个种子——它是次要基线，表里会显示 n_seed=3。
+        q: list[tuple[str, float, int]] = []
+        for s in (4, 5, 6):
+            q.append(("full", 1.0, s))
+        for s in (4, 5, 6):
+            q += [("nait", 0.30, s), ("random", 0.30, s), ("rand_len", 0.30, s)]
+        return q
+
+    if name == "epoch3":
+        # 3 epoch 那一轮：1 epoch 时连"全量"都可能欠拟合，天花板压着差距。
+        # 只跑 3 个臂 x 3 个种子（full / nait@30 / random@30），配 DATADIET_RUN_TAG=e3 隔离 id。
+        # 时间账（实测 3.9 samp/s）：full 9000 step ≈ 5.1 h，30% 3000 step ≈ 1.7 h。
+        # 3 个 full 种子要 15 h，一夜装不下，所以 full 只跑 1 个种子，
+        # 把省下的时间给对比臂（nait/random 各 2 个种子）——判据看的是 nait vs random。
+        q: list[tuple[str, float, int]] = [("full", 1.0, 1)]
+        for s in (1, 2):
+            q += [("nait", 0.30, s), ("random", 0.30, s)]
+        return q
+
+    if name == "k48":
+        # 48k 池上把对比臂补到 6 个种子：s1/s2 已有，接着 s3..s6。
+        # 判据看 nait vs random 的 Stouffer p 与符号一致性，两个种子说不清。
+        q: list[tuple[str, float, int]] = []
+        for s in (3, 4, 5, 6):
+            q += [("nait", 0.30, s), ("random", 0.30, s)]
+        return q
+
+    if name == "sweep48k":
+        # 48k 池上的剂量-反应扫描（1 个种子）：回答"随机在哪一档掉出等效界"。
+        # 30% 与 full 已有 6 个种子，这里只补 10/20/50/70 四个点，两个臂各一条。
+        # 时间账（48k 实测 ~5.5 samp/s）：4,800 条约 15 min、24,000 条约 67 min、33,600 条约 95 min。
+        q: list[tuple[str, float, int]] = []
+        for r in (0.10, 0.20, 0.50, 0.70):
+            q += [("nait", r, 1), ("random", r, 1)]
+        return q
+
+    if name == "abl48k":
+        # 消融：分层配额是不是必要的一环（48k、30%、2 个种子）。
+        # no_strat 用全局前 k%，不按科室配额；若它与 nait 打平，说明"分层"这一步没贡献。
+        return [("nait_nostrat", 0.30, s) for s in (1, 2)]
+
+    if name == "el2n":
+        # 经典基线：EL2N 打分后保留最难的 30%（Paul et al., 2021）。
+        # 只跑 30% 这一档、三个种子——它回答的是"激活选择比经典基线强吗"。
+        return [("el2n", 0.30, s) for s in (1, 2, 3)]
+
+    q: list[tuple[str, float, int]] = []
+    # 1. the baseline, then the head-to-head at the headline ratio
+    q += [("full", 1.0, 1), ("nait", 0.30, 1), ("random", 0.30, 1)]
+    # 2. the dose-response curve (where does random break?)
+    for r in (0.10, 0.20, 0.50, 0.70):
+        q += [("nait", r, 1), ("random", r, 1)]
+    # 3. replication seeds for the baseline and the headline point
+    for s in (2, 3):
+        q += [("full", 1.0, s), ("nait", 0.30, s), ("random", 0.30, s)]
+    # 4. the dedup arm, if time remains
+    for r in (0.10, 0.30):
+        q += [("nait_dedup", r, 1)]
+    return q
+
+
+THREAD_CAP = {          # 训练/评测都不许吃满整机，留出桌面与 I/O 的余量
+    "OMP_NUM_THREADS": "4",
+    "MKL_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "4",
+    "NUMEXPR_NUM_THREADS": "4",
+}
+
+
+HEAVY_PAT = ("train.py", "night_queue", "select_subset")
+
+
+def other_heavy_running(own_pid: int | None = None) -> bool:
+    r"""有没有别的重活在跑（训练 / 队列 / 选子集）？
+
+    用 psutil 而不是 powershell：Windows 的 .venv/Scripts/python.exe 是个
+    转向器，会用"同一条命令行 + 新 pid"再起一个基座 python。所以要沿父进程链
+    把"我自己和我的祖先"整体排除，否则队列一启动就把自己当成既有重活。
+    """
+    me = own_pid if own_pid is not None else os.getpid()
+    try:
+        import psutil
+    except Exception:
+        return False
+    proc = {}
+    for pr in psutil.process_iter(["pid", "ppid", "cmdline"]):
+        try:
+            proc[pr.info["pid"]] = (pr.info["ppid"], " ".join(pr.info["cmdline"] or []))
+        except Exception:
+            continue
+    mine, cur, seen = set(), me, set()
+    while cur and cur not in seen:
+        mine.add(cur)
+        seen.add(cur)
+        cur = proc.get(cur, (0, ""))[0]
+    for pid, (_ppid, cmd) in proc.items():
+        if pid in mine:
+            continue
+        if any(pat in cmd for pat in HEAVY_PAT):
+            return True
+    return False
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--plan", default="full",
+                    choices=["full", "quick", "seeds6", "scale", "el2n", "fill30",
+                             "sweep48k", "abl48k",
+                             "epoch3", "k48"])
+    ap.add_argument("--dry-run", action="store_true")
+    a = ap.parse_args()
+
+    if not a.dry_run and other_heavy_running(os.getpid()):
+        print("[night] 已有训练/队列/选子集进程在跑，拒绝叠加启动（先等它结束）")
+        print(f"[night] debug: 我的 pid={os.getpid()}")
+        dbg = subprocess.run(
+            ["powershell", "-NoProfile", "-Command",
+             "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | "
+             "Select-Object ProcessId, CommandLine | Format-List | Out-String"],
+            capture_output=True, text=True, timeout=60)
+        print("[night] debug: 当前 python 进程：")
+        print((dbg.stdout or "")[:800])
+        raise SystemExit(2)
+
+    have = done_ids()
+    items = [t for t in plan(a.plan) if C.exp_id(*t) not in have]
+    print(f"[night] {len(items)} runs to do ({len(plan(a.plan)) - len(items)} already done)")
+
+    if a.dry_run:
+        for m, r, s in items:
+            print("   ", C.exp_id(m, r, s))
+        return
+
+    t0 = time.time()
+    with open(LOG, "a", encoding="utf-8") as lf:
+        lf.write(f"\n===== night queue start {time.strftime('%Y-%m-%d %H:%M:%S')} =====\n")
+    failures = []
+    for i, (m, r, s) in enumerate(items, 1):
+        eid = C.exp_id(m, r, s)
+        cmd = [str(PY), str(ROOT / "run_one.py"), "--method", m,
+               "--ratio", str(r), "--seed", str(s),
+               "--epochs", os.environ.get("DATADIET_EPOCHS", "1")]
+        head = f"[night {i}/{len(items)}] {eid}  ({time.strftime('%H:%M:%S')})"
+        print(head, flush=True)
+        with open(LOG, "a", encoding="utf-8") as lf:
+            lf.write(head + "\n")
+        t = time.time()
+        # 每个 run 独立日志。不能把父进程的 LOG 句柄传给子进程：外层 PowerShell 也用
+        # `*>` 重定向同一个文件，两个写者叠加会让子进程的输出整段丢掉（上一轮就是这样）。
+        RUN_LOGS.mkdir(exist_ok=True)
+        run_log = RUN_LOGS / f"{eid}.log"
+        try:
+            env = dict(os.environ)
+            for k, v in THREAD_CAP.items():
+                env.setdefault(k, v)
+            with open(run_log, "w", encoding="utf-8") as lf:
+                p = subprocess.run(cmd, cwd=ROOT, stdout=lf, stderr=subprocess.STDOUT, env=env)
+            if p.returncode != 0:
+                tail = run_log.read_text(encoding="utf-8", errors="replace").strip().splitlines()[-4:]
+                raise RuntimeError(f"run_one exit {p.returncode}: " + " | ".join(tail))
+        except Exception as e:                                    # keep going
+            failures.append((eid, str(e)))
+            msg = f"  FAILED {eid}: {e}"
+            print(msg, flush=True)
+            with open(LOG, "a", encoding="utf-8") as lf:
+                lf.write(msg + "\n")
+            continue
+        print(f"  ok in {(time.time() - t) / 60:.0f} min", flush=True)
+        acc = [ln for ln in run_log.read_text(encoding="utf-8", errors="replace").splitlines()
+               if "ACCURACY=" in ln]
+        with open(LOG, "a", encoding="utf-8") as lf:
+            lf.write(f"  ok in {(time.time() - t) / 60:.1f} min; " + " ".join(acc) + "\n")
+
+    total = (time.time() - t0) / 3600
+    summary = (f"[night] finished {len(items) - len(failures)}/{len(items)} runs "
+               f"in {total:.1f} h; failures={failures}")
+    print(summary)
+    with open(LOG, "a", encoding="utf-8") as lf:
+        lf.write(summary + "\n")
+
+
+if __name__ == "__main__":
+    main()
+
+// ==================== 文件：tools/chain.py ====================
+"""chain.py —— 把剩下的实验按顺序跑完，中间留冷却时间（用户 2026-10-26 的要求）。
+
+一台上网本连续满载会热，所以每个 stage 之间停 `--cool` 分钟（默认 15），
+并且每个 stage 都记状态到 `logs/chain_state.json`，重启后不会重复跑已完成的 stage。
+
+stage 列表（顺序即执行顺序）：
+  e3        —— 3-epoch 那轮（由 tools/after_full_e3.py 在跑，这里只等它的报告落盘）
+  gen_medqa —— MedQA 生成式评测（4 个 arm，约 20 min）
+  pool48k   —— 48k 池的重跑（归档 24k → 造池 → 采激活 → 选择 → 训练 5 个 run，约 8 h）
+  gen48k    —— 48k 池上的生成式评测（4 个 arm，约 20 min）
+
+用法：
+    .venv\\Scripts\\python.exe tools\\chain.py            # 跑没完成的 stage
+    .venv\\Scripts\\python.exe tools\\chain.py --list     # 只看还有哪些
+"""
+
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+PY = ROOT / ".venv" / "Scripts" / "python.exe"
+STATE = ROOT / "logs" / "chain_state.json"
+LOG = ROOT / "logs" / "chain.log"
+
+TMP = ROOT / "tmp"
+TMP.mkdir(exist_ok=True)
+for k in ("TMP", "TEMP", "TMPDIR"):
+    os.environ[k] = str(TMP)
+os.environ["PYTHONIOENCODING"] = "utf-8"
+
+
+def log(msg: str) -> None:
+    line = f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
+    print(line, flush=True)
+    with open(LOG, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
+
+
+def load_state() -> dict:
+    if STATE.exists():
+        return json.loads(STATE.read_text(encoding="utf-8"))
+    return {}
+
+
+def save_state(st: dict) -> None:
+    STATE.write_text(json.dumps(st, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def run(cmd, name: str, env_extra: dict | None = None) -> int:
+    env = dict(os.environ)
+    if env_extra:
+        env.update(env_extra)
+    log(f"start {name}")
+    t0 = time.time()
+    with open(ROOT / "logs" / f"chain_{name}.log", "w", encoding="utf-8") as lf:
+        p = subprocess.run(cmd, cwd=ROOT, stdout=lf, stderr=subprocess.STDOUT, env=env)
+    log(f"{name} exit={p.returncode} in {(time.time() - t0) / 60:.1f} min")
+    return p.returncode
+
+
+def move(src: Path, dst: Path) -> None:
+    if src.exists() and not dst.exists():
+        shutil.move(str(src), str(dst))
+        log(f"archived {src.name} -> {dst.name}")
+
+
+# ------------------------------------------------------------------ stages
+def stage_e3(st) -> int:
+    """3-epoch 轮：等 after_full_e3.py 的报告出现即可（它自己会跑队列）。"""
+    target = ROOT / "results" / "e3_summary.csv"
+    deadline = time.time() + 16 * 3600
+    while not target.exists():
+        if time.time() > deadline:
+            raise TimeoutError("e3 超过 16 小时还没出报告")
+        time.sleep(120)
+    return 0
+
+
+def stage_gen_medqa(st) -> int:
+    (ROOT / "results" / "gen").mkdir(parents=True, exist_ok=True)
+    arms = ["none", "full_s1", "nait_r30_s1", "random_r30_s1"]
+    for a in arms:
+        rc = run([str(PY), "gen_eval.py", "--task", "medqa", "--limit", "500",
+                  "--bs", "8", "--seed", "7", "--adapter", a], f"gen_medqa_{a}",
+                 {"DATADIET_RUN_TAG": ""})
+        if rc != 0:
+            return rc
+    return run([str(PY), "tools/gen_report.py", "--task", "medqa"], "gen_medqa_report")
+
+
+def stage_pool48k(st) -> int:
+    """归档 24k 轮 → 造 48k 池 → 采激活 → 选择 → 训练。"""
+    move(ROOT / "results", ROOT / "results_round2_24k")
+    move(ROOT / "data" / "subsets", ROOT / "subsets_round2_24k")
+    move(ROOT / "data" / "processed", ROOT / "processed_round2_24k")
+    move(ROOT / "cache" / "acts", ROOT / "acts_round2_24k")
+    move(ROOT / "models" / "adapters", ROOT / "adapters_round2_24k")
+    for d in ("results", "results/preds", "results/runs", "data/subsets",
+              "data/processed", "cache/acts", "models/adapters"):
+        (ROOT / d).mkdir(parents=True, exist_ok=True)
+
+    env48 = {"DATADIET_N_TRAIN": "48000", "DATADIET_N_POOL": "48000",
+             "DATADIET_RUN_TAG": "", "DATADIET_EPOCHS": "1"}
+    steps = [
+        ([str(PY), "prepare_data.py", "--pool", "domain"], "48k_prepare", env48),
+        ([str(PY), "collect_acts.py", "--split", "train"], "48k_acts_train", env48),
+        ([str(PY), "collect_acts.py", "--split", "probe"], "48k_acts_probe", env48),
+        ([str(PY), "select_subset.py"], "48k_select", env48),
+        ([str(PY), "tools/make_randlen.py"], "48k_randlen", env48),
+        # full 1 个种子 + nait/random 各 2 个种子（每 run: full 1 epoch 48k ≈ 3.4 h，30% ≈ 1.0 h）
+        ([str(PY), "run_one.py", "--method", "full", "--ratio", "1.0", "--seed", "1", "--epochs", "1"],
+         "48k_full_s1", env48),
+    ]
+    for m in ("nait", "random"):
+        for s in (1, 2):
+            steps.append(([str(PY), "run_one.py", "--method", m, "--ratio", "0.30",
+                           "--seed", str(s), "--epochs", "1"], f"48k_{m}_s{s}", env48))
+    for cmd, name, env in steps:
+        rc = run(cmd, name, env)
+        if rc != 0:
+            return rc
+
+    # 归档式重跑最容易漏的一步：派生文件（eq_table / sample_stats / compute_table）
+    # 必须在新一轮里重新生成，否则收尾的 audit 会读不到文件而静默失败。
+    # 顺序不能反：R 先算出 eq_table / compute_table，report_numbers 才有东西可汇总；
+    # 而 R 又依赖 export_sample_stats 产的 sample_stats.csv。
+    report = [
+        ([str(PY), "tools/export_sample_stats.py"], "48k_sample_stats"),
+        (["C:/Program Files/R/R-4.6.1/bin/x64/Rscript.exe", "R/run_all.R"], "48k_r"),
+        ([str(PY), "tools/report_numbers.py"], "48k_report_numbers"),
+        ([str(PY), "tools/make_table1.py"], "48k_table1"),
+    ]
+    for cmd, name in report:
+        rc = run(cmd, name, env48)
+        if rc != 0:
+            return rc
+    return 0
+
+
+def stage_gen48k(st) -> int:
+    (ROOT / "results" / "gen").mkdir(parents=True, exist_ok=True)
+    arms = ["none", "full_s1", "nait_r30_s1", "random_r30_s1"]
+    for a in arms:
+        rc = run([str(PY), "gen_eval.py", "--task", "medmcqa", "--limit", "500",
+                  "--bs", "8", "--seed", "7", "--adapter", a], f"gen48k_{a}",
+                 {"DATADIET_RUN_TAG": ""})
+        if rc != 0:
+            return rc
+    return run([str(PY), "tools/gen_report.py", "--task", "medmcqa"], "gen48k_report")
+
+
+STAGES = [
+    ("e3", "3-epoch 轮（9 个 run 已裁成 5 个，正在跑）", stage_e3),
+    ("gen_medqa", "MedQA 生成式评测（4 arm，约 20 min）", stage_gen_medqa),
+    ("pool48k", "48k 池重跑（造池+采激活+5 个 run，约 8 h）", stage_pool48k),
+    ("gen48k", "48k 池生成式评测（4 arm，约 20 min）", stage_gen48k),
+]
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--list", action="store_true")
+    ap.add_argument("--cool", type=int, default=15, help="stage 之间冷却分钟数")
+    ap.add_argument("--only", default="", help="只跑某个 stage")
+    a = ap.parse_args()
+
+    st = load_state()
+    todo = [(n, d, f) for n, d, f in STAGES
+            if st.get(n, {}).get("status") != "done" and (not a.only or n == a.only)]
+    if a.list:
+        for n, d, _ in STAGES:
+            s = st.get(n, {}).get("status", "pending")
+            print(f"  {n:<12}{s:<10}{d}")
+        return
+
+    log(f"chain up: {len(todo)} stage(s) todo, cooldown {a.cool} min")
+    for i, (name, desc, fn) in enumerate(todo):
+        log(f"=== stage {name}: {desc} ===")
+        st.setdefault(name, {})["started"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        save_state(st)
+        try:
+            rc = fn(st)
+        except Exception as e:
+            rc = -1
+            log(f"stage {name} raised: {e}")
+        st[name]["rc"] = rc
+        st[name]["status"] = "done" if rc == 0 else "failed"
+        st[name]["finished"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        save_state(st)
+        log(f"stage {name} -> {st[name]['status']}")
+        if i < len(todo) - 1 and a.cool > 0:
+            log(f"cooling down {a.cool} min (让机器歇一歇)")
+            time.sleep(a.cool * 60)
+
+    log("chain finished")
+    run([str(PY), "tools/make_audit.py"], "chain_audit")
+    run([str(PY), "tools/audit_final.py"], "chain_audit_final")
+
+
+if __name__ == "__main__":
+    main()
+
+// ==================== 文件：tools/export_sample_stats.py ====================
+"""export_sample_stats.py - 导出"每样本一行"的激活统计表（提案 02③ 要求的字段）。
+
+提案原文：关键字段 = 样本激活统计 / 被选子集 / 训练数据量 / 下游任务表现 / 训练算力。
+本脚本产出第一项：每条训练样本的激活得分、全池名次、以及是否被某个子集选中。
+
+用法：
+    .venv\\Scripts\\python.exe tools\\export_sample_stats.py
+输出：
+    results/sample_stats.csv
+"""
+from __future__ import annotations
+
+import json
+import os
+import sys
+
+import numpy as np
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+
+import config as C  # noqa: E402
+import select_subset as S  # noqa: E402
+
+
+def main() -> None:
+    ids, tr = S.load_acts("train")
+    _, pr = S.load_acts("probe")
+    # 不按 C.N_POOL 截断：激活文件本来就是这个池子的（24k 池就是 24k 条）。
+    # 之前写 ids[: C.N_POOL] 会在环境变量没传时把 24k 池悄悄砍成 12k，
+    # 导出的表与真实池子对不上，而脚本不会报错。
+    ids = list(ids)
+
+    scores, _ = S.nait_scores(tr, pr)          # 与 select_subset.py 完全同一条路径
+    scores = np.asarray(scores).ravel()
+    n = len(ids)
+
+    order = np.argsort(-scores)
+    rank = np.empty(n, dtype=int)
+    rank[order] = np.arange(1, n + 1)
+
+    # 科室标签
+    dept_of = {}
+    with open(os.path.join(C.PROC, "train.jsonl"), encoding="utf-8") as f:
+        for line in f:
+            r = json.loads(line)
+            dept_of[r["id"]] = r["dept"]
+
+    # 子集名单
+    with open(os.path.join(C.SUBSETS, "subsets.json"), encoding="utf-8") as f:
+        subs = json.load(f)
+
+    cols, id_sets = [], {}
+    for method in ("nait", "nait_dedup"):
+        if method not in subs:
+            continue
+        for pct in ("10", "20", "30", "50", "70"):
+            key = f"{method}_{pct}"
+            blk = subs[method].get(pct, {})
+            id_sets[key] = set(blk.get("ids", []) if isinstance(blk, dict) else blk)
+            cols.append(key)
+
+    out = os.path.join(C.RESULTS, "sample_stats.csv")
+    with open(out, "w", encoding="utf-8", newline="") as f:
+        f.write(",".join(["id", "dept", "act_score", "act_rank", "pct_rank"] + cols) + "\n")
+        for i, sid in enumerate(ids):
+            line = [
+                sid, dept_of.get(sid, "other"), f"{float(scores[i]):.6f}",
+                str(int(rank[i])), f"{100.0 * rank[i] / n:.2f}",
+            ]
+            line += ["1" if sid in id_sets[k] else "0" for k in cols]
+            f.write(",".join(line) + "\n")
+
+    print(f"wrote {out}")
+    print(f"rows={n}  columns={5 + len(cols)}")
+    print("cols:", ",".join(["id", "dept", "act_score", "act_rank", "pct_rank"] + cols))
+    if "nait_30" in id_sets:
+        print("sanity: nait_30 selected =", sum(1 for s in ids if s in id_sets["nait_30"]))
+    print("sanity: score p50={:.4f}  p99={:.4f}".format(
+        float(np.percentile(scores, 50)), float(np.percentile(scores, 99))))
+
+
+if __name__ == "__main__":
+    main()
+
+// ==================== 文件：tools/paired_stats.py ====================
+"""Paired comparison between two runs on the same test items.
+
+Usage:
+    python tools/paired_stats.py full_s1_medqa nait_r30_s1_medqa
+    python tools/paired_stats.py full_s1_medqa nait_r30_s1_medqa random_r30_s1_medqa
+
+Prints, for each comparison:
+  - accuracy of each run
+  - the 2x2 table (both right / A only / B only / both wrong)
+  - exact McNemar p-value (binom.test on the discordant pairs)
+  - paired bootstrap CI for the accuracy difference (2000 resamples over items)
+
+Why paired: the same 1,273 questions are answered by both models, so the
+question "is B better than A" only depends on the items where they disagree.
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parent.parent
+PRED = ROOT / "results" / "preds"
+RNG = np.random.default_rng(0)
+
+
+def load(eid: str) -> pd.DataFrame:
+    p = PRED / f"{eid}.csv.gz"
+    if not p.exists():
+        raise SystemExit(f"missing {p}")
+    df = pd.read_csv(p)
+    need = {"item_id", "correct"}
+    if not need.issubset(df.columns):
+        raise SystemExit(f"{p} lacks columns {need - set(df.columns)}")
+    return df[["item_id", "correct"]].sort_values("item_id").reset_index(drop=True)
+
+
+def mcnemar_exact(b: int, c: int) -> float:
+    """Two-sided exact McNemar via the binomial test on discordant pairs."""
+    from math import comb
+
+    n = b + c
+    if n == 0:
+        return 1.0
+    k = min(b, c)
+    # two-sided: 2 * P(X <= k), capped at 1
+    tail = sum(comb(n, i) for i in range(k + 1)) / (2 ** n)
+    return min(1.0, 2 * tail)
+
+
+def boot_ci(diff: np.ndarray, B: int = 2000, alpha: float = 0.05) -> tuple[float, float]:
+    idx = RNG.integers(0, len(diff), size=(B, len(diff)))
+    means = diff[idx].mean(axis=1)
+    lo, hi = np.quantile(means, [alpha / 2, 1 - alpha / 2])
+    return float(lo), float(hi)
+
+
+def compare(a: str, b: str) -> None:
+    da, db = load(a), load(b)
+    if not da["item_id"].equals(db["item_id"]):
+        common = set(da["item_id"]) & set(db["item_id"])
+        da = da[da["item_id"].isin(common)].reset_index(drop=True)
+        db = db[db["item_id"].isin(common)].reset_index(drop=True)
+        print(f"  (restricted to {len(common)} common items)")
+
+    ca = da["correct"].to_numpy().astype(int)
+    cb = db["correct"].to_numpy().astype(int)
+    n = len(ca)
+
+    acc_a, acc_b = ca.mean(), cb.mean()
+    both = int(((ca == 1) & (cb == 1)).sum())
+    only_a = int(((ca == 1) & (cb == 0)).sum())
+    only_b = int(((ca == 0) & (cb == 1)).sum())
+    neither = int(((ca == 0) & (cb == 0)).sum())
+
+    d = cb - ca
+    lo, hi = boot_ci(d)
+    p = mcnemar_exact(only_a, only_b)
+
+    print(f"\n{a}  vs  {b}")
+    print(f"  n = {n} items")
+    print(f"  acc {a:<18} {acc_a:.4f}")
+    print(f"  acc {b:<18} {acc_b:.4f}")
+    print(f"  diff (B - A)        {100 * (acc_b - acc_a):+.2f} pp "
+          f"[{100 * lo:+.2f}, {100 * hi:+.2f}] 95% CI")
+    print(f"  both right {both:>5}   only A {only_a:>5}   only B {only_b:>5}   both wrong {neither:>5}")
+    print(f"  McNemar exact p = {p:.4g}")
+
+
+def main() -> None:
+    args = sys.argv[1:]
+    if len(args) < 2:
+        raise SystemExit(__doc__)
+    for other in args[1:]:
+        compare(args[0], other)
+
+
+if __name__ == "__main__":
+    main()
+
+// ==================== 文件：R/00_setup.R ====================
+# 00_setup.R —— 路径 / 常量 / 工具函数（所有脚本 source 它）
+# 用法：在 datadiet-ehr 项目根目录执行  Rscript R/01_equivalence.R
+# 说明：刻意只用 base R，不依赖 tidyverse —— 任何一台新装的 Windows R 都能直接跑。
+
+PROJ <- normalizePath(".", mustWork = TRUE)
+if (!dir.exists(file.path(PROJ, "R"))) {
+  stop("请在 datadiet-ehr 项目根目录运行（当前：", PROJ, "）")
+}
+
+# 语言边界：Python 只往 results/ 写，R 只从 results/ 读
+RESULTS <- Sys.getenv("DATADIET_RESULTS_DIR", unset = file.path(PROJ, "results"))
+# 3-epoch 那轮的 id 带 _e3 后缀，同一套脚本靠环境变量切换，不改代码
+FIG     <- file.path(PROJ, "paper", "figures")
+dir.create(FIG, recursive = TRUE, showWarnings = FALSE)
+
+# 等效性界 δ。写进 Method，跑实验之前定死，不许跑完再改。
+# 为什么是 2 个绝对点而不是 1 个：配对差值在 ~1–4k 道题、3 个种子的条件下，
+# 95%CI 半宽约 1.0–1.5pp（每道题 d∈{-1,0,1}，方差 ~0.37）。δ=1pp 时连"真等效"
+# 都可能因为 CI 太宽而判不合格，δ=2pp 才有检验功效。审稿人问起，这就是理由。
+DELTA <- 0.02
+
+# 方法之间的等效界。这里问的不是"和全量比掉不掉"，而是"两种挑法有没有区别"。
+# 界取 1pp：小于 1pp 的差距在实际部署里没法用（换个种子就翻方向），
+# 所以"差异 < 1pp"就该判成"等效"，而不是用"p>0.05 所以没差别"来糊过去
+# （那是 absence of evidence，不是 evidence of absence）。
+DELTA_CONTRAST <- 0.01
+
+TASKS   <- c("medqa", "medmcqa")
+METHODS <- c("full", "random", "rand_len", "el2n", "nait", "nait_dedup")
+PAL     <- c(full = "grey30", random = "grey65", rand_len = "#CC79A7",
+             el2n = "#E69F00", nait = "#0072B2", nait_dedup = "#009E73")
+
+read_results <- function(...) {
+  read.csv(file.path(RESULTS, ...), stringsAsFactors = FALSE)
+}
+
+# 逐题预测：Python 侧命名 <exp_id>_<task>.csv.gz
+read_preds <- function(eid, task) {
+  read.csv(file.path(RESULTS, "preds", paste0(eid, "_", task, ".csv.gz")),
+           stringsAsFactors = FALSE)
+}
+
+# 与 config.py 的 exp_id() 对齐：full 就是 full_s<seed>，其余带比例。
+# DATADIET_RUN_TAG 会追加后缀（3-epoch 那轮用 e3），保证两轮 id 不撞、也不互相覆盖。
+RUN_TAG <- Sys.getenv("DATADIET_RUN_TAG", unset = "")
+
+exp_id <- function(method, ratio, seed) {
+  suf <- if (nzchar(RUN_TAG)) paste0("_", RUN_TAG) else ""
+  if (identical(method, "full")) sprintf("full_s%d%s", as.integer(seed), suf)
+  else sprintf("%s_r%02d_s%d%s", method, round(ratio * 100), as.integer(seed), suf)
+}
+
+# 配对 bootstrap：输入逐题差值向量，返回均值的 95% CI
+boot_ci <- function(x, B = 2000, alpha = 0.05, seed = 1) {
+  set.seed(seed)
+  m <- replicate(B, mean(sample(x, length(x), replace = TRUE)))
+  stats::quantile(m, c(alpha / 2, 1 - alpha / 2), names = FALSE)
+}
+
+fmt_p <- function(p) ifelse(p < 0.001, "<.001", sprintf("%.3f", p))
+
+// ==================== 文件：R/01_equivalence.R ====================
+# 01_equivalence.R —— 论文的统计核心：30% 数据到底"等效"吗？nait 到底优于 random 吗？
+# 输入：results/metrics_long.csv, results/preds/*.csv.gz
+# 输出：results/eq_table.csv（方法 vs 全量）、results/eq_contrast.csv（方法 vs 方法）
+#
+# 统计口径（2026-10-24 修正，之前的口径是错的）：
+#   错的做法：把 3 个种子的 b/c 计数相加再跑一次 McNemar
+#             → 同一批 4183 道题被数了 3 遍，违反独立性，p 值不可解释。
+#   现在的做法：
+#     1. 每个种子内部单独做逐题配对检验（McNemar 精确检验 + 逐题 bootstrap CI）；
+#     2. 跨种子用 Stouffer 合并各seed的 p（带符号），再报种子间极差与标准差；
+#     3. 等效性两个口径都给：
+#        - equiv_item：把逐题差值按题平均后做 bootstrap（条件于这 3 次训练）——论文主用的口径；
+#        - equiv_seed：把 3 个种子均值当 3 个观测做 t 区间（对"新种子"外推）——更保守。
+#   两种口径不一致时，结论必须写"条件于固定种子"。
+
+source("R/00_setup.R")
+B <- 2000
+
+m <- read_results("metrics_long.csv")
+SEEDS <- sort(unique(m$seed))
+SUBS  <- setdiff(unique(m$method), "full")
+
+preds_path <- function(eid, task) file.path(RESULTS, "preds", paste0(eid, "_", task, ".csv.gz"))
+have <- function(eid, task) file.exists(preds_path(eid, task))
+
+# ---- 工具函数 ----
+paired <- function(ea, eb, task) {
+  if (!have(ea, task) || !have(eb, task)) return(NULL)
+  a <- read_preds(ea, task)[, c("item_id", "correct")]
+  b <- read_preds(eb, task)[, c("item_id", "correct")]
+  p <- merge(a, b, by = "item_id", suffixes = c(".a", ".b"))
+  if (!nrow(p)) return(NULL)
+  p <- p[order(p$item_id), ]
+  list(n = nrow(p),
+       acc_a = mean(p$correct.a), acc_b = mean(p$correct.b),
+       d = p$correct.a - p$correct.b,
+       a_only = sum(p$correct.a == 1 & p$correct.b == 0),
+       b_only = sum(p$correct.a == 0 & p$correct.b == 1))
+}
+
+mcnemar_p <- function(b, c) {
+  n <- b + c
+  if (n == 0) return(NA_real_)
+  binom.test(b, n, 0.5)$p.value
+}
+
+# Stouffer 合并：符号取方向，权重相等
+stouffer <- function(p, d) {
+  ok <- !is.na(p) & !is.na(d) & d != 0
+  if (!any(ok)) return(NA_real_)
+  z <- qnorm(1 - p[ok] / 2) * sign(d[ok])
+  zc <- sum(z) / sqrt(length(z))
+  2 * (1 - pnorm(abs(zc)))
+}
+
+equiv_flag <- function(lo, hi, delta = DELTA) (lo > -delta) && (hi < delta)
+
+# ============================================================
+# A. 每个种子内部：方法 vs 全量
+# ============================================================
+per <- list(); k <- 1
+for (tk in TASKS) {
+  for (sd in SEEDS) {
+    # 全量基线可能只跑了一个种子（48k / e3 轮就是这样）。那时用 full_s1 当共同参照，
+    # 并把 full_ref_seed 记进表里，免得读者以为每个种子都有独立的全量基线。
+    fe <- exp_id("full", 1, sd)
+    ref_seed <- sd
+    .pf <- function(e, t) file.path(RESULTS, "preds", paste0(e, "_", t, ".csv.gz"))
+    if (!file.exists(.pf(fe, tk))) {
+      fe <- exp_id("full", 1, 1)
+      ref_seed <- 1
+    }
+    for (mt in SUBS) {
+      rs <- sort(unique(m$ratio[m$method == mt & m$seed == sd]))
+      for (r in rs) {
+        eid <- exp_id(mt, r, sd)
+        pr <- paired(eid, fe, tk)
+        if (is.null(pr)) next
+        ci <- boot_ci(pr$d, B = B, seed = 7)   # 与跨种子汇总用同一个 RNG 种子：
+                                               # 单种子时两处 CI 必须完全一致，否则表对不上
+        per[[k]] <- data.frame(
+          task = tk, method = mt, ratio = r, seed = sd, full_ref_seed = ref_seed,
+          n_item = pr$n,
+          acc_full = round(pr$acc_b, 4), acc_sub = round(pr$acc_a, 4),
+          delta_pp = round(mean(pr$d) * 100, 2),
+          ci_lo_pp = round(ci[1] * 100, 2), ci_hi_pp = round(ci[2] * 100, 2),
+          b = pr$a_only, c = pr$b_only,
+          mcnemar_p = round(mcnemar_p(pr$a_only, pr$b_only), 4),
+          equiv = equiv_flag(ci[1], ci[2])
+        )
+        k <- k + 1
+      }
+    }
+  }
+}
+per <- do.call(rbind, per)
+write.csv(per, file.path(RESULTS, "eq_per_seed.csv"), row.names = FALSE)
+
+# ============================================================
+# B. 跨种子汇总
+# ============================================================
+key <- interaction(per$task, per$method, per$ratio, drop = TRUE)
+rows <- list(); i <- 1
+for (g in split(per, key)) {
+  g <- g[order(g$seed), ]
+  # 逐题差值：按题平均掉种子噪声，再对题做 bootstrap（条件口径）
+  vecs <- list()
+  for (sd in g$seed) {
+    pr <- paired(exp_id(g$method[1], g$ratio[1], sd), exp_id("full", 1, sd), g$task[1])
+    if (!is.null(pr)) vecs[[as.character(sd)]] <- pr$d
+  }
+  if (!length(vecs)) next
+  lens <- sapply(vecs, length)
+  vecs <- vecs[lens == max(lens)]                    # 题集必须一致才能逐题平均
+  d_item <- if (length(vecs) == 1) vecs[[1]] else rowMeans(do.call(cbind, vecs))
+
+  ci_item <- boot_ci(d_item, B = B, seed = 7)
+  ds <- g$delta_pp
+  ci_seed <- if (length(ds) >= 2) {
+    tcrit <- qt(0.975, df = length(ds) - 1)
+    half <- tcrit * sd(ds) / sqrt(length(ds))
+    c(mean(ds) - half, mean(ds) + half)
+  } else c(NA_real_, NA_real_)
+
+  rows[[i]] <- data.frame(
+    task = g$task[1], method = g$method[1], ratio = g$ratio[1],
+    n_seed = nrow(g), n_item = as.integer(round(mean(g$n_item))),
+    acc_full = round(mean(g$acc_full), 4), acc_sub = round(mean(g$acc_sub), 4),
+    delta_pp = round(mean(ds), 2),
+    ci_lo_pp = round(ci_item[1] * 100, 2), ci_hi_pp = round(ci_item[2] * 100, 2),
+    seed_min_pp = round(min(ds), 2), seed_max_pp = round(max(ds), 2),
+    seed_sd_pp = round(ifelse(length(ds) > 1, sd(ds), NA_real_), 2),
+    ci_seed_lo_pp = round(ci_seed[1], 2), ci_seed_hi_pp = round(ci_seed[2], 2),
+    stouffer_p = round(stouffer(g$mcnemar_p, ds), 4),
+    equiv_item = equiv_flag(ci_item[1], ci_item[2]),
+    equiv_seed = if (is.na(ci_seed[1])) NA else equiv_flag(ci_seed[1] / 100, ci_seed[2] / 100),
+    all_seeds_same_sign = (all(ds > 0) || all(ds < 0)),
+    stringsAsFactors = FALSE
+  )
+  i <- i + 1
+}
+res <- do.call(rbind, rows)
+res <- res[order(res$task, res$method, res$ratio), ]
+write.csv(res, file.path(RESULTS, "eq_table.csv"), row.names = FALSE)
+
+# ============================================================
+# C. 方法 vs 方法（nait 是否优于 random —— 论文真正要主张的那条）
+# ============================================================
+con <- list(); j <- 1
+others <- setdiff(SUBS, "random")
+# 先做"每个方法 vs 随机"，再补两条关键对照：
+#   nait vs rand_len —— 排除"长度代理"解释（长度分布完全对齐后还赢不赢）
+#   nait_dedup vs nait —— 去重本身有没有伤到效果
+pairs <- lapply(others, function(m) c(m, "random"))
+extra <- list(c("nait", "rand_len"), c("nait_dedup", "nait"))
+for (e in extra) {
+  if (all(e %in% SUBS)) pairs[[length(pairs) + 1]] <- e
+}
+for (tk in TASKS) {
+  for (pp in pairs) {
+    mt <- pp[1]; base <- pp[2]
+    for (r in sort(unique(per$ratio[per$method == mt]))) {
+      ds <- c(); ps <- c(); se <- c(); vecs <- list()
+      for (sd in SEEDS) {
+        pr <- paired(exp_id(mt, r, sd), exp_id(base, r, sd), tk)
+        if (is.null(pr)) next
+        ds <- c(ds, mean(pr$d) * 100)
+        ps <- c(ps, mcnemar_p(pr$a_only, pr$b_only))
+        se <- c(se, sd)
+        vecs[[length(vecs) + 1]] <- pr$d
+      }
+      if (!length(ds)) next
+      # 逐题口径：先按题把各 seed 的 d 平均（题目相同，可以逐题合并），再对题做 bootstrap。
+      # 这样得到的 CI 回答的是"换一批题，差距会落在哪"，不受种子噪声放大。
+      dbar <- rowMeans(do.call(cbind, vecs))
+      bc <- boot_ci(dbar * 100, seed = 7)
+      lo <- round(bc[1], 2); hi <- round(bc[2], 2)
+      con[[j]] <- data.frame(
+        task = tk, method = mt, vs = base, ratio = r, n_seed = length(ds),
+        delta_pp = round(mean(ds), 2), seed_min_pp = round(min(ds), 2),
+        seed_max_pp = round(max(ds), 2), seed_sd_pp = round(ifelse(length(ds) > 1, sd(ds), NA_real_), 2),
+        ci_lo_pp = lo, ci_hi_pp = hi,
+        tost_equiv = (lo > -DELTA_CONTRAST * 100) && (hi < DELTA_CONTRAST * 100),
+        tost_margin_pp = DELTA_CONTRAST * 100,
+        per_seed_pp = paste(sprintf("%+.2f", ds), collapse = " / "),
+        per_seed_p = paste(sprintf("%.3f", ps), collapse = " / "),
+        stouffer_p = round(stouffer(ps, ds), 4),
+        same_sign = (all(ds > 0) || all(ds < 0)),
+        stringsAsFactors = FALSE
+      )
+      j <- j + 1
+    }
+  }
+}
+contrast <- do.call(rbind, con)
+write.csv(contrast, file.path(RESULTS, "eq_contrast.csv"), row.names = FALSE)
+
+# ============================================================
+# D. 终端摘要
+# ============================================================
+cat("\n== r = 0.30：方法 vs 全量（δ = ±", DELTA * 100, "pp）==\n", sep = "")
+show <- res[abs(res$ratio - 0.30) < 1e-9, ]
+print(show[, c("task", "method", "n_seed", "delta_pp", "ci_lo_pp", "ci_hi_pp",
+               "seed_min_pp", "seed_max_pp", "stouffer_p", "equiv_item", "equiv_seed")],
+      row.names = FALSE)
+
+cat("\n== 逐种子（r = 0.30，看方向是否一致）==\n")
+pw <- per[abs(per$ratio - 0.30) < 1e-9, ]
+print(pw[, c("task", "method", "seed", "delta_pp", "ci_lo_pp", "ci_hi_pp", "mcnemar_p", "equiv")],
+      row.names = FALSE)
+
+cat("\n== 方法 vs 随机：同一比例下谁更好（TOST 界 ±",
+    DELTA_CONTRAST * 100, "pp）==\n", sep = "")
+print(contrast[, c("task", "method", "ratio", "delta_pp", "ci_lo_pp", "ci_hi_pp",
+                   "tost_equiv", "per_seed_pp", "stouffer_p", "same_sign")],
+      row.names = FALSE)
+
+cat("\n== 各比例下 nait 的掉点 ==\n")
+n <- res[res$method == "nait", c("task", "ratio", "n_seed", "delta_pp",
+                                 "ci_lo_pp", "ci_hi_pp", "equiv_item")]
+print(n[order(n$task, n$ratio), ], row.names = FALSE)
+
+cat("\n表已写出：\n  ", file.path(RESULTS, "eq_table.csv"),
+    "\n  ", file.path(RESULTS, "eq_per_seed.csv"),
+    "\n  ", file.path(RESULTS, "eq_contrast.csv"), "\n")
+
+// ==================== 文件：R/02_curve.R ====================
+# 02_curve.R —— 数据效率曲线（论文 Fig.2）
+# 输入：默认 results/metrics_long.csv（当前轮）；可用 DATADIET_CURVE_DIR 指向别的轮次
+# 输出：paper/figures/fig02_data_efficiency.png, fig02_absolute.png
+#
+# 为什么要能换目录：24k 主轮只跑了 30% 这一档（其它比例在 12k 轮的归档里），
+# 单点画不出曲线。所以 Fig.2 默认取 12k 轮的剂量-反应（五档齐全、标注为 pilot），
+# 而 6 种子主终点由 Fig.6 的森林图承担。
+
+source("R/00_setup.R")
+
+curve_dir <- Sys.getenv("DATADIET_CURVE_DIR", unset = "")
+if (nzchar(curve_dir)) {
+  f <- file.path(curve_dir, "metrics_long.csv")
+  cat(sprintf("Fig.2 数据来源：%s\n", f))
+  m <- read.csv(f, stringsAsFactors = FALSE)
+  m$value <- as.numeric(m$value)
+  m$ratio <- as.numeric(m$ratio)
+} else {
+  m <- read_results("metrics_long.csv")
+}
+sub <- m[m$method != "full", ]
+full_mean <- tapply(m$value[m$method == "full"], m$task[m$method == "full"], mean)
+
+# 每个 method × ratio × task：mean ± 1.96 SE（种子间）
+key <- interaction(sub$method, sub$ratio, sub$task, drop = TRUE)
+agg <- do.call(rbind, lapply(split(sub, key), function(d) {
+  data.frame(method = d$method[1], ratio = d$ratio[1], task = d$task[1],
+             mean = mean(d$value), se = sd(d$value) / sqrt(nrow(d)), n = nrow(d))
+}))
+
+# 两种纵轴：绝对准确率 / 相对全量的掉点（pp）
+agg$delta_pp <- (agg$mean - full_mean[agg$task]) * 100
+
+draw <- function(mode, file) {
+  png(file.path(FIG, file), width = 2000, height = 950, res = 150)
+  par(mfrow = c(1, 2), mar = c(3.9, 4.4, 2.6, 0.8), oma = c(1.9, 0, 0, 0),
+      mgp = c(2.6, 0.7, 0), las = 1)
+
+  if (mode == "delta") {
+    agg$y  <- agg$delta_pp
+  } else {
+    agg$y  <- agg$mean * 100
+  }
+  agg$lo <- agg$y - 1.96 * agg$se * 100
+  agg$hi <- agg$y + 1.96 * agg$se * 100
+
+  ylim <- range(c(agg$lo, agg$hi, if (mode == "delta") c(0, -DELTA * 100) else NULL), na.rm = TRUE)
+  ylim <- ylim + c(-0.05, 0.30) * diff(ylim)
+  ticks <- seq(-10, 10, 5)
+
+  for (k in seq_along(TASKS)) {
+    tk <- TASKS[k]
+    d  <- agg[agg$task == tk, ]
+    plot(NA, xlim = c(0.04, 0.78), ylim = ylim, xaxt = "n", bty = "l",
+         xlab = "Retained training data (fraction of full set)",
+         ylab = if (k == 1) (if (mode == "delta") "Delta vs full data (pp)" else "Accuracy (%)") else "",
+         main = tk)
+    axis(1, at = c(.1, .2, .3, .5, .7), labels = c("10%", "20%", "30%", "50%", "70%"))
+    axis(2, at = ticks[ticks >= ylim[1] & ticks <= ylim[2]])
+    if (mode == "delta") {
+      abline(h = 0, col = "grey40", lty = 3)
+      abline(h = -DELTA * 100, col = "#D55E00", lty = 2, lwd = 1.4)
+    } else {
+      abline(h = full_mean[[tk]] * 100, col = "grey30", lty = 3)
+      text(0.77, full_mean[[tk]] * 100, "full", pos = 2, cex = 0.7, col = "grey30", xpd = NA)
+    }
+    for (mt in setdiff(METHODS, "full")) {
+      dd <- d[d$method == mt, ]; dd <- dd[order(dd$ratio), ]
+      if (!nrow(dd)) next
+      col <- PAL[[mt]]
+      segments(dd$ratio, dd$lo, dd$ratio, dd$hi, col = col, lwd = 1.3)
+      lines(dd$ratio, dd$y, col = col, lwd = 2)
+      # 实心 = 多种子（有 CI）；空心 = 单种子（CI 不可估，别让点看起来"很确定"）
+      points(dd$ratio, dd$y, pch = ifelse(dd$n > 1, 19, 1), col = col, cex = 1.15)
+    }
+  }
+
+  # 图例单独铺在图底，不压任何曲线
+  par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
+  plot.new()
+  if (nzchar(curve_dir)) {
+    # 图顶留的 oma 是 0，mtext(outer=TRUE) 会被裁掉，所以写在覆盖层里
+    text(0.5, 0.975, "12k pool  ·  dose-response round (single seed except 30%)",
+         cex = 0.72, col = "grey35")
+  }
+  ord  <- c("random", "el2n", "rand_len", "nait", "nait_dedup")
+  lab  <- c("random", "el2n", "rand_len (length-matched)", "nait", "nait + dedup")
+  keep <- intersect(ord, unique(agg$method))
+  labs <- lab[match(keep, ord)]
+  cols <- PAL[keep]
+  ltys <- rep(1, length(keep)); pchs <- rep(19, length(keep))
+  labs <- c(labs, "open marker = single seed"); cols <- c(cols, "grey40")
+  ltys <- c(ltys, 0); pchs <- c(pchs, 1)
+  if (mode == "delta") {
+    labs <- c(labs, "equivalence margin \u00b1 2 pp"); cols <- c(cols, "#D55E00")
+    ltys <- c(ltys, 2); pchs <- c(pchs, NA)
+  }
+  legend("bottom", legend = labs, col = cols, lty = ltys, pch = pchs, lwd = 2,
+         horiz = TRUE, bty = "n", cex = 0.82, seg.len = 2.4)
+  invisible(dev.off())
+}
+
+draw("delta", "fig02_data_efficiency.png")
+draw("absolute", "fig02_absolute.png")
+
+cat("图已写出：\n  paper/figures/fig02_data_efficiency.png\n  paper/figures/fig02_absolute.png\n")
+cat("\n30% 保留时的掉点（pp）：\n")
+z <- agg[abs(agg$ratio - 0.30) < 1e-9, ]
+print(z[, c("task", "method", "mean", "delta_pp")], row.names = FALSE)
+
+// ==================== 文件：R/03_robustness.R ====================
+# 03_robustness.R —— 跨科室稳健性（论文 Fig.4 / Table 3）
+# 问题：nait 的优势是不是集中在某个科室？最差科室掉几个点？
+# 输入：results/preds/*.csv.gz（只取 r = 0.30 这一档）
+# 输出：results/robust.csv, paper/figures/fig04_dept.png
+
+source("R/00_setup.R")
+R0 <- 0.30
+m <- read_results("metrics_long.csv")
+SEEDS <- sort(unique(m$seed))
+SUBS  <- setdiff(unique(m$method), "full")
+
+preds_path <- function(eid, task) file.path(RESULTS, "preds", paste0(eid, "_", task, ".csv.gz"))
+have <- function(eid, task) file.exists(preds_path(eid, task))
+
+rows <- list(); i <- 1
+for (tk in TASKS) {
+  for (mt in SUBS) {
+    dz <- NULL
+    for (sd in SEEDS) {
+      fe <- exp_id("full", 1, sd)
+      se <- exp_id(mt, R0, sd)
+      if (!have(fe, tk) || !have(se, tk)) next
+      f <- read_preds(fe, tk)[, c("item_id", "dept", "correct")]
+      s <- read_preds(se, tk)[, c("item_id", "correct")]
+      p <- merge(f, s, by = "item_id", suffixes = c(".f", ".s"))
+      dz <- rbind(dz, p)
+    }
+    if (is.null(dz) || !nrow(dz)) next
+
+    dz$d <- dz$correct.s - dz$correct.f
+    agg_item <- aggregate(d ~ item_id + dept, data = dz, FUN = mean)
+
+    for (dp in sort(unique(agg_item$dept))) {
+      v  <- agg_item$d[agg_item$dept == dp]
+      if (length(v) < 30) next          # 太小的科室不画，避免噪声冒充结论
+      ci <- boot_ci(v, seed = 11)
+      rows[[i]] <- data.frame(task = tk, method = mt, dept = dp, n_item = length(v),
+                              delta_pp = round(mean(v) * 100, 2),
+                              ci_lo_pp = round(ci[1] * 100, 2),
+                              ci_hi_pp = round(ci[2] * 100, 2),
+                              equiv = (ci[1] > -DELTA) && (ci[2] < DELTA))
+      i <- i + 1
+    }
+  }
+}
+res <- do.call(rbind, rows)
+write.csv(res, file.path(RESULTS, "robust.csv"), row.names = FALSE)
+
+# ---- 图：点 + 区间，按科室分组 ----
+pal <- c(random = "grey55", el2n = "#E69F00", rand_len = "#CC79A7", nait = "#0072B2", nait_dedup = "#009E73")
+ord <- c("random", "el2n", "rand_len", "nait", "nait_dedup")
+lab <- c("random 30%", "el2n 30%", "rand_len 30%", "nait 30%", "nait+dedup 30%")
+ms  <- intersect(ord, SUBS)
+labs <- lab[match(ms, ord)]
+
+png(file.path(FIG, "fig04_dept.png"), width = 2100, height = 950, res = 150)
+par(mfrow = c(1, 2), mar = c(3.2, 4.4, 2.8, 0.8), oma = c(2.8, 0, 0, 0),
+    mgp = c(2.5, 0.7, 0), las = 1)
+off <- seq(-0.24, 0.24, length.out = length(ms))
+
+for (tk in TASKS) {
+  d <- res[res$task == tk, ]
+  if (!nrow(d)) next
+  depts <- sort(unique(d$dept))
+  plot(NA, xlim = c(0.55, length(depts) + 0.45),
+       ylim = range(c(d$ci_lo_pp, d$ci_hi_pp, 0, -DELTA * 100)) + c(-0.6, 0.6),
+       xlab = "", ylab = "Delta vs full data (pp)", main = tk, bty = "l", xaxt = "n")
+  axis(1, at = seq_along(depts), labels = depts, cex.axis = 0.9)
+  abline(h = 0, col = "grey40", lty = 3)
+  abline(h = -DELTA * 100, col = "#D55E00", lty = 2, lwd = 1.3)
+
+  for (k in seq_along(ms)) {
+    mt <- ms[k]
+    z <- d[d$method == mt, ]
+    if (!nrow(z)) next
+    z <- z[match(depts, z$dept), ]
+    x <- seq_along(depts) + off[k]
+    segments(x, z$ci_lo_pp, x, z$ci_hi_pp, col = pal[[mt]], lwd = 1.5)
+    points(x, z$delta_pp, pch = 19, col = pal[[mt]], cex = 1.15)
+  }
+}
+
+par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
+plot.new()
+legend("bottom", legend = labs, col = pal[ms],
+       pch = 19, lty = 1, lwd = 2, horiz = TRUE, bty = "n", cex = 0.85, seg.len = 2.4)
+invisible(dev.off())
+
+cat("表已写出：", file.path(RESULTS, "robust.csv"), "\n")
+cat("图已写出：paper/figures/fig04_dept.png\n\n每个方法最差的科室：\n")
+worst <- do.call(rbind, lapply(split(res, list(res$task, res$method), drop = TRUE),
+                               function(d) d[which.min(d$delta_pp), ]))
+print(worst[, c("task", "method", "dept", "delta_pp", "ci_lo_pp", "ci_hi_pp")],
+      row.names = FALSE)
+
+// ==================== 文件：R/04_compute.R ====================
+# 04_compute.R —— 算力净账（论文 Fig.5 / Table 4）
+# 关键点：净节省 = 全量训练 − (子集训练 + 选择前向)，三者都要算进去，不能只报训练时间。
+#
+# 为什么用"每样本速率"而不是直接拿 wall-clock：这些 run 是同一张卡上跑的，
+# 中间被别的进程抢过算力（有一条 r=50% 的 run 慢了近 2 倍）。直接比 wall-clock
+# 会把"机器当时忙不忙"当成"数据量大小"的效应。所以：
+#   rate = median(train_seconds / n_samples)          # 对污染不敏感
+#   gpu_hours = n_samples * rate / 3600 + select_overhead_h
+# 评测时间与训练集大小无关，单列，不进净账。
+#
+# 输入：results/{metrics_long.csv, compute.csv, select_overhead.json}
+# 输出：results/compute_table.csv, paper/figures/fig05_compute.png
+
+source("R/00_setup.R")
+
+m  <- read_results("metrics_long.csv")
+cp <- read_results("compute.csv")
+
+# base R 没有 jsonlite，而这个文件就是一串 "键": 数字，正则取出来足够
+sel_of <- function(method, default = 0) {
+  p <- file.path(RESULTS, "select_overhead.json")
+  if (!file.exists(p)) return(default)
+  txt <- paste(readLines(p, warn = FALSE), collapse = " ")
+  mt <- regmatches(txt, regexpr(sprintf('"%s"\\s*:\\s*[0-9.]+', method), txt))
+  if (!length(mt)) return(default)
+  as.numeric(sub(".*:\\s*", "", mt))
+}
+sel <- sel_of("nait")
+
+# 池子大小从数据里读，不写死：24k 那一轮的 train.jsonl 就是 24,000 行。
+# 之前写死 12000 会让 24k 轮的"每样本耗时"整体翻倍、子集条数只报一半。
+pool_file <- file.path(PROJ, "data", "processed", "train.jsonl")
+N_FULL <- if (file.exists(pool_file)) length(readLines(pool_file, warn = FALSE)) else 12000
+cat(sprintf("训练池大小（读 train.jsonl）：%d 条\n", N_FULL))
+
+n_of <- function(method, ratio) if (identical(method, "full")) N_FULL else round(N_FULL * ratio)
+cp$n_samples <- mapply(n_of, cp$method, cp$ratio)
+cp$s_per_sample <- cp$train_seconds / cp$n_samples
+
+rate <- median(cp$s_per_sample)
+cp$contaminated <- cp$s_per_sample > 1.3 * rate
+rate_clean <- median(cp$s_per_sample[!cp$contaminated])
+cat(sprintf("每样本训练耗时：中位数 %.4f s，清洗后 %.4f s（剔除 %d 条被抢算力的 run）\n",
+            rate, rate_clean, sum(cp$contaminated)))
+
+cp$train_h  <- cp$n_samples * rate_clean / 3600
+# 只有"要看一遍模型"的方法才付选择前向的钱，而且各家不一样：
+#   nait*  采 5 层激活 + 打分（实测 917 s = 0.2547 GPU-h）
+#   el2n   只需一次前向拿 p_true（实测 36.4 min = 0.607 GPU-h，比采激活更贵，
+#          因为它跑的是完整词表 softmax，而激活采集只存 5 层隐藏态）
+#   random / rand_len 是纯抽样（rand_len 只是按 nait 的长度分布抽），零开销。
+ovh <- c(full = 0, random = 0, rand_len = 0,
+         nait = sel_of("nait"), nait_dedup = sel_of("nait_dedup"), el2n = sel_of("el2n"))
+cp$select_h <- as.numeric(ovh[cp$method])
+cp$select_h[is.na(cp$select_h)] <- 0
+cp$gpu_hours <- cp$train_h + cp$select_h
+
+full_h <- N_FULL * rate_clean / 3600
+
+tab <- do.call(rbind, lapply(split(cp, list(cp$method, cp$ratio), drop = TRUE), function(d) {
+  data.frame(method = d$method[1], ratio = d$ratio[1], n_samples = d$n_samples[1],
+             n_seed = nrow(d),
+             train_h = round(mean(d$train_h), 3),
+             select_h = round(mean(d$select_h), 3),
+             gpu_hours = round(mean(d$gpu_hours), 3),
+             net_saving_pct = round((1 - mean(d$gpu_hours) / full_h) * 100, 1))
+}))
+tab <- tab[order(tab$method, tab$ratio), ]
+
+# 准确率仅作参考（两任务平均）
+acc <- tapply(m$value, list(m$method, m$ratio), mean)
+tab$acc <- round(mapply(function(mt, r) acc[mt, as.character(r)], tab$method, tab$ratio), 4)
+
+write.csv(tab, file.path(RESULTS, "compute_table.csv"), row.names = FALSE)
+
+# ---------------- 图 ----------------
+# 这一轮只有 30% 一档（其它比例是上一轮 12k 池的），所以不画曲线，画"堆叠柱"：
+# 每根柱子 = 训练 + 选择前向，虚线 = 全量训练的算力。读者一眼看到
+# "el2n 明明只留 30% 数据，算力却几乎没省"，那是它跑全词表 softmax 的代价。
+pal <- c(random = "grey55", el2n = "#E69F00", rand_len = "#CC79A7", nait = "#0072B2", nait_dedup = "#009E73")
+ord <- c("random", "el2n", "rand_len", "nait", "nait_dedup")
+lab <- c("random", "el2n", "rand_len", "nait", "nait + dedup")
+
+z <- tab[abs(tab$ratio - 0.30) < 1e-9, ]
+z <- z[match(intersect(ord, z$method), z$method), ]
+ms <- z$method
+labs <- lab[match(ms, ord)]
+
+png(file.path(FIG, "fig05_compute.png"), width = 1750, height = 1000, res = 150)
+par(mar = c(3.8, 4.8, 2.8, 4.2), oma = c(0, 0, 2.0, 0), mgp = c(2.7, 0.8, 0), las = 1)
+ylim <- c(0, max(c(z$gpu_hours, full_h)) * 1.20)
+bp <- barplot(rbind(z$train_h, z$select_h), names.arg = labs, ylim = ylim,
+              col = c("grey80", "grey45"), border = NA, space = 0.55,
+              ylab = "GPU-hours per run\n(30% retained)", main = "What the 70% saving costs to earn",
+              cex.names = 0.9)
+text(bp, z$gpu_hours, sprintf("%.0f%%", z$net_saving_pct), pos = 3, cex = 0.8, col = "grey15")
+
+abline(h = full_h, col = "grey30", lty = 3, lwd = 1.5)
+text(bp[1] - 0.10, full_h, sprintf("full data (%.2f GPU-h)", full_h),
+     pos = 3, adj = c(0, 0), cex = 0.75, col = "grey30")
+
+axis(4, at = pretty(ylim), labels = pretty(ylim) * 2, col.axis = "grey40", cex.axis = 0.8)
+text(bp[1] - 0.55, ylim[2], "right axis: cost (CNY @ 2/GPU-h)", adj = c(0, 1), cex = 0.7, col = "grey40")
+
+par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
+plot.new()
+legend("top", legend = c("training", "selection forward pass", "net saving vs full data"),
+       fill = c("grey80", "grey45", NA), border = NA, lty = c(NA, NA, 3),
+       lwd = c(NA, NA, 1.5), col = c(NA, NA, "grey30"),
+       horiz = TRUE, bty = "n", cex = 0.82)
+invisible(dev.off())
+
+cat("\n表已写出：", file.path(RESULTS, "compute_table.csv"), "\n")
+cat("图已写出：paper/figures/fig05_compute.png\n\n")
+cat(sprintf("全量单次训练：%.2f GPU-h（约 %.0f 元 @2元/GPU-h）\n", full_h, full_h * 2))
+cat(sprintf("选择前向开销：%.3f GPU-h（实测，一次性）\n\n", sel))
+cat("30% 档的净账：\n")
+print(tab[abs(tab$ratio - 0.30) < 1e-9,
+          c("method", "n_samples", "train_h", "select_h", "gpu_hours",
+            "net_saving_pct", "acc")], row.names = FALSE)
+
+// ==================== 文件：R/05_multiple.R ====================
+# 05_multiple.R —— 多重比较：谁在主检验里，谁只是探索
+#
+# 为什么要单独一个文件：审稿人第一个会问"你比了这么多次，p 值还能信吗"。
+# 答案不能是"我们没校正"，也不能是"全都校正"——得先把假设分成家族，
+# 每个家族内部校正，并且说清哪个家族支撑主结论。
+#
+# 家族划分（与 docs/PREREG.md §2/§4 一致）：
+#   P 主终点：子集 vs 全量（30%），每个 (任务, 方法) 一条，预注册、单独报告、不参与校正
+#   C 对比家族：方法 vs 方法（30%），6 条，探索性 → Holm
+#   D 剂量家族：nait 在 10/20/50/70% 的探索性对比 → Holm
+#
+# 输入：results/eq_contrast.csv（delta/CI/stouffer_p）
+# 输出：results/holm.csv
+
+source("R/00_setup.R")
+
+ct <- read_results("eq_contrast.csv")
+if (!nrow(ct)) { cat("eq_contrast.csv 为空，跳过\n"); quit(save = "no") }
+
+ct$ratio <- as.numeric(ct$ratio)
+ct$stouffer_p <- as.numeric(ct$stouffer_p)
+ct$delta_pp <- as.numeric(ct$delta_pp)
+
+ct$family <- ifelse(abs(ct$ratio - 0.30) < 1e-9, "C_contrast_at_30", "D_other_ratios")
+
+res <- do.call(rbind, lapply(split(ct, ct$family), function(d) {
+  # Holm 在每个家族内部做；p 缺失的行保留 NA 且不参与校正
+  p <- d$stouffer_p
+  ok <- is.finite(p)
+  d$p_holm <- NA_real_
+  d$p_holm[ok] <- p.adjust(p[ok], method = "holm")
+  d$sig_raw  <- ok & p < 0.05
+  d$sig_holm <- ok & d$p_holm < 0.05
+  d
+}))
+
+# 说明：等效性（P 家族）报告的是 TOST/CI，不产生需要校正的 p，
+# 因此这里只对"方法间差异"做校正。这一点必须写进正文，别让读者以为是漏了。
+
+out <- res[order(res$family, res$task, res$method, res$vs), c(
+  "family", "task", "method", "vs", "ratio", "delta_pp",
+  "ci_lo_pp", "ci_hi_pp", "stouffer_p", "p_holm", "sig_raw", "sig_holm")]
+write.csv(out, file.path(RESULTS, "holm.csv"), row.names = FALSE, na = "")
+
+cat("写出：", file.path(RESULTS, "holm.csv"), "\n\n")
+for (f in unique(out$family)) {
+  cat("家族", f, "（", sum(out$family == f), " 条）\n", sep = "")
+  z <- out[out$family == f, ]
+  print(z[, c("task", "method", "vs", "delta_pp", "stouffer_p", "p_holm", "sig_holm")],
+        row.names = FALSE)
+  cat("\n")
+}
+
+n_raw  <- sum(out$sig_raw, na.rm = TRUE)
+n_holm <- sum(out$sig_holm, na.rm = TRUE)
+cat(sprintf("校正前显著 %d 条，Holm 校正后 %d 条。\n", n_raw, n_holm))
+if (n_holm < n_raw) {
+  cat("→ 有对比靠校正前的 p 值撑着，正文不能写成确定结论。\n")
+} else {
+  cat("→ 校正前后结论不变。\n")
+}
+
+// ==================== 文件：R/06_forest.R ====================
+# 06_forest.R —— 逐种子森林图（论文 Fig.6）
+#
+# 为什么需要这张图：表格里的"Δ = −0.26pp"会掩盖一个事实——
+# 六个种子里有的 +0.55、有的 −0.86。点图能把"符号翻转"直接摊开，
+# 比任何一句"not significant"都诚实。
+#
+# 输入：results/eq_per_seed.csv（每种子一行）、results/eq_table.csv（汇总）
+# 输出：paper/figures/fig06_forest.png
+
+source("R/00_setup.R")
+
+per <- read_results("eq_per_seed.csv")
+agg <- read_results("eq_table.csv")
+if (!nrow(per)) { cat("eq_per_seed.csv 为空，跳过\n"); quit(save = "no") }
+
+per$ratio <- as.numeric(per$ratio)
+agg$ratio <- as.numeric(agg$ratio)
+ratio_show <- 0.30
+
+per <- per[abs(per$ratio - ratio_show) < 1e-9, ]
+agg <- agg[abs(agg$ratio - ratio_show) < 1e-9, ]
+
+ms  <- intersect(c("nait", "random", "rand_len", "el2n", "nait_dedup"), unique(per$method))
+ord <- match(ms, c("nait", "random", "rand_len", "el2n", "nait_dedup"))
+ms  <- ms[order(ord)]
+lab <- c(nait = "nait", random = "random", rand_len = "rand_len\n(len-matched)",
+         el2n = "el2n", nait_dedup = "nait + dedup")
+
+png(file.path(FIG, "fig06_forest.png"), width = 1750, height = 900, res = 150)
+par(mfrow = c(1, length(TASKS)), mar = c(3.8, 6.0, 2.8, 2.4), oma = c(0, 0, 1.6, 0),
+    mgp = c(2.4, 0.6, 0), las = 1)
+
+for (tk in TASKS) {
+  p <- per[per$task == tk, ]
+  a <- agg[agg$task == tk, ]
+  if (!nrow(p)) { plot.new(); next }
+
+  ylab <- c(sapply(ms, function(m) lab[[m]]), rep("", 0))
+  ypos <- rev(seq_along(ms))          # 第一个方法画在最上面
+  ylim <- c(0.4, length(ms) + 0.6)
+  xlim <- range(c(p$ci_lo_pp, p$ci_hi_pp, -DELTA * 100, DELTA * 100,
+                  a$ci_lo_pp, a$ci_hi_pp), na.rm = TRUE)
+  xlim <- xlim + c(-0.15, 0.15) * diff(xlim)
+
+  plot(NA, xlim = xlim, ylim = ylim, axes = FALSE, xlab = "",
+       ylab = "", main = tk)
+  abline(v = 0, col = "grey40", lty = 3)
+  abline(v = c(-DELTA * 100, DELTA * 100), col = "#D55E00", lty = 2)
+  axis(1, cex.axis = 0.85, padj = -0.2)
+  axis(2, at = ypos, labels = sapply(ms, function(m) lab[[m]]), tick = FALSE, cex.axis = 0.9)
+  mtext(if (identical(tk, TASKS[1])) "Delta vs full data (pp)" else "", side = 1, line = 2.3, cex = 0.9)
+
+  for (k in seq_along(ms)) {
+    m <- ms[k]; y <- ypos[k]
+    d <- p[p$method == m, ]
+    a1 <- a[a$method == m, ]
+    col <- PAL[[m]]
+    if (nrow(d)) {
+      # 每个种子一个点，纵向轻微散开，避免重叠时看不见
+      off <- if (nrow(d) > 1) seq(-0.16, 0.16, length.out = nrow(d)) else 0
+      d <- d[order(d$seed), ]
+      points(d$delta_pp, y + off, pch = 19, col = col, cex = 0.85)
+    }
+    if (nrow(a1)) {
+      # 汇总：粗线 = 种子间 95% CI，方块 = 均值
+      segments(a1$ci_seed_lo_pp, y, a1$ci_seed_hi_pp, y, col = col, lwd = 2.6)
+      points(a1$delta_pp, y, pch = 18, col = col, cex = 1.7)
+    }
+  }
+}
+
+mtext("Per-seed deltas (dots) and pooled mean with seed-level 95% CI (thick bar)",
+      side = 3, outer = TRUE, line = 0.4, cex = 0.8, col = "grey25")
+invisible(dev.off())
+
+cat("图已写出：paper/figures/fig06_forest.png\n")
+
+// ==================== 文件：R/07_pipeline.R ====================
+# 07_pipeline.R —— 论文 Fig.1：整条流水线一页看懂
+# 输出：paper/figures/fig01_pipeline.png
+#
+# 纯 base R 画，不引外部包：六个方框 + 箭头 + 每个框下面两行小字说明。
+
+source("R/00_setup.R")
+
+png(file.path(FIG, "fig01_pipeline.png"), width = 1950, height = 720, res = 150)
+par(mar = c(0.5, 0.5, 0.5, 0.5), xpd = NA)
+plot(NA, xlim = c(0, 100), ylim = c(0, 100), axes = FALSE, xlab = "", ylab = "")
+
+box <- function(x, w, title, l1 = "", l2 = "", fill = "#EDF2F7", border = "#4A5568") {
+  y0 <- 52; y1 <- 78
+  rect(x - w / 2, y0, x + w / 2, y1, col = fill, border = border, lwd = 1.4)
+  text(x, y1 - 7, title, font = 2, cex = 0.95)
+  if (nzchar(l1)) text(x, y0 + 8.5, l1, cex = 0.72, col = "#2D3748")
+  if (nzchar(l2)) text(x, y0 + 3.5, l2, cex = 0.72, col = "#2D3748")
+}
+
+arrow_to <- function(x0, x1, label = "", y = 65) {
+  arrows(x0, y, x1, y, length = 0.10, lwd = 1.4, col = "#2D3748")
+  if (nzchar(label)) text((x0 + x1) / 2, y + 4.5, label, cex = 0.62, col = "#4A5568")
+}
+
+xs <- c(10, 27, 44, 61, 78, 93.5)
+w  <- c(15, 14, 14, 15, 14, 12)
+
+box(xs[1], w[1], "1 训练池", "MedMCQA train", "24,000 / 48,000 条", fill = "#E6F0FA")
+box(xs[2], w[2], "2 激活采集", "5 层 · response token", "24,000×5×1536", fill = "#E8F5E9")
+box(xs[3], w[3], "3 选择协议", "去均值 → 得分 → 去重", "分层配额 → 取前 k%", fill = "#FFF4E0")
+box(xs[4], w[4], "4 LoRA SFT", "Qwen2.5-1.5B · bf16", "r=16 · 1 epoch · 4×2", fill = "#EDE9F6")
+box(xs[5], w[5], "5 评测", "选项判别 + 生成式", "MedQA / MedMCQA", fill = "#FDECEC")
+box(xs[6], w[6], "6 统计", "逐题配对 McNemar", "TOST · Holm · 种子 CI", fill = "#E9EEF3")
+
+for (i in 1:5) arrow_to(xs[i] + w[i] / 2 + 0.4, xs[i + 1] - w[i + 1] / 2 - 0.4)
+
+text(50, 96, "DataDiet-EHR：从 30% 数据到可判定的等效结论", font = 2, cex = 1.25)
+text(50, 90, "每个数字都由 Python 出、R 判；选择过程可审计（哈希 + 每样本激活统计）",
+     cex = 0.78, col = "#4A5568")
+
+# 对照臂：从第 3 步分叉
+segments(xs[3], 52, xs[3], 40, col = "#4A5568", lwd = 1.4)
+segments(xs[3] - 16, 40, xs[3] + 16, 40, col = "#4A5568", lwd = 1.4)
+arrows(xs[3] - 16, 40, xs[3] - 16, 38.4, length = 0.10, lwd = 1.4, col = "#4A5568")
+arrows(xs[3] + 16, 40, xs[3] + 16, 38.4, length = 0.10, lwd = 1.4, col = "#4A5568")
+rect(xs[3] - 24, 26, xs[3] - 8, 38, col = "#F7FAFC", border = "#A0AEC0", lwd = 1.2)
+text(xs[3] - 16, 34.5, "随机对照", font = 2, cex = 0.8)
+text(xs[3] - 16, 30.5, "同规模·同步数", cex = 0.66)
+text(xs[3] - 16, 27.8, "random / rand_len", cex = 0.66)
+rect(xs[3] + 8, 26, xs[3] + 24, 38, col = "#F7FAFC", border = "#A0AEC0", lwd = 1.2)
+text(xs[3] + 16, 34.5, "经典基线", font = 2, cex = 0.8)
+text(xs[3] + 16, 30.5, "EL2N（最难样本）", cex = 0.66)
+text(xs[3] + 16, 27.8, "代价 0.607 GPU-h", cex = 0.66)
+
+text(50, 14, "对照口径：δ = 2 pp（逐题 + 种子双口径），主终点 = 30% 保留时相对全量的掉点",
+     cex = 0.78, col = "#2D3748")
+text(50, 9, "算力净账：全量 1.02 GPU-h  vs  nait 0.56（省 45%）· 随机 0.31（省 70%）· EL2N 0.92（省 11%）",
+     cex = 0.78, col = "#2D3748")
+text(50, 3.5, "开源：协议文档 + 逐题预测 + 每样本激活与选择日志 + 一条命令复现",
+     cex = 0.72, col = "#4A5568", font = 3)
+
+invisible(dev.off())
+cat("图已写出：paper/figures/fig01_pipeline.png\n")
+
+// ==================== 文件：R/run_all.R ====================
+# run_all.R —— 一条命令跑完 R 侧全部分析
+# 用法（项目根目录）：Rscript R/run_all.R
+# 若要在假数据上做自检：Rscript R/99_make_demo_data.R 之后手动 source 各脚本，
+# 并把 00_setup.R 的 RESULTS 指向 results/demo。
+
+t0 <- Sys.time()
+# Fig.2 的剂量-反应曲线来自 12k pilot 轮（24k 主轮只跑了 30% 一档）。
+# 归档目录存在时才指过去，否则退回当前轮，免得换机器就报错。
+.curve_archive <- file.path(getwd(), "results_round1_12k")
+if (dir.exists(.curve_archive)) Sys.setenv(DATADIET_CURVE_DIR = .curve_archive)
+
+steps <- c("R/01_equivalence.R", "R/02_curve.R",
+           "R/03_robustness.R", "R/04_compute.R",
+           "R/05_multiple.R", "R/06_forest.R", "R/07_pipeline.R")
+
+for (s in steps) {
+  cat("\n", strrep("=", 70), "\n>>> ", s, "\n", strrep("=", 70), "\n", sep = "")
+  source(s, echo = FALSE)
+}
+cat(sprintf("\n全部完成，用时 %.1f 秒。\n", as.numeric(difftime(Sys.time(), t0, units = "secs"))))
