@@ -53,3 +53,7 @@ results_round*/
 # ---- 临时与办公软件锁文件 ----
 tmp/
 ~\$*
+
+# ---- 归档轮次的池子副本（可由 prepare_data.py 用同样 seed 重建） ----
+processed_round*/
+data/processed_round*/
