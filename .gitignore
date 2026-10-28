@@ -55,3 +55,6 @@ tmp/
 # 注意 results_round*/ 仍要入库：它们是 fig02/fig06 背后的逐题预测与指标表 ----
 processed_round*/
 data/processed_round*/
+
+# ---- 打出来的发布包（可由 tools/make_release.py 重建，24 MB） ----
+dist/
