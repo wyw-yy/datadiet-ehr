@@ -40,3 +40,16 @@ desktop.ini
 
 # 软著 PDF 体积大、可随时重生成（tools/make_softcopyright.py + tools/txt_to_pdf.ps1）
 softcopyright/*.pdf
+
+# ---- 模型权重与激活（GB 级，脚本可重建，绝不入库） ----
+*.safetensors
+*.npz
+adapters_round*/
+acts_round*/
+
+# ---- 归档式重跑留下的结果目录（体积小但属于历史快照，按需保留；默认不入库） ----
+results_round*/
+
+# ---- 临时与办公软件锁文件 ----
+tmp/
+~\$*
