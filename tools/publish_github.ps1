@@ -27,6 +27,16 @@ function Fail($msg) { Write-Host "[x] $msg" -ForegroundColor Red; exit 1 }
 function Info($msg) { Write-Host "[·] $msg" -ForegroundColor Cyan }
 function Ok($msg)   { Write-Host "[√] $msg" -ForegroundColor Green }
 
+# 原生命令（git/gh）把进度写到 stderr，而 $ErrorActionPreference="Stop" 会把
+# stderr 当终止错误 —— 上一次就因此"推送其实成功了、脚本却中途退出"。
+# 用这个包一层：只看退出码。
+function Run-Native {
+    param([scriptblock]$Cmd)
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try { & $Cmd 2>&1 | Out-Host; return $LASTEXITCODE } finally { $ErrorActionPreference = $prev }
+}
+
 # ---------------------------------------------------------------- 0. 前置检查
 $gh = Get-Command gh -ErrorAction SilentlyContinue
 if (-not $gh) { Fail "没装 GitHub CLI。装：winget install --id GitHub.cli" }
@@ -53,15 +63,15 @@ if ($hasOrigin) {
 } else {
     $vis = if ($Public) { "--public" } else { "--private" }
     Info "创建仓库 $Repo（$vis）并推送..."
-    gh repo create $Repo $vis --source . --remote origin --push --description "DataDiet-EHR: activation-based training-subset selection with an equivalence protocol (reproducible, audited)" 
-    if ($LASTEXITCODE -ne 0) { Fail "gh repo create 失败（可能仓库名已被占用，换个 -Repo 名字）" }
+    $rc = Run-Native { gh repo create $Repo $vis --source . --remote origin --push --description "DataDiet-EHR: activation-based training-subset selection with an equivalence protocol (reproducible, audited)" }
+    if ($rc -ne 0) { Fail "gh repo create 失败（可能仓库名已被占用，换个 -Repo 名字）" }
     Ok "仓库已创建并推送"
 }
 
 # --------------------------------------------------------------- 2. 推 tag 与分支
 Info "推送 master 与 tags..."
-git push -u origin master 2>&1 | Out-Null
-git push origin --tags 2>&1 | Out-Null
+$null = Run-Native { git push -u origin master }
+$null = Run-Native { git push origin --tags }
 Ok "分支与 tag 已推送"
 
 # ------------------------------------------------------- 3. 打成果包并上传 Release
@@ -81,9 +91,14 @@ if (-not $SkipRelease) {
     }
     Info "创建 GitHub Release $tag ..."
     $useNotes = if (Test-Path $notes) { "--notes-file $notes" } else { "--generate-notes" }
-    gh release create $tag $zip --title "v$ver — 数据冗余度实证：30% 数据等效，净省 48.2%" $useNotes
-    if ($LASTEXITCODE -ne 0) { Write-Host "[!] Release 创建失败，但代码已经推上去了；可稍后手动 gh release create" -ForegroundColor Yellow }
-    else { Ok "Release 已发布" }
+    $existing = Run-Native { gh release view $tag --json tagName }
+    if ($existing -eq 0) {
+        Info "Release $tag 已存在，跳过"
+    } else {
+        $rc = Run-Native { gh release create $tag $zip --title "v$ver — 数据冗余度实证：30% 数据等效，净省 48.2%" $useNotes }
+        if ($rc -ne 0) { Write-Host "[!] Release 创建失败，但代码已经推上去了" -ForegroundColor Yellow }
+        else { Ok "Release 已发布" }
+    }
 }
 
 # ------------------------------------------------------------------- 4. 收尾提示
