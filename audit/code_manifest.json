@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-28T14:02:10+0800",
+  "generated_at": "2026-10-28T14:03:21+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
   "n_files": 298,
@@ -606,9 +606,9 @@
     },
     {
       "path": "docs/challenge_b/blocks.json",
-      "sha256": "30f1d5774160111808772cb1f9f208cac092d585bd887125677a15c2e64166e1",
-      "size": 25099,
-      "mtime": "2026-10-28T13:14:18"
+      "sha256": "833dc905773987151d1f4ca18da294cdd064b12fb5b4269821e9c5ec030ba6ab",
+      "size": 25144,
+      "mtime": "2026-10-28T14:02:55"
     },
     {
       "path": "eval.py",
@@ -1793,5 +1793,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "1610eb0cac3d1b67a0af104e2bf65cf502e9a7816b03d464c9207e09a053ad3f"
+  "manifest_sha256": "dba32536709d3123940a2dbc236351f745a417d88f43a42aa30f149932fdc0e9"
 }
