@@ -47,12 +47,11 @@ softcopyright/*.pdf
 adapters_round*/
 acts_round*/
 
-# ---- 归档式重跑留下的结果目录（体积小但属于历史快照，按需保留；默认不入库） ----
-
 # ---- 临时与办公软件锁文件 ----
 tmp/
 ~\$*
 
-# ---- 归档轮次的池子副本（可由 prepare_data.py 用同样 seed 重建） ----
+# ---- 归档轮次的池子副本（可由 prepare_data.py 用同样 seed 重建）；
+# 注意 results_round*/ 仍要入库：它们是 fig02/fig06 背后的逐题预测与指标表 ----
 processed_round*/
 data/processed_round*/
