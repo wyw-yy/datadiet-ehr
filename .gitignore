@@ -58,3 +58,7 @@ data/processed_round*/
 
 # ---- 打出来的发布包（可由 tools/make_release.py 重建，24 MB） ----
 dist/
+
+# ---- 日志的其它后缀（gh 登录、pip 之类） ----
+*.err
+logs/
