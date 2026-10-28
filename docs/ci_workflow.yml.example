@@ -1,3 +1,13 @@
+# 这是 CI 配置的备份，后缀是 .example 所以不会被 GitHub 当 workflow 执行。
+# 为什么不在 .github/workflows/ 里：推送带 workflow 的提交需要 gh 令牌具备
+# `workflow` scope；当前令牌没有，GitHub 会直接拒绝整个 push。
+# 想启用：gh auth refresh -s workflow 之后，把本文件复制回
+#       .github/workflows/ci.yml 再提交。
+#
+# 内容就是三个静态检查（不跑训练，因为数据不入库）：
+#   python -m compileall / Rscript 解析 R 脚本 / 校验 audit 哈希清单
+# ------------------------------------------------
+
 name: static-checks
 
 # 这个仓库的 CI 只做**静态**检查，原因是诚实的：
