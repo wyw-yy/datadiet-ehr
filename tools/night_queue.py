@@ -252,11 +252,23 @@ def main() -> None:
             lf.write(f"  ok in {(time.time() - t) / 60:.1f} min; " + " ".join(acc) + "\n")
 
     total = (time.time() - t0) / 3600
-    summary = (f"[night] finished {len(items) - len(failures)}/{len(items)} runs "
+    ok = len(items) - len(failures)
+    summary = (f"[night] finished {ok}/{len(items)} runs "
                f"in {total:.1f} h; failures={failures}")
     print(summary)
     with open(LOG, "a", encoding="utf-8") as lf:
         lf.write(summary + "\n")
+
+    # 曾经踩过的坑：plan 里臂名写错（nait_nostrat），run_one 立刻以
+    # "invalid choice" 退出，队列 0.04 秒"成功"结束、0 个 run，
+    # 上层看到 exit=0 就以为跑完了。这里把"一个都没跑成"变成硬失败。
+    if ok == 0:
+        raise SystemExit(
+            f"[night] ran 0 runs successfully out of {len(items)} — "
+            f"这几乎一定是参数/环境错误（例如 plan 里的方法名不在 config.METHODS 里）。"
+        )
+    if failures:
+        raise SystemExit(f"[night] {len(failures)} run(s) failed: {failures}")
 
 
 if __name__ == "__main__":

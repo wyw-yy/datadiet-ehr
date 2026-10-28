@@ -50,15 +50,37 @@ def upsert(path: Path, key: dict, row: dict, fields: list[str]) -> None:
         w.writerows(rows)
 
 
+# 需要跑一遍模型才能挑样本的方法：它们没有"免费"的可能，必须显式登记开销。
+NEEDS_SELECTION = {"nait", "nait_dedup", "nait_ns", "nait_dp", "nait_dedup_dp", "el2n"}
+
+
 def select_overhead(method: str) -> float:
-    """Amortised cost of the selection pass (measured once, stored by the pipeline)."""
+    """Amortised cost of the selection pass (measured once, stored by the pipeline).
+
+    这里以前是 `.get(method, 0.0)` + 文件不存在返回 0.0，结果是：归档把
+    results/select_overhead.json 搬走后，nait 的选择开销被静默记成 0，
+    "净省 48%" 会凭空变成 "净省 70%"。这类静默默认值比报错危险得多，
+    所以现在改成：该收钱的方法没登记开销就直接失败。
+    """
+    if method in ("full", "random", "rand_len"):
+        return 0.0                      # 这几个不做前向筛选，确实为 0
+
     p = C.RESULTS / "select_overhead.json"
-    if method == "full":
-        return 0.0
-    if p.exists():
-        with open(p, encoding="utf-8") as f:
-            return float(json.load(f).get(method, 0.0))
-    return 0.0
+    if not p.exists():
+        raise SystemExit(
+            f"[run_one] 缺 {p}：{method} 需要登记选择前向开销。\n"
+            f"         先跑 collect_acts.py + select_subset.py 让它落盘，"
+            f"或手动写入 {{\"{method}\": <实测 GPU-h>}}。\n"
+            f"         不要默认 0——那会把净省算高（历史事故：48% 被算成 70%）。"
+        )
+    with open(p, encoding="utf-8") as f:
+        data = json.load(f)
+    if method in NEEDS_SELECTION and method not in data:
+        raise SystemExit(
+            f"[run_one] {p} 里没有 {method} 的开销（现有键：{sorted(data)}）。\n"
+            f"         该方法的子集是用模型挑的，必须把实测耗时写进去。"
+        )
+    return float(data.get(method, 0.0))
 
 
 def main():
