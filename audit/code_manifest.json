@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-28T13:08:21+0800",
+  "generated_at": "2026-10-28T14:00:30+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 288,
+  "n_files": 298,
   "files": [
     {
       "path": "adapters_round2_24k/el2n_r30_s1/adapter_config.json",
@@ -597,6 +597,18 @@
       "sha256": "04db3c54f311397d0b8cc41428d987c63c28a40ed44396df6a70e4dc80e52ba8",
       "size": 4045,
       "mtime": "2026-10-27T18:18:41"
+    },
+    {
+      "path": "dist/datadiet-ehr-v1.0.0.manifest.txt",
+      "sha256": "28cb3c343284c0839c6d8260466c3225bc35a699bb99abdd3f436111beb2bd8e",
+      "size": 94228,
+      "mtime": "2026-10-28T13:53:10"
+    },
+    {
+      "path": "docs/challenge_b/blocks.json",
+      "sha256": "30f1d5774160111808772cb1f9f208cac092d585bd887125677a15c2e64166e1",
+      "size": 25099,
+      "mtime": "2026-10-28T13:14:18"
     },
     {
       "path": "eval.py",
@@ -1302,9 +1314,9 @@
     },
     {
       "path": "run_one.py",
-      "sha256": "e76bace3290ca7c3c65ce553ae091e5e8c6c94e4a3164626bd15802f4fdb0a18",
-      "size": 5892,
-      "mtime": "2026-10-22T20:48:00"
+      "sha256": "fc3fe49da8cf19db4516d25c102f6c1c8c0544fe461c0f290619cab775db0438",
+      "size": 7193,
+      "mtime": "2026-10-28T13:28:57"
     },
     {
       "path": "run_pilots.bat",
@@ -1359,6 +1371,12 @@
       "sha256": "44590b392a5114e008281f23f4c099b1fae92ff183f0c56ed77bbd751e9f1b78",
       "size": 432054,
       "mtime": "2026-10-24T23:30:39"
+    },
+    {
+      "path": "tmp/check_overhead.py",
+      "sha256": "b3c4e30a7dce26a2b61945e80cb93c1c4fb8a1f3dded2fdc7e78f426bca82284",
+      "size": 873,
+      "mtime": "2026-10-28T13:29:09"
     },
     {
       "path": "tools/_ps_check.ps1",
@@ -1419,6 +1437,12 @@
       "sha256": "9058149b40a09d04a58046d4672049905d6783ceb7682d53f40b6ccfaa123d71",
       "size": 2636,
       "mtime": "2026-10-22T20:01:26"
+    },
+    {
+      "path": "tools/blocks_to_docx.ps1",
+      "sha256": "f3a65471370c98ded5dbcfbdb1c3e3f86dcf17d3fefa545c52737f870f7306c1",
+      "size": 7556,
+      "mtime": "2026-10-28T13:18:27"
     },
     {
       "path": "tools/build_wheelhouse.bat",
@@ -1487,6 +1511,12 @@
       "mtime": "2026-10-26T12:37:12"
     },
     {
+      "path": "tools/html_to_docx.ps1",
+      "sha256": "eb0f5b21709e3d974787d5f4f24108a5471205177cb652d392f3a09d5de2ec44",
+      "size": 2097,
+      "mtime": "2026-10-28T13:13:19"
+    },
+    {
       "path": "tools/inspect_acts.py",
       "sha256": "fe233645245f3313395327a8fc16f4872c7c511789c5aaab54b7377d94789d67",
       "size": 644,
@@ -1529,6 +1559,12 @@
       "mtime": "2026-10-24T14:26:44"
     },
     {
+      "path": "tools/make_release.py",
+      "sha256": "99dab1d3bd4c9b67957e8986d0852076fc2873f24841a1bbabf9d6d070783406",
+      "size": 4782,
+      "mtime": "2026-10-28T13:34:02"
+    },
+    {
       "path": "tools/make_softcopyright.py",
       "sha256": "94e4c2f628efd6cf1415cffa06be45ee4ac82bdcd8e10878f3d92533a5a8be15",
       "size": 7274,
@@ -1536,9 +1572,9 @@
     },
     {
       "path": "tools/make_table1.py",
-      "sha256": "acdd88d133a2493e33c1bf9063fbffdecb135494a255fa2f053f263ad2f149cd",
-      "size": 7397,
-      "mtime": "2026-10-25T12:40:54"
+      "sha256": "3e1f82ffadff05034258e878ca946e0e3dc6700d255fe53483a25d4aa77b2ea9",
+      "size": 7558,
+      "mtime": "2026-10-28T14:00:22"
     },
     {
       "path": "tools/manifest_data.json",
@@ -1565,10 +1601,28 @@
       "mtime": "2026-10-22T19:58:49"
     },
     {
+      "path": "tools/md_to_blocks.py",
+      "sha256": "0f1a314e11e44d6064f7f567e4b1d0bd3ac4eda3d56bf58923cfa0a287e0391d",
+      "size": 2569,
+      "mtime": "2026-10-28T13:14:04"
+    },
+    {
+      "path": "tools/md_to_docx.py",
+      "sha256": "ffd7667f19d0fa7f470a800e9899304e31431643486cbb930ccf8831ad476751",
+      "size": 6261,
+      "mtime": "2026-10-28T13:10:12"
+    },
+    {
+      "path": "tools/md_to_html.py",
+      "sha256": "15edf25b117dd062d813d4715f6168faab9bf46e474406f0b6ea3b386c6ff2e3",
+      "size": 4276,
+      "mtime": "2026-10-28T13:13:37"
+    },
+    {
       "path": "tools/night_queue.py",
-      "sha256": "1d1d5f7c0c78c450ef3d6ea852e692560effad8269866ebd0d8fdd24c95f6cfa",
-      "size": 11467,
-      "mtime": "2026-10-28T02:35:51"
+      "sha256": "e157fbe8c1a28b745be7b74644bd8a095bf85c30b5fd13b9d96cc9204d2b85d1",
+      "size": 12084,
+      "mtime": "2026-10-28T13:29:33"
     },
     {
       "path": "tools/paired_stats.py",
@@ -1655,6 +1709,12 @@
       "mtime": "2026-10-22T21:06:14"
     },
     {
+      "path": "tools/publish_github.ps1",
+      "sha256": "d83c1fc7412be037513cb31da460a71d548ecb1b795ad1935eb0c80be96cefc9",
+      "size": 5608,
+      "mtime": "2026-10-28T13:52:47"
+    },
+    {
       "path": "tools/read_notice.py",
       "sha256": "ee20060ee81b0581970bc36db9e6bb0250d1cc94579e9b62654b46c8683eeef8",
       "size": 1359,
@@ -1733,5 +1793,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "4f73c849a074624d13187b5fe7d1595b4cd4a9c3626c6e03e1523f4638c47541"
+  "manifest_sha256": "1610eb0cac3d1b67a0af104e2bf65cf502e9a7816b03d464c9207e09a053ad3f"
 }

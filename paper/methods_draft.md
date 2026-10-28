@@ -1,6 +1,6 @@
 # 方法（初稿，2,000 字以内）
 
-> 说明：数字取自当前 24k 轮（`results/` 与 `paper/table1.md`）。等 MIMIC 跑完只需换数字与数据来源段。
+> 说明：数字取自当前 48k 主轮（`results/` 与 `paper/table1.md`）。等 MIMIC 跑完只需换数字与数据来源段。
 > 写作顺序按 JAMIA / Nature MI 的方法章节习惯：任务 → 数据 → 选择协议 → 训练 → 评测 → 统计。
 
 ## 1. 任务设定
@@ -15,11 +15,11 @@ $\Delta=\mathrm{acc}(f_S)-\mathrm{acc}(f_{\text{full}})$。
 
 ## 2. 数据
 
-- **训练池**：MedMCQA 训练集（182,822 条四选一医学题），按 `seed=42` 打乱后取前 24,000 条为池 $T$，
+- **训练池**：MedMCQA 训练集（182,822 条四选一医学题），按 `seed=42` 打乱后取前 48,000 条为池 $T$，
   另取 2,000 条为 probe（域内参考集，与 $T$ 不重叠）。
 - **评测**：MedMCQA 官方 test+validation 合并去重后 4,183 条（同域、主评测）；MedQA（USMLE Step 1）1,273 条（跨任务迁移）。
 - **去重与泄漏控制**：先做精确去重（题干归一化）；再用题干相似度做集合间检查，
-  实测 train ∩ eval = 0（MedQA）、1/4,183（MedMCQA）、train ∩ probe = 6/24,000。
+  实测 train ∩ eval = 0（MedQA）、1/4,183（MedMCQA）、train ∩ probe = 6/48,000。
   评测集的 20 组重复题干（40 条，0.96%）保留并在 limitation 中说明。
 - **科室标签**：用 MedMCQA 的 `subject_name`（21 类）映射到 6 个桶（cardio / resp / endo / neuro / onco / other）。
   池内分布 other 57.0%、neuro 11.3%、cardio 9.5%、onco 8.2%、resp 7.9%、endo 6.0%（以 `select_stats.json` 为准）。
@@ -30,7 +30,7 @@ $\Delta=\mathrm{acc}(f_S)-\mathrm{acc}(f_{\text{full}})$。
 在 **response token 位置**上的隐藏态均值，得到 $\bar a_i\in\mathbb{R}^{5\times1536}$。
 只取 response token 是因为 instruction 部分在池内高度同质，把它平均进去会稀释样本间的差异。
 
-采集开销实测 400 秒 / 12,000 条（约 7,900 token/s）；24k 池约 480 秒，计入算力净账。
+采集开销实测：48k 池 25.7 分钟（train）+ 1.2 分钟（probe），约 7,900 token/s，计入算力净账。
 
 ## 4. 选择协议
 
@@ -43,7 +43,7 @@ $\Delta=\mathrm{acc}(f_S)-\mathrm{acc}(f_{\text{full}})$。
    $c^{(l)}$ 为 probe 集在这一层去均值后的质心。$s_i$ 衡量"这条样本在多大程度上把模型
    激活成目标域的样子"。
 3. **去重**：按 $s_i$ 降序扫，若与已保留集合的最大余弦 $\ge 0.95$ 则跳过（流式实现，内存 $O(\text{chunk}\times|S|)$）。
-   实测保留率 98.4%（24k 池）。
+   实测保留率 **97.32%**（48k 池：46,714 / 48,000）。
 4. **分层配额**：按科室在池中的占比分配名额，桶内按 $s_i$ 降序取满。
 
 产出：`data/subsets/subsets.json`（`nait` / `nait_dedup` 两套，各五档保留率）与
@@ -66,7 +66,7 @@ $\Delta=\mathrm{acc}(f_S)-\mathrm{acc}(f_{\text{full}})$。
 ## 6. 统计口径
 
 - **主终点**：30% 保留率下的 $\Delta$，每个 (任务, 方法) 一条，预注册、单独报告。
-- **等效界** $\delta=2$pp：由功效分析定——逐题差值方差约 0.37，3,600 条子集 × 4,183 题，
+- **等效界** $\delta=2$pp：由功效分析定——逐题差值方差约 0.37，14,400 条子集 × 4,183 题，
   配对 CI 半宽 1.0–1.5pp，取 2pp 才有检验功效。
 - **两种口径都报**：
   (i) 逐题口径：把各 seed 的逐题差值按题平均，对题做 2,000 次 bootstrap；
