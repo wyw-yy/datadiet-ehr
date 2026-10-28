@@ -15,7 +15,7 @@
 | 许可 | MIT（数据集卡片声明） |
 | 我们用到的文件 | `data/raw/medmcqa-train/train.parquet`（182,822 行，85.9 MB）、`data/raw/medmcqa/data/{test,validation}-00000-of-00001.parquet`（10,333 行，2.3 MB） |
 | 字段 | `id, question, opa..opd, cop, choice_type, exp, subject_name, topic_name` |
-| 训练池 | 从 **train split** 抽 24,000 条（`--pool domain`，seed 42）；与 test/validation **不重叠** |
+| 训练池 | 从 **train split** 抽 48,000 条（`--pool domain`，seed 42）；与 test/validation **不重叠**（前几轮用过 12,000 / 24,000，均为同一序列的前缀） |
 | probe | 同一次抽样里的 2,000 条，**不参与训练**，只用来定义"目标域的平均激活长什么样" |
 | 评测 | test+validation 里 `0 <= cop <= 3` 的 **4,183** 条（丢弃 `cop=-1` 的无答案题） |
 | 科室标签 | `subject_name` 21 个取值 → 六桶（`cardio/onco/neuro/resp/endo/other`），映射表在 `prepare_data.py` 的 `SUBJECT_DEPT` |

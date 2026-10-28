@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-28T14:03:21+0800",
+  "generated_at": "2026-10-28T20:21:50+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 298,
+  "n_files": 300,
   "files": [
     {
       "path": "adapters_round2_24k/el2n_r30_s1/adapter_config.json",
@@ -600,9 +600,9 @@
     },
     {
       "path": "dist/datadiet-ehr-v1.0.0.manifest.txt",
-      "sha256": "28cb3c343284c0839c6d8260466c3225bc35a699bb99abdd3f436111beb2bd8e",
+      "sha256": "9a7f75145337430e4e2583eb8d76129637fd93b814f747c999091a9ec9d1b483",
       "size": 94228,
-      "mtime": "2026-10-28T13:53:10"
+      "mtime": "2026-10-28T14:03:28"
     },
     {
       "path": "docs/challenge_b/blocks.json",
@@ -1572,9 +1572,9 @@
     },
     {
       "path": "tools/make_table1.py",
-      "sha256": "3e1f82ffadff05034258e878ca946e0e3dc6700d255fe53483a25d4aa77b2ea9",
-      "size": 7558,
-      "mtime": "2026-10-28T14:00:22"
+      "sha256": "cc11a04779153b7b65d7e2321eb37ae6db2635910c4a58d0a56b1dd3327051b6",
+      "size": 8156,
+      "mtime": "2026-10-28T20:20:35"
     },
     {
       "path": "tools/manifest_data.json",
@@ -1733,6 +1733,12 @@
       "mtime": "2026-10-24T14:27:31"
     },
     {
+      "path": "tools/review_docs.py",
+      "sha256": "8d9b8573d9cbe177a889977db04a2eb4dab6925ddc3a519dcfa0fab6fe2d97f4",
+      "size": 5431,
+      "mtime": "2026-10-28T20:21:22"
+    },
+    {
       "path": "tools/run_scale.py",
       "sha256": "ffff4b83d3babcf72d2c084aa0c1e5b429840eb665ee1ed5fb428349a7ec4286",
       "size": 6436,
@@ -1749,6 +1755,12 @@
       "sha256": "138cc1e5dc6c3b6a53ea55f27d816cf90f2a7a4cd38f0a13330ba67ecd9ca590",
       "size": 2301,
       "mtime": "2026-10-27T18:46:50"
+    },
+    {
+      "path": "tools/update_docs_48k.py",
+      "sha256": "a9cce382aef613f549e013fe02c55a4e9f666e7f6776f5de1783b4da80b9c46e",
+      "size": 5075,
+      "mtime": "2026-10-28T20:18:04"
     },
     {
       "path": "tools/verify.py",
@@ -1793,5 +1805,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "dba32536709d3123940a2dbc236351f745a417d88f43a42aa30f149932fdc0e9"
+  "manifest_sha256": "834a1a3faf467a57a3a94a659e6210bf75226043a6aac280edb943a129e92445"
 }

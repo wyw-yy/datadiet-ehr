@@ -1,5 +1,7 @@
 # Results（初稿 v2 · 48k 主轮）
 
+> 口径：训练池 **48,000 条**，30% = **14,400 条**；近重复去重保留 **46,714 / 48,000 = 97.32%**。
+
 > 数据来源：`results/`（48k 池，23 个 run：full s1 + nait/random s1–s6 + nait_ns s1–s2）；
 > 24k 池的 EL2N / rand_len 在 `results_round2_24k/`；12k 池的剂量-反应在 `results_round1_12k/`。
 > 所有数字都能在 `results/eq_table.csv`、`eq_contrast.csv`、`compute_table.csv`、`holm.csv` 里查到；

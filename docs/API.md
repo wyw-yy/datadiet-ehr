@@ -84,7 +84,7 @@ scores = nait_scores(acts)          # acts: (N, L, D) 每层取 response token �
 keep = greedy_kept_streaming(normed_feats, order=np.argsort(-scores), thr=0.95)
 ```
 
-内存是 `O(chunk × kept)` 而不是 `O(N²)`：24,000 条样本时前者约 30 MB，
+内存是 `O(chunk × kept)` 而不是 `O(N²)`：48,000 条样本时前者约 60 MB，
 后者（朴素布尔矩阵）是 576 MB。返回布尔掩码。
 
 ---

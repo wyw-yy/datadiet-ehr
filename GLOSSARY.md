@@ -26,7 +26,7 @@
 | 算 loss | 交叉熵，**只对 response** 算 | 冒烟 2.45（perplexity ≈11.6） |
 | 反向 | 从 loss 倒推每个参数的梯度 | 算力约为前向 2 倍 |
 | 更新 | AdamW + OneCycleLR 挪一小步 | `lr=1e-4`，`bs=4`，`grad_accum=2` |
-| epoch | 把训练集看一遍 | 24,000 条 ≈ 62 分钟 |
+| epoch | 把训练集看一遍 | 48,000 条 ≈ 123 分钟 |
 
 **算术对得上**：`步数 = 样本数 ÷ (bs × grad_accum)` = 200 ÷ 8 = 25 步（日志 `step 25/25`）。
 
@@ -43,7 +43,7 @@
 | 5 科室打标 | 正则从文本判断科室 | `dept` 字段 | other 5,947 / neuro 1,850 / cardio 1,357 / endo 1,127 / resp 1,082 / onco 637 |
 | 6 采激活 | 每条跑一次前向，5 层取 response 平均 | `cache/acts/acts_train.npz` | (12000, 5, 1536)，400 秒 |
 | 7 打分 | 与 probe 质心算余弦相似度 | 每条一个分数 | 12,000 个数 |
-| 8 选择 | 去重(cos>0.95) → 科室配额 → 取满 | `data/subsets/subsets.json` | 30% = 3,600 条 |
+| 8 选择 | 去重(cos>0.95) → 科室配额 → 取满 | `data/subsets/subsets.json` | 30% = 14,400 条 |
 | 9 训练 | LoRA SFT | `models/adapters/<exp_id>/` | 全量 1 run ≈ 46 分钟 |
 | 10 评测 | 两个考卷各跑一遍 | `results/preds/<exp_id>_<task>.csv.gz` | MedQA 1,273 / MedMCQA 4,183 |
 | 11 汇总 | 写入长表 | `results/metrics_long.csv` | 一行 = (方法, 比例, seed, 考卷) |
@@ -55,7 +55,7 @@
 
 | 术语 | 一句话 | 我们的值 |
 |---|---|---|
-| **样本 sample** | 一条训练数据（一问一答） | 24,000 条 |
+| **样本 sample** | 一条训练数据（一问一答） | 48,000 条 |
 | **instruction / input / output** | HCM 三列：指令 / 病人自述 / 医生回答 | `output` 即 response |
 | **prompt** | 喂给模型的前半段 | ~86 token |
 | **response / completion** | 要模型学会的后半段 | ~121 token |
@@ -97,7 +97,7 @@
 | **gradient 梯度** | 每个参数该往哪调、调多少 | 反向产出 |
 | **loss / 交叉熵** | 模型对正确答案有多"意外" | 只算 response |
 | **perplexity** | `e^loss`，直观"犹豫程度" | ≈11.6 |
-| **epoch** | 把训练集看一遍 | 12,000 条 ≈ 46 分钟 |
+| **epoch** | 把训练集看一遍 | 48,000 条 ≈ 123 分钟 |
 | **step** | 一次参数更新 | = 样本 ÷ (bs×accum) |
 | **batch / bs** | 一次喂几条 | 4 |
 | **grad_accum** | 攒几个微批再更新（凑等效 batch） | 2 → 等效 batch 8 |
@@ -157,6 +157,6 @@
 ## 9. 论文里会出现的四个常量（记住就能开口）
 
 1. **28 层 × 1536 维** —— 激活的形状
-2. **30% = 3,600 条** —— 目标保留量
+2. **30% = 14,400 条** —— 目标保留量
 3. **δ = 2pp** —— 等效界
 4. **净省 ≈ 53%** —— 假数据管线跑出的示例值，真实数据待填
