@@ -110,3 +110,4 @@ Write-Host "  1) 论文投稿前把仓库设为 public：gh repo edit --visibili
 Write-Host "  2) 在 https://zenodo.org 用 GitHub 账号登录 → Settings → GitHub → 打开本仓库开关"
 Write-Host "  3) 在 GitHub 上发一个 Release（Zenodo 会自动抓取并给 DOI）"
 Write-Host "  4) 把 DOI 填进论文的 Code Availability 段（docs/ARTIFACT_USE.md 有模板句）"
+exit 0
