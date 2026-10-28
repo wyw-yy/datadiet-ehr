@@ -1,0 +1,23 @@
+# 关机快照 2026-10-28 04:04:06
+
+metrics_long.csv: 46 行
+
+exp_id,method,ratio,seed,task,value,n_items,split
+nait_r70_s1,nait,0.7,1,medqa,0.484682,1273,full
+nait_r70_s1,nait,0.7,1,medmcqa,0.461869,4183,full
+random_r70_s1,random,0.7,1,medqa,0.483896,1273,full
+random_r70_s1,random,0.7,1,medmcqa,0.454698,4183,full
+nait_ns_r30_s1,nait_ns,0.3,1,medqa,0.478397,1273,full
+nait_ns_r30_s1,nait_ns,0.3,1,medmcqa,0.461869,4183,full
+nait_ns_r30_s2,nait_ns,0.3,2,medqa,0.47447,1273,full
+nait_ns_r30_s2,nait_ns,0.3,2,medmcqa,0.457566,4183,full
+eq_table.csv: 有
+eq_contrast.csv: 有
+compute_table.csv: 有
+holm.csv: 有
+e3_summary.csv: 缺
+
+completed runs: 23
+last 5: random_r30_s4, random_r30_s5, random_r30_s6, random_r50_s1, random_r70_s1
+
+chain_state: {"e3": {"started": "2026-10-26 18:21:11", "rc": 0, "status": "done", "finished": "2026-10-27 04:03:16"}, "gen_medqa": {"started": "2026-10-27 04:18:16", "rc": 0, "status": "done", "finished": "2026-10-27 04:46:28"}, "pool48k": {"started": "2026-10-27 05:01:28", "rc": 1, "status": "failed", "finished": "2026-10-27 10:41:57"}, "gen48k": {"started": "2026-10-27 10:56:57", "rc": 0, "status": "done", "finished": "2026-10-27 11:18:05"}}

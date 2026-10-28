@@ -55,8 +55,8 @@
     "net_saving_pct": 48.2
   },
   "compute_nait_ns_30": {
-    "gpu_hours": 0.625,
-    "net_saving_pct": 70.0
+    "gpu_hours": 1.08,
+    "net_saving_pct": 48.2
   },
   "compute_random_30": {
     "gpu_hours": 0.625,

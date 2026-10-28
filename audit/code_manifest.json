@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-28T04:00:17+0800",
+  "generated_at": "2026-10-28T13:08:21+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 287,
+  "n_files": 288,
   "files": [
     {
       "path": "adapters_round2_24k/el2n_r30_s1/adapter_config.json",
@@ -623,6 +623,12 @@
       "mtime": "2026-10-27T11:18:05"
     },
     {
+      "path": "logs/last_state.txt",
+      "sha256": "66b85a9b6901eb708eaf1ca29476a13b07032aad1bf575e5f5f2b8d2650b3175",
+      "size": 1205,
+      "mtime": "2026-10-28T04:04:06"
+    },
+    {
       "path": "prepare_data.py",
       "sha256": "b434bbbf314cc72c5875b32a76e7558aa3eede19de0a9b2ca0d2c3fbc1b4642c",
       "size": 15172,
@@ -666,9 +672,9 @@
     },
     {
       "path": "R/04_compute.R",
-      "sha256": "66b7b3df056e9ca0dd5db46ceadcbff4e304e27fc7e64b07078928b590a374a8",
-      "size": 6547,
-      "mtime": "2026-10-25T23:23:59"
+      "sha256": "0b23bfa99fe147f053665fcd8a61ef9333d34955a45a618d5cae07450c3a4ca4",
+      "size": 6684,
+      "mtime": "2026-10-28T13:08:09"
     },
     {
       "path": "R/05_multiple.R",
@@ -1674,9 +1680,9 @@
     },
     {
       "path": "tools/shutdown_when_idle.py",
-      "sha256": "008b6fbcc5b74a2313b292b6e16be7d098366ead43a33d7207e0219a0107d95d",
-      "size": 5722,
-      "mtime": "2026-10-27T20:55:53"
+      "sha256": "5b87d252db85d55c3430e5860a72773a84c60722dc974a8c17028faef240d801",
+      "size": 6358,
+      "mtime": "2026-10-28T04:02:01"
     },
     {
       "path": "tools/txt_to_pdf.ps1",
@@ -1727,5 +1733,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "02a40e5697ba4778b6fb72196fa570425203a43fc32877388acaaaff4a61c460"
+  "manifest_sha256": "4f73c849a074624d13187b5fe7d1595b4cd4a9c3626c6e03e1523f4638c47541"
 }

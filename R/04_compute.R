@@ -50,7 +50,9 @@ cp$train_h  <- cp$n_samples * rate_clean / 3600
 #          因为它跑的是完整词表 softmax，而激活采集只存 5 层隐藏态）
 #   random / rand_len 是纯抽样（rand_len 只是按 nait 的长度分布抽），零开销。
 ovh <- c(full = 0, random = 0, rand_len = 0,
-         nait = sel_of("nait"), nait_dedup = sel_of("nait_dedup"), el2n = sel_of("el2n"))
+         nait = sel_of("nait"), nait_dedup = sel_of("nait_dedup"), el2n = sel_of("el2n"),
+         # nait_ns 只是去掉分层配额，激活采集与打分一样要跑，开销同 nait
+         nait_ns = sel_of("nait_ns"))
 cp$select_h <- as.numeric(ovh[cp$method])
 cp$select_h[is.na(cp$select_h)] <- 0
 cp$gpu_hours <- cp$train_h + cp$select_h
