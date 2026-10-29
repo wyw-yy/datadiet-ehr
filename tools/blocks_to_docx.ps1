@@ -17,7 +17,10 @@ $ErrorActionPreference = "Stop"
 # 若写成 `$blocks = ... | ConvertFrom-Json`，会把数组塞回这个 [string] 变量、
 # 被转成字符串 "System.Object[]"，于是循环里一个块都拿不到（曾经的 pages=1 / chars=0）。
 $blocksPath = (Resolve-Path $Blocks).Path
-$DocxPath = [System.IO.Path]::GetFullPath((Join-Path (Get-Location) $Docx))
+# 绝对路径直接用：Join-Path 在 PS 5.1 里遇到绝对的第二参数会拼成 "C:\a\C:\b"，
+# GetFullPath 随即报 "The given path's format is not supported"。
+$DocxPath = if ([System.IO.Path]::IsPathRooted($Docx)) { [System.IO.Path]::GetFullPath($Docx) }
+            else { [System.IO.Path]::GetFullPath((Join-Path (Get-Location) $Docx)) }
 # ConvertFrom-Json 在 PS 5.1 里不会枚举数组，管道里出来的是"一个 Object[]"，
 # 所以不能写 @(cmd | ConvertFrom-Json)（那会得到 Count=1），要先落变量再判断类型。
 $parsed = (Get-Content $blocksPath -Raw -Encoding UTF8) | ConvertFrom-Json
@@ -155,7 +158,7 @@ try {
     Write-Output "chars: $chars"
 
     if ($Pdf -ne "") {
-        $Pdf = [System.IO.Path]::GetFullPath((Join-Path (Get-Location) $Pdf))
+        $Pdf = [System.IO.Path]::GetFullPath($Pdf)
         $doc.ExportAsFixedFormat($Pdf, 17)
         Write-Output "pdf: $Pdf"
     }
