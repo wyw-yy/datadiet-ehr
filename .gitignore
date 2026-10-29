@@ -62,3 +62,6 @@ dist/
 # ---- 日志的其它后缀（gh 登录、pip 之类） ----
 *.err
 logs/
+
+# 挑战杯通知原文与附件（第三方文件，49 MB，只留本地参考）
+docs/challenge_b/notice/
