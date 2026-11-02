@@ -230,6 +230,9 @@ def main() -> None:
         cmd = [str(PY), str(ROOT / "run_one.py"), "--method", m,
                "--ratio", str(r), "--seed", str(s),
                "--epochs", os.environ.get("DATADIET_EPOCHS", "1")]
+        # 卡被抢导致 eval 崩掉时，adapter 已经在磁盘上；复用它省掉整轮训练。
+        if os.environ.get("DATADIET_REUSE", "1") == "1":
+            cmd.append("--reuse")
         head = f"[night {i}/{len(items)}] {eid}  ({time.strftime('%H:%M:%S')})"
         print(head, flush=True)
         with open(LOG, "a", encoding="utf-8") as lf:
