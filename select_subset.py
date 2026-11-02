@@ -235,7 +235,7 @@ if __name__ == "__main__":
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--no-dedup", action="store_true")
     ap.add_argument("--no-strat", action="store_true",
-                    help="消融：不做科室分层配额，直接取全局前 k%（产物 method=nait_ns）")
+                    help="消融：不做科室分层配额，直接取全局前 k 成（产物 method=nait_ns）")
     ap.add_argument("--probe-split", default="probe",
                     help="which acts_<split>.npz to build the centroid from "
                          "(probe = source domain, probe_domain = target domain)")

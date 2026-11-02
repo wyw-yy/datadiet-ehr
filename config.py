@@ -39,7 +39,8 @@ MAX_LEN = 512            # tokens per training example (pool: p50=256, p90=366, 
 # Measured on this laptop's RTX 5070 (11 TFLOP/s bf16, ~2 samples/s at 1.5B):
 # 12k pool x 1 epoch ~ 1.5 h, so the whole matrix below is ~16 h of training.
 # ------------------------------------------------------------- experiment grid
-RATIOS  = [0.10, 0.20, 0.30, 0.50, 0.70]
+RATIOS  = [float(x) for x in os.environ.get(
+              "DATADIET_RATIOS", "0.10,0.20,0.30,0.50,0.70").split(",")]
 SEEDS   = [1, 2, 3]
 METHODS = ["full", "random", "rand_len", "nait", "nait_dedup", "nait_dp",
            "nait_dedup_dp", "nait_ns", "el2n"]

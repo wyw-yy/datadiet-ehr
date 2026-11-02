@@ -74,6 +74,16 @@ def plan(name: str) -> list[tuple[str, float, int]]:
             q += [("nait", 0.30, s), ("random", 0.30, s), ("rand_len", 0.30, s)]
         return q
 
+    if name == "small":
+        # 极小预算档：回应 DIQ（CVPR'26）"1% 追平全量"的主张。
+        # 48k 池 → 1% = 480 条、5% = 2,400 条；每档 nait / random 各 2 个种子。
+        # 判据：两臂是否都落在 ±2pp 内。都落 → "任务本来就容易"；只有 nait 落 → 选择器在极小预算下才有用。
+        q: list[tuple[str, float, int]] = []
+        for r in (0.01, 0.05):
+            for s in (1, 2):
+                q += [("nait", r, s), ("random", r, s)]
+        return q
+
     if name == "fill30":
         # 按 PREREG 第 5 节：正式跑要 6 个种子。这一轮只补 30% 这一档的 s4–6，
         # 让主终点（子集 vs 全量）从 3 个种子变 6 个。顺序先 full（它是所有差值的分母），
@@ -184,7 +194,7 @@ def other_heavy_running(own_pid: int | None = None) -> bool:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--plan", default="full",
-                    choices=["full", "quick", "seeds6", "scale", "el2n", "fill30",
+                    choices=["full", "quick", "seeds6", "scale", "el2n", "fill30", "small",
                              "sweep48k", "abl48k",
                              "epoch3", "k48"])
     ap.add_argument("--dry-run", action="store_true")
