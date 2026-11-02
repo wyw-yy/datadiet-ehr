@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-28T20:21:50+0800",
+  "generated_at": "2026-11-03T00:16:41+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 300,
+  "n_files": 308,
   "files": [
     {
       "path": "adapters_round2_24k/el2n_r30_s1/adapter_config.json",
@@ -594,9 +594,9 @@
     },
     {
       "path": "config.py",
-      "sha256": "04db3c54f311397d0b8cc41428d987c63c28a40ed44396df6a70e4dc80e52ba8",
-      "size": 4045,
-      "mtime": "2026-10-27T18:18:41"
+      "sha256": "1cef6fc7b171dc82ceee7e88a4fd6ba925de6229c6120173206b51e2dfb6218b",
+      "size": 4123,
+      "mtime": "2026-11-02T22:16:45"
     },
     {
       "path": "dist/datadiet-ehr-v1.0.0.manifest.txt",
@@ -605,10 +605,34 @@
       "mtime": "2026-10-28T14:03:28"
     },
     {
+      "path": "dist/datadiet-ehr-v1.0.1.manifest.txt",
+      "sha256": "4fd0ad814b046b010f04a7b5c14736b36767ff3b4fc2400e5f47c8b4282f9d49",
+      "size": 95082,
+      "mtime": "2026-10-28T20:22:21"
+    },
+    {
       "path": "docs/challenge_b/blocks.json",
       "sha256": "833dc905773987151d1f4ca18da294cdd064b12fb5b4269821e9c5ec030ba6ab",
       "size": 25144,
       "mtime": "2026-10-28T14:02:55"
+    },
+    {
+      "path": "docs/challenge_b/notice/关于组织开展皖江工学院第五届“挑战杯”大学生课外学术科技作品竞赛的通知.txt",
+      "sha256": "34b5690d44ce6b648bf0e663c663d268d02b1450f9c64cb666d5461f18e55f06",
+      "size": 9518,
+      "mtime": "2026-10-27T17:51:24"
+    },
+    {
+      "path": "docs/challenge_b/notice/附件2：皖江工学院第五届“挑战杯”大学生课外学术科技作品竞赛作品申报书.txt",
+      "sha256": "a6e5d6088c58e6528fb509e1f533f821f6aee1368a26108ab2e0c2adffc07b9e",
+      "size": 15299,
+      "mtime": "2026-10-27T17:51:29"
+    },
+    {
+      "path": "docs/challenge_b/notice/附件3：皖江工学院第五届“挑战杯”大学生课外学术科技作品竞赛作品提交规范要求.txt",
+      "sha256": "3a4bbe0e367343141ffb89b1027cc08a80e44b37b1e9110ad194c0e772f0be92",
+      "size": 3837,
+      "mtime": "2026-10-27T17:51:29"
     },
     {
       "path": "eval.py",
@@ -1326,9 +1350,9 @@
     },
     {
       "path": "select_subset.py",
-      "sha256": "82ca84b7a223b1c3cf42bff6c0f7c17281c6f504f3affa8c3bcc1d2cb47ed483",
-      "size": 11208,
-      "mtime": "2026-10-27T18:18:36"
+      "sha256": "1467f44bca363bd62253a4dbfc50a82d5842f84b33a7946324effdd14e80233a",
+      "size": 11211,
+      "mtime": "2026-11-02T22:16:45"
     },
     {
       "path": "setup_deps.bat",
@@ -1377,6 +1401,24 @@
       "sha256": "b3c4e30a7dce26a2b61945e80cb93c1c4fb8a1f3dded2fdc7e78f426bca82284",
       "size": 873,
       "mtime": "2026-10-28T13:29:09"
+    },
+    {
+      "path": "tmp/patent/path.json",
+      "sha256": "7a7b9af6bef9f02d18b4754cd54c3d50008282247d9291e26ce8869c985f520b",
+      "size": 6733,
+      "mtime": "2026-10-29T22:23:10"
+    },
+    {
+      "path": "tmp/patent/交底书_草稿.json",
+      "sha256": "10a447288f752a279addc4a9e7d069dd3d50ac18477ad49ec8876820eaf1b23c",
+      "size": 8996,
+      "mtime": "2026-10-29T22:10:16"
+    },
+    {
+      "path": "tmp/patent/申请路径与费用.json",
+      "sha256": "622841b4b67ccd1a816689434401a8eec987445ce6c7b2df7cb1145755fd2e6d",
+      "size": 4612,
+      "mtime": "2026-10-29T22:10:35"
     },
     {
       "path": "tools/_ps_check.ps1",
@@ -1440,9 +1482,9 @@
     },
     {
       "path": "tools/blocks_to_docx.ps1",
-      "sha256": "f3a65471370c98ded5dbcfbdb1c3e3f86dcf17d3fefa545c52737f870f7306c1",
-      "size": 7556,
-      "mtime": "2026-10-28T13:18:27"
+      "sha256": "5081460e7ade7618ce1621b69439a731ded4f958ceb6c4b4f81f91b75813c14f",
+      "size": 7809,
+      "mtime": "2026-10-29T19:47:25"
     },
     {
       "path": "tools/build_wheelhouse.bat",
@@ -1620,9 +1662,9 @@
     },
     {
       "path": "tools/night_queue.py",
-      "sha256": "e157fbe8c1a28b745be7b74644bd8a095bf85c30b5fd13b9d96cc9204d2b85d1",
-      "size": 12084,
-      "mtime": "2026-10-28T13:29:33"
+      "sha256": "1a19e4f9b2c75e9ad11607722409f1f154d4ab3c5547dc6991f5f3e4ba625030",
+      "size": 12828,
+      "mtime": "2026-11-02T22:40:44"
     },
     {
       "path": "tools/paired_stats.py",
@@ -1781,6 +1823,12 @@
       "mtime": "2026-10-25T21:43:16"
     },
     {
+      "path": "tools/wait_then_small.py",
+      "sha256": "cf5e36bb5bd83a6c454f7bd2c0fc0c47e6f758e027c68c21db6a545a3f8a2024",
+      "size": 5260,
+      "mtime": "2026-11-02T22:39:58"
+    },
+    {
       "path": "tools/watch_queue.py",
       "sha256": "3a792e9e6929ecb8ce46526be97e1341222a63704e271b023630dbc3e2fd410d",
       "size": 4795,
@@ -1805,5 +1853,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "834a1a3faf467a57a3a94a659e6210bf75226043a6aac280edb943a129e92445"
+  "manifest_sha256": "5b1ec3af73cde7299b6b7477f3fd302e09b6569b398cc06aac4f657915851259"
 }

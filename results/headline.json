@@ -49,20 +49,20 @@
     "seed_min_pp": -0.71,
     "seed_max_pp": 0.16
   },
-  "compute_full_gpu_h": 2.082,
+  "compute_full_gpu_h": 2.065,
   "compute_nait_30": {
-    "gpu_hours": 1.08,
-    "net_saving_pct": 48.2
+    "gpu_hours": 1.074,
+    "net_saving_pct": 48.0
   },
   "compute_nait_ns_30": {
-    "gpu_hours": 1.08,
-    "net_saving_pct": 48.2
+    "gpu_hours": 1.074,
+    "net_saving_pct": 48.0
   },
   "compute_random_30": {
-    "gpu_hours": 0.625,
+    "gpu_hours": 0.619,
     "net_saving_pct": 70.0
   },
-  "n_runs": 23,
+  "n_runs": 31,
   "n_tasks": 2,
   "sample_stats_rows": 48000,
   "sample_stats_nait30": 14400

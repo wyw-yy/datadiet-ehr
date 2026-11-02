@@ -1,0 +1,16 @@
+{
+  "exp_id": "random_r05_s1",
+  "method": "random",
+  "ratio": 0.05,
+  "seed": 1,
+  "epochs": 1.0,
+  "n_samples": 2400,
+  "steps": 300,
+  "max_len": 512,
+  "bs": 4,
+  "grad_accum": 2,
+  "train_seconds": 322.4,
+  "loss_last": 2.0552,
+  "adapter": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\adapters\\random_r05_s1",
+  "pool_size": 48000
+}
