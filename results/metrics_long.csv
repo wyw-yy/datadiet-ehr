@@ -61,3 +61,11 @@ nait_r05_s2,nait,0.05,2,medqa,0.470542,1273,full
 nait_r05_s2,nait,0.05,2,medmcqa,0.451112,4183,full
 random_r05_s2,random,0.05,2,medqa,0.479969,1273,full
 random_r05_s2,random,0.05,2,medmcqa,0.455893,4183,full
+nait_r10_s2,nait,0.1,2,medqa,0.46033,1273,full
+nait_r10_s2,nait,0.1,2,medmcqa,0.449199,4183,full
+nait_r20_s2,nait,0.2,2,medqa,0.476041,1273,full
+nait_r20_s2,nait,0.2,2,medmcqa,0.450155,4183,full
+random_r10_s2,random,0.1,2,medqa,0.485467,1273,full
+random_r10_s2,random,0.1,2,medmcqa,0.454459,4183,full
+random_r20_s2,random,0.2,2,medqa,0.479183,1273,full
+random_r20_s2,random,0.2,2,medmcqa,0.451351,4183,full

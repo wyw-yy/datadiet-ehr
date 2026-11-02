@@ -45,6 +45,8 @@ ALLOW_LINE = {
     "docs/GENERATIVE_EVAL.md": ("47.8",),          # 生成式准确率，不是净省
     "docs/challenge_b/研制报告.md": ("12,000 条",),  # 叙述当年去重事故
     "GLOSSARY.md": ("12,000 条",),                  # 教材式举例
+    # 交底书要讲"当年在 24k 池上踩的坑"，这里的规模数字是历史事实，不是口径残留
+    "docs/patent/交底书_草稿.md": ("12,000 条", "24,000 条"),
 }
 SKIP_PARTS = {".venv", ".git", "node_modules", "dist", "log", "tmp"}
 
