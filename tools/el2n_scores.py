@@ -85,6 +85,8 @@ def main():
     ap.add_argument("--limit", type=int, default=0, help="only score the first N rows (timing probe)")
     ap.add_argument("--bs", type=int, default=8)
     ap.add_argument("--max-len", type=int, default=C.MAX_LEN)
+    ap.add_argument("--nll-chunk", type=int, default=96,
+                    help="sequence positions per logsumexp pass (lowers peak VRAM; 96 is safe at bs 6-8)")
     ap.add_argument("--no-subset", action="store_true", help="write scores only, skip subset files")
     ap.add_argument("--from-scores", default="",
                     help="reuse an existing scores json (no model, no GPU)")
@@ -148,16 +150,23 @@ def main():
                 inp[i, : len(ids)] = torch.tensor(ids, device="cuda")
                 att[i, : len(ids)] = 1
 
-            logits = model(input_ids=inp, attention_mask=att).logits
-            # nll = logsumexp(logits) - logit_of_true_token, computed without the
-            # float32 copy of the full (B, T-1, V) tensor - that copy alone is
-            # ~2.5 GiB at bs=8/len=512/V=151k and would not fit next to the model.
-            lg = logits[:, :-1]
+            with torch.no_grad():
+                logits = model(input_ids=inp, attention_mask=att).logits
+            # nll = logsumexp(logits) - logit_of_true_token.  logsumexp over the
+            # full (B,T-1,V) tensor materialises a float32 copy (~1.9 GiB at
+            # bs=6/len=512/V=151k) and torch then allocates a second one for the
+            # reduction -> OOM even at bs=6.  Do it in seq chunks instead; each
+            # chunk only costs B*chunk*V*4 bytes.
             tgt = inp[:, 1:]
-            tgt_logit = lg.gather(-1, tgt.unsqueeze(-1)).squeeze(-1).float()
-            log_z = torch.logsumexp(lg, dim=-1).float()
-            tok_nll = log_z - tgt_logit                                # (B, T-1)
-            del logits, lg
+            tok_nll = torch.empty((tgt.shape[0], tgt.shape[1]), dtype=torch.float32, device="cuda")
+            for lo in range(0, tgt.shape[1], args.nll_chunk):
+                hi = min(lo + args.nll_chunk, tgt.shape[1])
+                lg = logits[:, lo:hi].float()                          # (B, chunk, V)
+                tgt_logit = lg.gather(-1, tgt[:, lo:hi].unsqueeze(-1)).squeeze(-1)
+                log_z = torch.logsumexp(lg, dim=-1)
+                tok_nll[:, lo:hi] = log_z - tgt_logit
+                del lg, tgt_logit, log_z
+            del logits
 
             for i, span in enumerate(spans):
                 if span is None:

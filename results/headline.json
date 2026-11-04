@@ -77,28 +77,32 @@
     "vs_random_p": 0.079,
     "vs_random_same_sign": "TRUE"
   },
-  "compute_full_gpu_h": 2.131,
+  "compute_full_gpu_h": 2.128,
+  "compute_el2n_30": {
+    "gpu_hours": 1.15,
+    "net_saving_pct": 45.9
+  },
   "compute_nait_30": {
-    "gpu_hours": 1.094,
+    "gpu_hours": 1.093,
     "net_saving_pct": 48.6
   },
   "compute_nait_dedup_30": {
-    "gpu_hours": 1.094,
+    "gpu_hours": 1.093,
     "net_saving_pct": 48.6
   },
   "compute_nait_ns_30": {
-    "gpu_hours": 1.094,
+    "gpu_hours": 1.093,
     "net_saving_pct": 48.6
   },
   "compute_rand_len_30": {
-    "gpu_hours": 0.639,
+    "gpu_hours": 0.638,
     "net_saving_pct": 70.0
   },
   "compute_random_30": {
-    "gpu_hours": 0.639,
+    "gpu_hours": 0.638,
     "net_saving_pct": 70.0
   },
-  "n_runs": 47,
+  "n_runs": 48,
   "n_tasks": 2,
   "sample_stats_rows": 48000,
   "sample_stats_nait30": 14400

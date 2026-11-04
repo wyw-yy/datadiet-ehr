@@ -93,3 +93,5 @@ rand_len_r30_s1,rand_len,0.3,1,medqa,0.477612,1273,full
 rand_len_r30_s1,rand_len,0.3,1,medmcqa,0.458762,4183,full
 nait_dedup_r30_s1,nait_dedup,0.3,1,medqa,0.486253,1273,full
 nait_dedup_r30_s1,nait_dedup,0.3,1,medmcqa,0.463065,4183,full
+el2n_r30_s1,el2n,0.3,1,medqa,0.457973,1273,full
+el2n_r30_s1,el2n,0.3,1,medmcqa,0.447526,4183,full
