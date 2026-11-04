@@ -34,7 +34,7 @@ the paired CI beyond the margin — this is *underpower*, not evidence of a diff
 
 Per-seed deltas for the headline contrast (MedMCQA, nait − random):
 +0.72 / +0.77 / +0.60 / +0.02 / −0.36 / +1.24 pp → **5 of 6 seeds positive**.
-Holm family C = the four contrasts at 30% (nait and nait_ns × two tasks); corrected p = 0.064,
+Holm family C = the twelve contrasts at 30% (six arm pairs × two tasks); corrected p = 0.176,
 i.e. **not significant**. TOST at ±1 pp does not pass either (CI upper bound 1.03).
 
 ## A.3 Compute accounting (48,000-sample pool)
