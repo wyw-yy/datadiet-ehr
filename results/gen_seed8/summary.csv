@@ -1,0 +1,5 @@
+arm,task,n,acc,format_ok,parse_rate,p50_tokens,mean_tokens,n_flagged
+base,medmcqa,500,0.428,1.0,1.0,47,50.9,0
+full_s1,medmcqa,500,0.454,1.0,1.0,22,40.2,0
+nait_r30_s1,medmcqa,500,0.454,1.0,1.0,68,78.6,0
+random_r30_s1,medmcqa,500,0.468,1.0,1.0,27,42.4,0

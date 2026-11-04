@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-03T01:57:12+0800",
+  "generated_at": "2026-11-04T08:33:46+0800",
   "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 308,
+  "n_files": 311,
   "files": [
     {
       "path": "adapters_round2_24k/el2n_r30_s1/adapter_config.json",
@@ -636,9 +636,9 @@
     },
     {
       "path": "eval.py",
-      "sha256": "09ac219a6773092ad50ca904656500e193fa5d90fa9d47018fb6ce7bfaecf7b3",
-      "size": 5988,
-      "mtime": "2026-10-22T20:10:43"
+      "sha256": "1b86a96a04e2de24da82ef4418912d828ef7fda12b2c4b879914e3fcaff67b8f",
+      "size": 6824,
+      "mtime": "2026-11-03T17:56:11"
     },
     {
       "path": "finish_round.bat",
@@ -1475,6 +1475,12 @@
       "mtime": "2026-10-24T13:40:03"
     },
     {
+      "path": "tools/audit_runs.py",
+      "sha256": "deafed90356e9f61276271e6d9f3916b85866a6a9179f1bc9f5355eefc7e336f",
+      "size": 4833,
+      "mtime": "2026-11-03T17:38:24"
+    },
+    {
       "path": "tools/bench_bs.py",
       "sha256": "9058149b40a09d04a58046d4672049905d6783ceb7682d53f40b6ccfaa123d71",
       "size": 2636,
@@ -1776,9 +1782,15 @@
     },
     {
       "path": "tools/review_docs.py",
-      "sha256": "8d9b8573d9cbe177a889977db04a2eb4dab6925ddc3a519dcfa0fab6fe2d97f4",
-      "size": 5431,
-      "mtime": "2026-10-28T20:21:22"
+      "sha256": "6b55b0edff564640a2cdba9a8f57bfce491e2628395eaa839b19c37a42b96c5e",
+      "size": 5615,
+      "mtime": "2026-11-03T01:57:44"
+    },
+    {
+      "path": "tools/run_remaining.py",
+      "sha256": "36a627e55e480962451fadfd5ea2e294613034fbbdf437cfb9def736741e03ec",
+      "size": 5603,
+      "mtime": "2026-11-03T18:01:09"
     },
     {
       "path": "tools/run_scale.py",
@@ -1791,6 +1803,12 @@
       "sha256": "5b87d252db85d55c3430e5860a72773a84c60722dc974a8c17028faef240d801",
       "size": 6358,
       "mtime": "2026-10-28T04:02:01"
+    },
+    {
+      "path": "tools/stop_after_full.py",
+      "sha256": "6f79f078814d6f2a33a8bc99b3b10e6fbf7d54fa2d23f45521621d8e22322abe",
+      "size": 4206,
+      "mtime": "2026-11-03T20:00:32"
     },
     {
       "path": "tools/txt_to_pdf.ps1",
@@ -1853,5 +1871,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "74975e156ebff5e1011e3d041234cd45af50c14634532a59d99e17d7a8c3da3d"
+  "manifest_sha256": "1b859820befc14d93b90133668f06777778fc6cfc2f6ae4e780798f141e03d49"
 }

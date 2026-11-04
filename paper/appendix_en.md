@@ -12,9 +12,9 @@ A cell is *equivalent* only if its 95% CI lies entirely within ±2 pp.
 
 | Task | Method | Seeds | Full data | 30% subset | Δ (pp) | Item 95% CI | Seed 95% CI | Item-equiv. | Seed-equiv. |
 |---|---|---|---|---|---|---|---|---|---|
-| MedMCQA | **nait** | 6 | 0.4678 | 0.4583 | **−0.96** | [−1.77, +0.22] | [−1.34, −0.58] | ✅ | ✅ |
-| MedMCQA | random | 6 | 0.4678 | 0.4533 | −1.45 | [−2.39, −0.53] | [−1.84, −1.07] | ❌ | ✅ |
-| MedMCQA | nait_ns | 2 | 0.4678 | 0.4598 | −0.81 | [−1.67, +0.43] | [−3.55, +1.92] | ✅ | ❌ |
+| MedMCQA | **nait** | 6 | 0.4678 | 0.4583 | **−0.98** | [−1.77, +0.22] | [−1.34, −0.58] | ✅ | ✅ |
+| MedMCQA | random | 6 | 0.4678 | 0.4533 | −1.47 | [−2.39, −0.53] | [−1.84, −1.07] | ❌ | ✅ |
+| MedMCQA | nait_ns | 2 | 0.4678 | 0.4598 | −0.89 | [−1.67, +0.43] | [−3.55, +1.92] | ✅ | ❌ |
 | MedQA | **nait** | 6 | 0.4784 | 0.4788 | +0.04 | [−2.52, +1.26] | [−0.57, +0.64] | ❌ | ✅ |
 | MedQA | random | 6 | 0.4784 | 0.4760 | −0.24 | [−2.36, +1.18] | [−0.63, +0.16] | ❌ | ✅ |
 | MedQA | nait_ns | 2 | 0.4784 | 0.4764 | −0.20 | [−1.96, +1.89] | [−2.67, +2.28] | ✅ | ❌ |
@@ -41,14 +41,14 @@ i.e. **not significant**. TOST at ±1 pp does not pass either (CI upper bound 1.
 
 | Method | Retention | Training (GPU-h) | Selection forward (GPU-h) | Total (GPU-h) | Net saving |
 |---|---|---|---|---|---|
-| random | 30% | 0.625 | 0 | 0.625 | **70.0%** |
-| **nait** | 30% | 0.625 | **0.455** | 1.080 | **48.2%** |
-| nait_ns | 30% | 0.625 | 0.455 | 1.080 | 48.2% |
+| random | 30% | 0.639 | 0 | 0.639 | **70.0%** |
+| **nait** | 30% | 0.639 | **0.455** | 1.094 | **48.6%** |
+| nait_ns | 30% | 0.639 | 0.455 | 1.094 | 48.6% |
 | nait | 10% | 0.208 | 0.455 | 0.663 | 68.2% |
 | nait | 70% | 1.458 | 0.455 | 1.913 | 8.2% |
 | EL2N (24k pool) | 30% | 0.307 | 0.607 | 0.914 | 10.8% |
 
-Full-data training: **2.082 GPU-h** (48,000 samples × 0.153 s/sample, median over runs).
+Full-data training: **2.131 GPU-h** (48,000 samples × 0.153 s/sample, median over runs).
 The selection forward pass is measured, not modelled: activation collection 25.7 min + probe 1.2 min +
 scoring 0.4 min = 0.455 GPU-h. Reporting "70% compute saving" would silently charge selection cost to zero.
 
@@ -58,7 +58,7 @@ scoring 0.4 min = 0.455 GPU-h. Reporting "70% compute saving" would silently cha
 |---|---|---|---|---|
 | 12k | −0.31 (1 seed) | −0.65 (1) | +0.34 | no difference |
 | 24k | −0.53 (6) | −0.47 (6) | −0.06 (p = 0.72) | no difference |
-| **48k** | **−0.96 (6)** | **−1.45 (6)** | **+0.50 (p = 0.016)** | random crosses the margin first |
+| **48k** | **−0.98 (6)** | **−1.47 (6)** | **+0.50 (p = 0.016)** | random crosses the margin first |
 
 ## A.5 Generative evaluation (48k pool, 500 MedMCQA items, greedy decoding)
 

@@ -2,7 +2,7 @@
 
 > 口径：训练池 **48,000 条**，30% = **14,400 条**；近重复去重保留 **46,714 / 48,000 = 97.32%**。
 
-**关键判定（谈判时只用这两句）**：①nait 的 30% 子集双口径等效（−0.96 pp，CI [−1.77, +0.22]）；②nait − random = +0.50 pp，未校正 p = 0.016、**Holm 校正 0.064 不显著**，TOST ±1 pp 也未通过——所以只能说"随机越界、激活选择没有"，不能说"显著更优"。
+**关键判定（谈判时只用这两句）**：①nait 的 30% 子集双口径等效（−0.98 pp，CI [−1.77, +0.22]）；②nait − random = +0.50 pp，未校正 p = 0.016、**Holm 校正 0.064 不显著**，TOST ±1 pp 也未通过——所以只能说"随机越界、激活选择没有"，不能说"显著更优"。
 
 > 更新时间 2026-10-24（第一批 19 个 run 跑完之后重写）。
 > 图例：✅ 已落实并能演示 ｜ 🟡 部分（有数但样本不够/待补）｜ ⚠️ 与提案有偏离（**必须写进 limitation**）｜ ⬜ 还没做
@@ -15,18 +15,18 @@
 
 | # | 提案要求 | 我们的实现 | 证据文件 | 状态 |
 |---|---|---|---|---|
-| ① | 问题：少用三成病历数据还能不能训好模型 | 全量 48,000 条 vs 子集 14,400 条（30%），同一张考卷，等效界 δ=2pp | `results/eq_table.csv`、`RESULTS.md` §1 | ⚠️ 同域任务：nait 双口径通过（−0.96pp），random 逐题越界（−1.45pp，CI 下界 −2.39）；跨任务两臂因题量少判不了 |
+| ① | 问题：少用三成病历数据还能不能训好模型 | 全量 48,000 条 vs 子集 14,400 条（30%），同一张考卷，等效界 δ=2pp | `results/eq_table.csv`、`RESULTS.md` §1 | ⚠️ 同域任务：nait 双口径通过（−0.98pp），random 逐题越界（−1.47pp，CI 下界 −2.39）；跨任务两臂因题量少判不了 |
 | ② | 缺口：选择协议此前不可复现 | 随机性全固定（seed=42）、层集合 {8,12,16,20,24}、阈值 0.95、所有中间量落盘、代码哈希留档 | `data/subsets/subsets.json`、`results/select_stats.json`、`audit/` | ✅ |
 | ③ | 做法：基于神经元激活做子集选择 | 采 5 层隐状态 → **减池内均值** → L2 归一 → 与 probe 质心算余弦 → 按科室分层配额取满 | `collect_acts.py`、`select_subset.py`、`cache/acts/*.npz` | ✅ |
 | ③ | 做法：给出可复现协议 | 10 节协议文档：输入契约、采集、去均值、打分、去重、分层、审计、参数总表、自检、放弃的选项 | `docs/PROTOCOL.md` | ✅ |
 | ③ | 做法：开源实现 | 代码齐全 + 一键脚本 + 环境锁定 + 新机器部署说明；**缺 README / LICENSE** | `check_env.bat`、`run_pilots.bat`、`requirements-lock.txt`、`docs/SETUP_MACHINES.md` | 🟡 缺 `README.md` + `LICENSE` |
 | ③ | 做法：测量数据削减比例 | 五档 10 / 20 / 30 / 50 / 70% 全部跑完（30% 有 6 种子，其余 1 种子） | `results/eq_table.csv`、`paper/figures/fig02_data_efficiency.png` | ✅ |
-| ③ | 做法：算力节省 | 每次 run 的真实 `train_seconds`；选择前向开销按方法实测（nait **0.455**（el2n 的 0.607 来自 24k 轮） GPU-h）；每样本耗时用中位数剔污染 | `results/compute_table.csv`、`paper/figures/fig05_compute.png` | ✅ 净省 nait **48.2%**、random 70.0%（el2n 10.8% 来自 24k 轮，且比随机更差） |
-| ③ | 做法：跨科室稳健性 | 6 个科室逐题结果可分；科室 n<30 跳过 | `results/robust.csv`、`paper/figures/fig04_dept.png` | 🟡 有图有表，但科室级样本量很小、CI 极宽（24k 轮最差是 onco 的 nait −3.55pp，CI [−8.51, +0.71] 跨 0，不能下结论） |
+| ③ | 做法：算力节省 | 每次 run 的真实 `train_seconds`；选择前向开销按方法实测（nait **0.455**（el2n 的 0.607 来自 24k 轮） GPU-h）；每样本耗时用中位数剔污染 | `results/compute_table.csv`、`paper/figures/fig05_compute.png` | ✅ 净省 nait **48.6%**、random 70.0%（el2n 10.8% 来自 24k 轮，且比随机更差） |
+| ③ | 做法：跨科室稳健性 | 6 个科室逐题结果可分；科室 n<30 跳过 | `results/robust.csv`、`paper/figures/fig04_dept.png` | 🟡 有图有表，但科室级样本量很小、CI 极宽（最差科室的 CI 跨 0，不能下结论；数字见 `results/robust.csv`） |
 | ③ | 做法：跨任务稳健性 | MedMCQA（同域，4,183）＋ MedQA（跨任务，1,273） | `data/processed/medmcqa.jsonl`、`medqa.jsonl` | ✅ |
 | ④ | 产出：开源协议 | 同"可复现协议" | `docs/PROTOCOL.md` | ✅ |
 | ④ | 产出：数据冗余度报告 | 去重保留 **97.32%**（46,714/48,000）；随机对余弦 p50 −0.0125 / p99 0.4474 | `results/select_stats.json` | ✅ 结论：**这批数据几乎没有语义级近重复**，冗余不在"重复样本"上 |
-| ④ | 产出：算力节省结论 | nait 净省 48.2%（训练 0.625 + 选择 0.455 / 全量 2.082 GPU-h）；el2n 只省 10.8% | `results/compute_table.csv` | ✅ |
+| ④ | 产出：算力节省结论 | nait 净省 48.6%（训练 0.639 + 选择 0.455 / 全量 2.131 GPU-h）；el2n 只省 10.8% | `results/compute_table.csv` | ✅ |
 
 ---
 
@@ -66,7 +66,7 @@
 |---|---|---|---|---|
 | ① | 场景：临床模型训练算力预算压缩 | 单卡 8GB 笔电上把 12k 条的训练压到 0.17 GPU-h | `results/compute_table.csv` | ✅ |
 | ② | 用户：模型训练团队 / 信息科 / 预算决策方 | 一句话能讲清："少看七成题，考分不掉，电费省一半" | `RESULTS.md` | 🟡 缺一页给非技术读者的摘要 |
-| ③ | 用途：效果不降前提下降低数据与算力成本 | 净省 48.2%，代价是一次性 0.455 GPU-h 的选择前向；24k 轮同比例下 EL2N 要 0.607 GPU-h、只省 10.8% | `fig05_compute.png` | ✅ |
+| ③ | 用途：效果不降前提下降低数据与算力成本 | 净省 48.6%，代价是一次性 0.455 GPU-h 的选择前向；24k 轮同比例下 EL2N 要 0.607 GPU-h、只省 10.8% | `fig05_compute.png` | ✅ |
 | ④ | 验收：同效果下训练数据削减 ≥30% | **30% 达成**（逐题口径），但"同效果"的强度取决于种子数 | `results/eq_table.csv` | 🟡 |
 | ⑤ | 落地：发布开源协议与实施指南 | 协议有、脚本有、新机器部署说明有；缺 README/LICENSE 与"如何换自己的数据"教程 | `docs/PROTOCOL.md`、`docs/SETUP_MACHINES.md` | 🟡 |
 

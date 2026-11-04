@@ -1,0 +1,16 @@
+{
+  "exp_id": "nait_r70_s2",
+  "method": "nait",
+  "ratio": 0.7,
+  "seed": 2,
+  "epochs": 1.0,
+  "n_samples": 33600,
+  "steps": 4200,
+  "max_len": 512,
+  "bs": 4,
+  "grad_accum": 2,
+  "train_seconds": 5836.1,
+  "loss_last": 1.9247,
+  "adapter": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr\\models\\adapters\\nait_r70_s2",
+  "pool_size": 48000
+}

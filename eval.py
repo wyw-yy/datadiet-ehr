@@ -62,8 +62,29 @@ def option_token_ids(tok):
     return ids
 
 
+def _resolve_adapter(a: str | None) -> str | None:
+    """--adapter 既接受完整路径，也接受 models/adapters/<name> 里的目录名。
+
+    只给目录名时必须先拼成路径：否则 transformers 会把它当成 HuggingFace repo id
+    去联网找，离线时直接抛 "We couldn't connect to 'https://huggingface.co'"。
+    """
+    if not a:
+        return None
+    p = Path(a)
+    if p.is_dir():
+        return str(p.resolve())
+    cand = Path(C.ADAPTER_DIR) / a if hasattr(C, "ADAPTER_DIR") else None
+    if cand is not None and cand.is_dir():
+        return str(cand.resolve())
+    alt = Path(C.BASE_DIR).parent / "adapters" / a
+    if alt.is_dir():
+        return str(alt.resolve())
+    raise SystemExit(f"[eval] adapter not found: {a} (tried path, models/adapters/{a})")
+
+
 def load_model(base: Path, adapter: str | None):
     from transformers import AutoModelForCausalLM, AutoTokenizer
+    adapter = _resolve_adapter(adapter)
     if adapter:
         from peft import PeftModel
         tok = AutoTokenizer.from_pretrained(adapter, trust_remote_code=True)
