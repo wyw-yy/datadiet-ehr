@@ -78,6 +78,9 @@ pct_of <- function(v) mean(rd$delta_pp < v) * 100
 
 cat(sprintf("\n随机 30%% 子集零分布（%s，%d 个种子，全量分母 %.4f）\n",
             TASK_MAIN, nrow(rd), full_acc))
+cat("  注：分母 = full_s1..s3 的逐题正确率均值（不是单个种子），因此本表的 Δ 与\n",
+    "      eq_table.csv 里按单种子配对的 Δ 可能差 0.1–0.2pp，二者都在允许的读数误差内。\n",
+    sep = "")
 cat(sprintf("  均值 %.2f  标准差 %.2f  最小 %.2f  最大 %.2f\n",
             mean(rd$delta_pp), sd(rd$delta_pp), min(rd$delta_pp), max(rd$delta_pp)))
 cat(sprintf("  P2.5 %.2f  P10 %.2f  中位 %.2f  P90 %.2f  P97.5 %.2f\n",
@@ -109,7 +112,8 @@ ylim <- range(c(rd$delta_pp, tab$delta_pp, -DELTA * 100), na.rm = TRUE)
 ylim <- ylim + c(-0.25, 0.45) * diff(ylim)
 plot(NA, xlim = c(0.2, 3.8), ylim = ylim, xaxt = "n", bty = "l",
      xlab = "", ylab = "Delta vs full data (pp)",
-     main = sprintf("Null band: 20 random 30%% subsets (%s, 48k pool)", TASK_MAIN))
+     main = sprintf("Null band: %d random 30%% subsets (%s, 48k pool)",
+                    nrow(rd), TASK_MAIN))
 axis(1, at = c(1, 2, 3), labels = c(sprintf("random\n(n=%d)", nrow(rd)),
                                     "nait", "rand_len"))
 
