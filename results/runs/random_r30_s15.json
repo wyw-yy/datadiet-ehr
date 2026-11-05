@@ -1,0 +1,16 @@
+{
+  "exp_id": "random_r30_s15",
+  "method": "random",
+  "ratio": 0.3,
+  "seed": 15,
+  "epochs": 1.0,
+  "n_samples": 14400,
+  "steps": 1800,
+  "max_len": 512,
+  "bs": 4,
+  "grad_accum": 2,
+  "train_seconds": 2346.9,
+  "loss_last": 1.8838,
+  "adapter": "D:\\code\\codetest\\datadiet-ehr\\models\\adapters\\random_r30_s15",
+  "pool_size": 48000
+}

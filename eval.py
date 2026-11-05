@@ -110,10 +110,34 @@ def score_batch(model, tok, prompts: list[str], opt_ids: list[int], max_len: int
               padding=True, truncation=True, max_length=max_len)
     ids = enc["input_ids"].cuda()
     att = enc["attention_mask"].cuda()
-    logits = model(input_ids=ids, attention_mask=att).logits[:, -1, :].float()
-    logp = torch.log_softmax(logits, dim=-1)[:, opt_ids]      # (B, 4)
-    p = torch.softmax(logits, dim=-1)[:, opt_ids]
+    # logits_to_keep=1 只算最后一个位置：否则 (B,T,151936) 的 bf16 张量在 8 GB 卡上就是 OOM
+    # （bs16 x T1024 x 151936 x 2B ~= 5 GB，2026-11-05 凌晨那次整批失败就是这么来的）
+    try:
+        logits = model(input_ids=ids, attention_mask=att, logits_to_keep=1).logits[:, -1, :].float()
+    except TypeError:                       # 老版本 transformers 不认这个参数
+        logits = model(input_ids=ids, attention_mask=att).logits[:, -1, :].float()
+    sel = logits[:, opt_ids]                # (B, 4) —— 先切四个选项再 softmax，不物化整个词表
+    logp = torch.log_softmax(sel, dim=-1)
+    p = torch.softmax(sel, dim=-1)
     return logp.tolist(), p.tolist()
+
+
+def score_chunk(model, tok, prompts, opt_ids, max_len, bs: int):
+    """OOM 就把 bs 减半重试，最小到 1；避免整批 run 因为一条长样本全废。"""
+    try:
+        return score_batch(model, tok, prompts, opt_ids, max_len)
+    except torch.cuda.OutOfMemoryError:
+        torch.cuda.empty_cache()
+        if bs <= 1 or len(prompts) <= 1:
+            raise
+        half = max(1, bs // 2)
+        print(f"[eval] CUDA OOM at bs={len(prompts)} -> retry bs={half}", flush=True)
+        lp, p = [], []
+        for i in range(0, len(prompts), half):
+            l2, p2 = score_chunk(model, tok, prompts[i:i + half], opt_ids, max_len, half)
+            lp += l2
+            p += p2
+        return lp, p
 
 
 def main():
@@ -149,7 +173,7 @@ def main():
     n_ok = 0
     for start in range(0, len(rows), a.bs):
         chunk = rows[start:start + a.bs]
-        lp, p = score_batch(model, tok, prompts[start:start + a.bs], opt_ids, a.max_len)
+        lp, p = score_chunk(model, tok, prompts[start:start + a.bs], opt_ids, a.max_len, a.bs)
         for k, r in enumerate(chunk):
             pred = LETTERS[max(range(4), key=lambda j: lp[k][j])]
             # answer is the 0-based option index (prepare_data stores ints)

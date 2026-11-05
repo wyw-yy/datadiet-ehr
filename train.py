@@ -24,9 +24,15 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import random
 import time
 from pathlib import Path
+
+# 8 GiB 卡上 bs4×512 + 梯度检查点偶尔会在重算时抖到 7.9 GiB 以上而 OOM（seed 16 稳定复现）。
+# 限制单次分段大小能显著减少碎片，比 expandable_segments 更兼容（后者在 Windows 上不支持）。
+# 必须在 import torch 之前设置。
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "max_split_size_mb:128")
 
 import torch
 
