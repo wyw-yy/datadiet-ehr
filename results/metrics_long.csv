@@ -123,3 +123,5 @@ random_r30_s20,random,0.3,20,medqa,0.484682,1273,full
 random_r30_s20,random,0.3,20,medmcqa,0.457327,4183,full
 rand_len_r30_s2,rand_len,0.3,2,medqa,0.484682,1273,full
 rand_len_r30_s2,rand_len,0.3,2,medmcqa,0.465216,4183,full
+rand_len_r30_s3,rand_len,0.3,3,medqa,0.492537,1273,full
+rand_len_r30_s3,rand_len,0.3,3,medmcqa,0.458044,4183,full

@@ -84,6 +84,35 @@ def missing_runs() -> list[str]:
     return out
 
 
+def resume_stalled(minutes: float) -> bool:
+    """resume 进程还在、但日志超过 minutes 分钟没动 —— 说明它卡死了。
+
+    2026-11-06 的事故就是这样：显卡驱动在 22:43 重置（事件 nvlddmkm 153 刷了几十次），
+    训练进程卡在 CUDA 调用里不返回也不退出，resume_rigor 一直"存活"，于是
+    post_rigor 的 alive 判据永远为真，谁也没发现整批在 00:13 就已经全失败了 ——
+    机器又空转 18 小时。之后必须用"日志有没有往前走"判活，不能只看进程在不在。
+    """
+    if not RESUME_LOG.exists():
+        return False
+    return (time.time() - RESUME_LOG.stat().st_mtime) / 60.0 > minutes
+
+
+def kill_resume_tree() -> None:
+    for p in psutil.process_iter(["pid", "cmdline"]):
+        try:
+            cmd = " ".join(p.info["cmdline"] or [])
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+        if "resume_rigor.py" in cmd and "post_rigor" not in cmd:
+            try:
+                for ch in p.children(recursive=True):
+                    ch.kill()
+                p.kill()
+                log(f"killed stalled resume pid={p.pid}")
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
+
 def relaunch_resume() -> None:
     cmd = f'cd /d "{ROOT}" && "{PY}" tools\\resume_rigor.py >> "{RESUME_RELAUNCH_LOG}" 2>&1'
     log(f"relaunching resume_rigor (log -> {RESUME_RELAUNCH_LOG.name})")
@@ -106,6 +135,9 @@ def main() -> None:
     ap.add_argument("--misses", type=int, default=3)
     ap.add_argument("--max-wait-hours", type=float, default=24.0)
     ap.add_argument("--max-relaunch", type=int, default=5)
+    ap.add_argument("--stall-minutes", type=float, default=30.0,
+                    help="resume 进程在、但日志这么久没动，就当作卡死并重启")
+    ap.add_argument("--heartbeat-minutes", type=float, default=10.0)
     ap.add_argument("--no-shutdown", action="store_true")
     ap.add_argument("--retry", action="append", default=[],
                     help="补跑失败的 run，格式 method:ratio:seed，可重复")
@@ -118,11 +150,21 @@ def main() -> None:
     miss = 0
     relaunches = 0
     give_up = False
+    last_beat = time.time()
 
     while True:
-        done = RESUME_LOG.exists() and "resume finished" in RESUME_LOG.read_text(
-            encoding="utf-8", errors="ignore")
+        # 只看日志最后一行：整个文件里搜 "resume finished" 会被上一轮的旧记录骗到
+        # （2026-11-06 18:02 就撞了：重启后第一轮读到的还是 00:13 那行"finished"）。
+        done = False
+        if RESUME_LOG.exists():
+            tail = [ln for ln in RESUME_LOG.read_text(encoding="utf-8", errors="ignore").splitlines()
+                    if ln.strip()]
+            done = bool(tail) and "resume finished" in tail[-1]
         alive = running("resume_rigor.py")
+        if alive and resume_stalled(a.stall_minutes):
+            log(f"resume alive but log frozen > {a.stall_minutes:.0f} min -> treat as dead")
+            kill_resume_tree()
+            alive = False
         if done or not alive:
             miss += 1
             log(f"resume idle (log_done={done}, alive={alive}), miss {miss}/{a.misses}")
@@ -142,6 +184,11 @@ def main() -> None:
                 miss = 0
         else:
             miss = 0
+        if time.time() - last_beat > a.heartbeat_minutes * 60:
+            gap_now = len(missing_runs())
+            log(f"heartbeat: alive={alive} missing={gap_now}/{len(PLAN)} "
+                f"{(time.time() - t0) / 3600:.1f} h elapsed")
+            last_beat = time.time()
         if time.time() - t0 > a.max_wait_hours * 3600:
             log("max wait exceeded, doing the analysis anyway (no shutdown)")
             give_up = True
