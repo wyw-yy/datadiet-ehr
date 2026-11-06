@@ -231,6 +231,9 @@ def main() -> None:
         ([str(PY), "tools/report_numbers.py"], "report_numbers"),
         ([str(PY), "tools/make_table1.py"], "make_table1"),
         ([str(PY), "tools/make_audit.py"], "make_audit"),
+        # 数字一改，所有文档里的旧口径就过期了；这一步在做审计之前把 Markdown 里的
+        # 关键数字按 CSV 现状机械同步一遍（叙述性措辞仍要人改，脚本只在末尾打印 TODO）。
+        ([str(PY), "tools/sync_numbers.py"], "sync_numbers"),
         ([str(PY), "tools/audit_final.py"], "audit_final"),
         ([str(PY), "tools/audit_runs.py"], "audit_runs"),
     ]
