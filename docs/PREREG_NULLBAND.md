@@ -61,3 +61,17 @@
 
 - `R/08_nullband.R` → `results/nullband.csv`、`paper/figures/fig07_nullband.png`
 - 复验：`report_numbers` → `make_table1` → `make_audit` → `audit_final` → `audit_runs`
+
+## 修正案 1（2026-11-06 18:20，开跑前登记）
+
+**硬件排除 `random_r30_s16`。** 该 run 在 `bs4 × accum2`（与已完成 15 个 run 完全同参）下稳定 OOM：
+GPU 已清空到 0 MiB、无其它进程、`512×512 bf16 matmul` 自检通过，仍在第 1 个训练步崩
+（栈顶 `torch/utils/checkpoint.py:1607 recompute_fn` → `torch/cuda/random.py:74 set_state`）。
+原因：随机子集经长度分桶后把最长的 4 条凑成一个 batch，`4×512` 的 logits（bf16 622 MB +
+float32 上采样 1.24 GB）越过 8 GiB 物理上限。详见 `data/excluded_runs.txt`。
+
+- 零分布因此为 **n = 19**（seed 1–15、17–20），其余参数与判定规则 R1–R4 不变。
+- **排除规则**：只允许因显存上限排除；排除发生在看到该 run 的准确率之前；若其它随机种子
+  出现同样情况，同样记录排除，不得因结果好坏排除。
+- **不采用的方案**：整批改成 `bs2 × accum4` 重跑 25 个（等效 batch 相同但数值行为不完全一致，
+  且要废掉已完成 15 个 run 的一致性，约 14 h）。为个别样本改变全场设定，比少一个种子更伤严谨性。

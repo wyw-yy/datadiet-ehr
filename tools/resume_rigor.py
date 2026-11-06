@@ -53,6 +53,29 @@ def eid(method: str, ratio: float, seed: int) -> str:
     return f"{method}_r{int(round(ratio * 100)):02d}_s{seed}"
 
 
+# 硬件排除名单（见 data/excluded_runs.txt 的注释）：8 GiB 上 bs4×accum2 稳定 OOM 的
+# run。排除理由是显存上限、与结果无关，写进文档后不再重试，避免每次重启都白跑 1 分钟。
+def _load_excluded() -> set[str]:
+    p = ROOT / "data" / "excluded_runs.txt"
+    if not p.exists():
+        return set()
+    out = set()
+    for ln in p.read_text(encoding="utf-8").splitlines():
+        ln = ln.split("#", 1)[0].strip()
+        if ln:
+            out.add(ln)
+    return out
+
+
+EXCLUDED = _load_excluded()
+
+
+def ok_excluded() -> set[str]:
+    """只保留仍在 PLAN 里的排除项（防止文件写错）。"""
+    plan_ids = {eid(m, r, s) for (m, r, s) in PLAN}
+    return {e for e in EXCLUDED if e in plan_ids}
+
+
 def log(msg: str) -> None:
     line = f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
     print(line, flush=True)
@@ -125,8 +148,10 @@ def main() -> None:
     ap.add_argument("--gpu-wait-min", type=float, default=20.0)
     a = ap.parse_args()
 
-    todo = [(m, r, s) for (m, r, s) in PLAN if not have_preds(eid(m, r, s))]
-    log(f"resume up: {len(PLAN)} planned, {len(PLAN) - len(todo)} already done, {len(todo)} todo")
+    todo = [(m, r, s) for (m, r, s) in PLAN
+            if not have_preds(eid(m, r, s)) and eid(m, r, s) not in EXCLUDED]
+    log(f"resume up: {len(PLAN)} planned, {len(ok_excluded())} excluded (hardware), "
+        f"{len(PLAN) - len(todo) - len(ok_excluded())} already done, {len(todo)} todo")
     ok, fails = 0, []
     t0 = time.time()
     done_times: list[float] = []
@@ -159,8 +184,11 @@ def main() -> None:
         t1 = time.time()
         rc = run_one(e, m, r, s, None, a.per_run_min, "")
         if rc != 0 or not have_preds(e):
-            log(f"{e}: rc={rc}, retrying once with --bs 2")
-            rc = run_one(e, m, r, s, 2, a.per_run_min, "_bs2")
+            # 2026-11-06 18:20 起：**不再自动降 bs**。用户要求"极致严谨"——已完成的
+            # 15 个 run 都是 bs4×accum2，如果这批里有人偷偷改成 bs2×accum4，虽然
+            # 等效 batch 相同，数值行为并不完全一致，属于隐性混杂。失败就记失败，
+            # 由人决定是整批换参数还是把这个 run 记为"单卡排除"。
+            log(f"{e}: rc={rc} — 按 bs4 判失败，不自动降 batch（保持与已完成 15 个 run 同参）")
 
         dt = (time.time() - t1) / 60
         if rc == 0 and have_preds(e):

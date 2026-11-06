@@ -72,11 +72,31 @@ def eid_of(method: str, ratio: float, seed: int) -> str:
     return f"{method}_r{int(round(ratio * 100)):02d}_s{seed}"
 
 
+def excluded() -> set[str]:
+    """硬件排除名单（data/excluded_runs.txt）：8 GiB 上 bs4 稳定 OOM 的 run。
+
+    排除理由是显存上限、与结果无关，所以闸门把它们当作"已完成"，不让它们
+    永远拦住分析（否则 24/25 会把整条收尾链卡死）。
+    """
+    p = ROOT / "data" / "excluded_runs.txt"
+    if not p.exists():
+        return set()
+    out = set()
+    for ln in p.read_text(encoding="utf-8").splitlines():
+        ln = ln.split("#", 1)[0].strip()
+        if ln:
+            out.add(ln)
+    return out
+
+
 def missing_runs() -> list[str]:
-    """返回还缺 preds 的 exp_id（两个 task 任一缺失都算缺）。"""
+    """返回还缺 preds 的 exp_id（两个 task 任一缺失都算缺），跳过硬件排除项。"""
+    skip = excluded()
     out = []
     for m, r, s in PLAN:
         eid = eid_of(m, r, s)
+        if eid in skip:
+            continue
         ok = all((ROOT / "results" / "preds" / f"{eid}_{t}.csv.gz").exists()
                  for t in ("medmcqa", "medqa"))
         if not ok:

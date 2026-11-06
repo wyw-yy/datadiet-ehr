@@ -49,3 +49,20 @@ Invoke-CimMethod -ClassName Win32_Process -MethodName Create `
 **修法**：`logits_to_keep=1`（只保留最后位置）+ 先切四个选项再 softmax（`logits[:, opt_ids]`）+ `score_chunk` 捕获 `torch.cuda.OutOfMemoryError` 后把 bs 减半递归重试。
 
 **副作用（已记录在 `docs/API.md`）**：`pA..pD` 的归一化范围前后不一致（旧文件是整个词表、新文件是 A–D 内部）。argmax 与 `pred/correct` 不受影响，但做置信度/ECE 必须重新评测。
+
+## 事故 4：我自己把分配器改坏了（2026-11-05 22:00 → 11-06 18:15）
+
+**症状**：11-06 18:05 之后，所有 `bs4` 的 run 都在第 1 个训练步 OOM，而 18:05 之前 15 个
+run 用同样参数全部正常。
+
+**根因**：为了治 `s16` 的 OOM，我在 `train.py` 顶部加了
+`os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "max_split_size_mb:128")`。
+`max_split_size_mb` 会**禁止大于 128 MB 的单块分配**，而这张卡上一次 logits 分配就要几百 MB，
+等于把大块切碎——于是所有 run 都崩。它不是"减少碎片"，而是"禁止大块"。
+
+**修法**：整段回滚，并在原位置留注释说明为什么不能再加。显存不够时唯一的正确做法是
+降 `--bs`（`run_one.py --bs 2` 会自动把 `--grad-accum` 翻倍，保持等效 batch 8）。
+
+**教训**：在没有 A/B 对照的情况下改分配器参数，会把"个别样本 OOM"变成"全部样本 OOM"，
+而且症状完全一样，极易误判成硬件故障。改性能/内存相关开关必须一次只改一个变量，
+并先跑 10 步验证。
