@@ -94,6 +94,9 @@ def main():
     ap.add_argument("--limit-train", type=int, default=None)
     ap.add_argument("--limit-eval", type=int, default=None)
     ap.add_argument("--reuse", action="store_true", help="skip training if the adapter exists")
+    # 显存吃紧时的逃生门：--bs 2 把 batch 降下来（train.py 默认 bs 4）。
+    ap.add_argument("--bs", type=int, default=None, help="override train.py batch size")
+    ap.add_argument("--grad-accum", type=int, default=None, help="override grad accumulation steps")
     a = ap.parse_args()
 
     C.ensure_dirs()
@@ -113,6 +116,12 @@ def main():
     else:
         cmd = [PY, "train.py", "--method", a.method, "--ratio", str(a.ratio),
                "--seed", str(a.seed), "--epochs", str(a.epochs)]
+        if a.bs:
+            cmd += ["--bs", str(a.bs)]
+            # 保持等效 batch（默认 bs4 × accum2 = 8）：bs 减半就把累积步数翻倍
+            cmd += ["--grad-accum", str(a.grad_accum or max(1, 8 // a.bs))]
+        elif a.grad_accum:
+            cmd += ["--grad-accum", str(a.grad_accum)]
         if limit_train:
             cmd += ["--limit", str(limit_train)]
         # NB: even in smoke mode we keep the adapter - the point of the smoke test is

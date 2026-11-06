@@ -29,10 +29,12 @@ import random
 import time
 from pathlib import Path
 
-# 8 GiB 卡上 bs4×512 + 梯度检查点偶尔会在重算时抖到 7.9 GiB 以上而 OOM（seed 16 稳定复现）。
-# 限制单次分段大小能显著减少碎片，比 expandable_segments 更兼容（后者在 Windows 上不支持）。
-# 必须在 import torch 之前设置。
-os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "max_split_size_mb:128")
+# 2026-11-06 18:15 回滚：这里曾设 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF",
+# "max_split_size_mb:128")，想治 seed 16 的 OOM。结果**所有** bs4 的 run 都在第一步
+# 崩掉（把它清掉后 18:05 之前的 15 个 run 全部正常）——max_split_size_mb 会禁止
+# 大于 128 MB 的单块分配，而这块卡上 logits 一次就要几百 MB，等于自断经脉。
+# 结论：不要动分配器参数；显存不够就把 --bs 降下来（run_one.py --bs 2 会自动
+# 把 grad-accum 翻倍保持等效 batch）。
 
 import torch
 
