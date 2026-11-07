@@ -125,3 +125,15 @@ rand_len_r30_s2,rand_len,0.3,2,medqa,0.484682,1273,full
 rand_len_r30_s2,rand_len,0.3,2,medmcqa,0.465216,4183,full
 rand_len_r30_s3,rand_len,0.3,3,medqa,0.492537,1273,full
 rand_len_r30_s3,rand_len,0.3,3,medmcqa,0.458044,4183,full
+rand_len_r30_s5,rand_len,0.3,5,medqa,0.490966,1273,full
+rand_len_r30_s5,rand_len,0.3,5,medmcqa,0.460913,4183,full
+nait_dedup_r30_s2,nait_dedup,0.3,2,medqa,0.477612,1273,full
+nait_dedup_r30_s2,nait_dedup,0.3,2,medmcqa,0.459001,4183,full
+nait_dedup_r30_s3,nait_dedup,0.3,3,medqa,0.478397,1273,full
+nait_dedup_r30_s3,nait_dedup,0.3,3,medmcqa,0.453263,4183,full
+nait_dedup_r30_s5,nait_dedup,0.3,5,medqa,0.485467,1273,full
+nait_dedup_r30_s5,nait_dedup,0.3,5,medmcqa,0.463782,4183,full
+el2n_r30_s2,el2n,0.3,2,medqa,0.479183,1273,full
+el2n_r30_s2,el2n,0.3,2,medmcqa,0.449677,4183,full
+el2n_r30_s3,el2n,0.3,3,medqa,0.476041,1273,full
+el2n_r30_s3,el2n,0.3,3,medmcqa,0.446809,4183,full

@@ -8,3 +8,6 @@
 # 每个 run 在 8 GiB 上 bs4×512 的峰值 ≈ 7.8–8.1 GiB；随机子集的长度分桶会把
 # 4 条最长样本凑成一个 batch，个别子集会越过物理上限。
 random_r30_s16
+rand_len_r30_s4	CUDA OOM：该子集按长度分桶后凑出的 batch 超出 8 GB	2026-11-07
+nait_dedup_r30_s4	CUDA OOM：同上	2026-11-07
+el2n_r30_s4	CUDA OOM：同上	2026-11-07

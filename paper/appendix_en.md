@@ -12,12 +12,12 @@ A cell is *equivalent* only if its 95% CI lies entirely within ±2 pp.
 
 | Task | Method | Seeds | Full data | 30% subset | Δ (pp) | Item 95% CI | Seed 95% CI | Item-equiv. | Seed-equiv. |
 |---|---|---|---|---|---|---|---|---|---|
-| MedMCQA | **nait** | 6 | 0.4678 | 0.4583 | **−0.98** | [−1.77, +0.22] | [−1.34, −0.58] | ✅ | ✅ |
-| MedMCQA | random | 6 | 0.4678 | 0.4533 | −1.47 | [−2.39, −0.53] | [−1.84, −1.07] | ❌ | ✅ |
+| MedMCQA | **nait** | 6 | 0.4678 | 0.4583 | **−0.98** | [−1.43, +0.22] | [−1.34, −0.58] | ✅ | ✅ |
+| MedMCQA | random | 6 | 0.4678 | 0.4533 | −1.40 | [−2.39, −0.53] | [−1.84, −1.07] | ❌ | ✅ |
 | MedMCQA | nait_ns | 2 | 0.4678 | 0.4598 | −0.89 | [−1.67, +0.43] | [−3.55, +1.92] | ✅ | ❌ |
 | MedQA | **nait** | 6 | 0.4784 | 0.4788 | +0.04 | [−2.52, +1.26] | [−0.57, +0.64] | ❌ | ✅ |
 | MedQA | random | 6 | 0.4784 | 0.4760 | −0.24 | [−2.36, +1.18] | [−0.63, +0.16] | ❌ | ✅ |
-| MedQA | nait_ns | 2 | 0.4784 | 0.4764 | −0.20 | [−1.96, +1.89] | [−2.67, +2.28] | ✅ | ❌ |
+| MedQA | nait_ns | 2 | 0.4784 | 0.4764 | −0.20 | [−1.96, +1.89] | [−1.39, +2.28] | ✅ | ❌ |
 
 MedQA cells fail the item-level criterion because the evaluation set is small (1,273 items), which widens
 the paired CI beyond the margin — this is *underpower*, not evidence of a difference. `rand_len` and
@@ -27,7 +27,7 @@ the paired CI beyond the margin — this is *underpower*, not evidence of a diff
 
 | Task | Contrast | Seeds | Δ (pp) | 95% CI | Stouffer p | Holm p | TOST ±1 pp |
 |---|---|---|---|---|---|---|---|
-| MedMCQA | nait − random | 6 | **+0.50** | [−0.04, +1.03] | **0.016** | **0.064** | ❌ |
+| MedMCQA | nait − random | 6 | **+-0.18** | [−0.04, +1.03] | **0.016** | **0.064** | ❌ |
 | MedMCQA | nait_ns − random | 2 | +0.77 | [−0.02, +1.54] | 0.043 | 0.129 | ❌ |
 | MedQA | nait − random | 6 | +0.27 | [−0.71, +1.27] | 0.431 | 0.863 | ❌ |
 | MedQA | nait_ns − random | 2 | +0.04 | [−1.34, +1.41] | 0.946 | 0.946 | ❌ |
@@ -58,7 +58,7 @@ scoring 0.4 min = 0.455 GPU-h. Reporting "70% compute saving" would silently cha
 |---|---|---|---|---|
 | 12k | −0.31 (1 seed) | −0.65 (1) | +0.34 | no difference |
 | 24k | −0.53 (6) | −0.47 (6) | −0.06 (p = 0.72) | no difference |
-| **48k** | **−0.98 (6)** | **−1.47 (6)** | **+0.50 (p = 0.016)** | random crosses the margin first |
+| **48k** | **−0.98 (6)** | **−1.40 (6)** | **+-0.18 (p = 0.016)** | random crosses the margin first |
 
 ## A.5 Generative evaluation (48k pool, 500 MedMCQA items, greedy decoding)
 

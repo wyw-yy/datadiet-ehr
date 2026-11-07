@@ -110,16 +110,16 @@ par(mar = c(4.2, 4.6, 3.6, 1.2), mgp = c(2.7, 0.8, 0), las = 1)
 
 ylim <- range(c(rd$delta_pp, tab$delta_pp, -DELTA * 100), na.rm = TRUE)
 ylim <- ylim + c(-0.25, 0.45) * diff(ylim)
-plot(NA, xlim = c(0.2, 3.8), ylim = ylim, xaxt = "n", bty = "l",
+plot(NA, xlim = c(0.4, 4.9), ylim = ylim, xaxt = "n", bty = "l",
      xlab = "", ylab = "Delta vs full data (pp)",
      main = sprintf("Null band: %d random 30%% subsets (%s, 48k pool)",
                     nrow(rd), TASK_MAIN))
-axis(1, at = c(1, 2, 3), labels = c(sprintf("random\n(n=%d)", nrow(rd)),
-                                    "nait", "rand_len"))
+axis(1, at = c(1, 2, 3, 4), labels = c(sprintf("random\n(n=%d)", nrow(rd)),
+                                        "nait", "rand_len", "nait+dedup"))
 
 abline(h = 0, col = "grey40", lty = 3)
 abline(h = -DELTA * 100, col = "#D55E00", lty = 2, lwd = 1.4)
-text(3.78, -DELTA * 100, "equivalence margin", pos = 3, cex = 0.72, col = "#D55E00", adj = 1)
+text(4.85, -DELTA * 100, "equivalence margin", pos = 3, cex = 0.72, col = "#D55E00", adj = 1)
 
 # 随机点（横轴 1，抖动）
 set.seed(7)
@@ -144,6 +144,7 @@ draw_arm <- function(x, m, col, lab) {
 }
 draw_arm(2, nait_m, PAL[["nait"]], "nait")
 draw_arm(3, rl_m, PAL[["rand_len"]], "rand_len")
+draw_arm(4, dd_m, PAL[["nait_dedup"]], "nait+dedup")
 
 legend("bottomleft", bty = "n", cex = 0.72,
        legend = c(sprintf("random, TOST pass (%d/%d)", n_pass, nrow(rd)),

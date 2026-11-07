@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-04T08:33:46+0800",
-  "project": "C:\\Users\\yang'yu\\Desktop\\codetest\\datadiet-ehr",
+  "generated_at": "2026-11-07T13:43:33+0800",
+  "project": "D:\\code\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 311,
+  "n_files": 332,
   "files": [
     {
       "path": "adapters_round2_24k/el2n_r30_s1/adapter_config.json",
@@ -611,6 +611,12 @@
       "mtime": "2026-10-28T20:22:21"
     },
     {
+      "path": "docs/.numbers_snapshot.json",
+      "sha256": "889e6552d44ae7240f4fb6beb90fa451634046418e549ba8915663136aa8464e",
+      "size": 1702,
+      "mtime": "2026-11-06T18:24:16"
+    },
+    {
       "path": "docs/challenge_b/blocks.json",
       "sha256": "833dc905773987151d1f4ca18da294cdd064b12fb5b4269821e9c5ec030ba6ab",
       "size": 25144,
@@ -636,9 +642,9 @@
     },
     {
       "path": "eval.py",
-      "sha256": "1b86a96a04e2de24da82ef4418912d828ef7fda12b2c4b879914e3fcaff67b8f",
-      "size": 6824,
-      "mtime": "2026-11-03T17:56:11"
+      "sha256": "6474c533a07a306b96d0d18cfa00e9ccdfb434b51d8296a46cb22d741b15446f",
+      "size": 8030,
+      "mtime": "2026-11-05T17:27:38"
     },
     {
       "path": "finish_round.bat",
@@ -663,6 +669,12 @@
       "sha256": "66b85a9b6901eb708eaf1ca29476a13b07032aad1bf575e5f5f2b8d2650b3175",
       "size": 1205,
       "mtime": "2026-10-28T04:04:06"
+    },
+    {
+      "path": "logs/status.txt",
+      "sha256": "c40eb72abf970e63357efb728141b81db7167fefefd59a87d68a63b00b2033ce",
+      "size": 46,
+      "mtime": "2026-11-06T22:11:12"
     },
     {
       "path": "prepare_data.py",
@@ -729,6 +741,12 @@
       "sha256": "b1661b4d3221f7854ec304b2ca0d098865b95cb4b55235818e699c4154f4b0ea",
       "size": 3475,
       "mtime": "2026-10-26T18:22:01"
+    },
+    {
+      "path": "R/08_nullband.R",
+      "sha256": "4d0c1a7c1316e5562c06d381f0b65183f71c1308ef977c82445db28be20f761f",
+      "size": 6851,
+      "mtime": "2026-11-05T22:08:46"
     },
     {
       "path": "R/99_make_demo_data.R",
@@ -1338,9 +1356,9 @@
     },
     {
       "path": "run_one.py",
-      "sha256": "fc3fe49da8cf19db4516d25c102f6c1c8c0544fe461c0f290619cab775db0438",
-      "size": 7193,
-      "mtime": "2026-10-28T13:28:57"
+      "sha256": "b3305517a348548985134140b14567982b9b64db0a19037c04b6d0ef16f66505",
+      "size": 7788,
+      "mtime": "2026-11-06T18:10:51"
     },
     {
       "path": "run_pilots.bat",
@@ -1374,9 +1392,9 @@
     },
     {
       "path": "softcopyright/说明书.txt",
-      "sha256": "091f6931930145eb7adb6cbf2f1d775a3c4da388b2a1da6d08f705c86d93f649",
-      "size": 26909,
-      "mtime": "2026-10-27T18:45:37"
+      "sha256": "f84d800397cb2ca060fbca4de600c1c602fb0c906f3dbc84cdea3ae2b2438f86",
+      "size": 9924,
+      "mtime": "2026-11-06T19:22:23"
     },
     {
       "path": "subsets_round2_24k/subsets.json",
@@ -1403,6 +1421,12 @@
       "mtime": "2026-10-28T13:29:09"
     },
     {
+      "path": "tmp/el2n_probe.json",
+      "sha256": "c09fdf512864e17b2768edfc6a14a69a45f8f74c8cfb5b8c3701c9f14a16bf11",
+      "size": 9015,
+      "mtime": "2026-11-04T08:51:11"
+    },
+    {
       "path": "tmp/patent/path.json",
       "sha256": "7a7b9af6bef9f02d18b4754cd54c3d50008282247d9291e26ce8869c985f520b",
       "size": 6733,
@@ -1419,6 +1443,24 @@
       "sha256": "622841b4b67ccd1a816689434401a8eec987445ce6c7b2df7cb1145755fd2e6d",
       "size": 4612,
       "mtime": "2026-10-29T22:10:35"
+    },
+    {
+      "path": "tmp/sc/agree.json",
+      "sha256": "3deae74e5e480bcb222be77a495e7b9cfc51123baeaa1349c832f957762af4a5",
+      "size": 5103,
+      "mtime": "2026-11-06T18:53:22"
+    },
+    {
+      "path": "tmp/wmi_probe.py",
+      "sha256": "5c55a256544ef910ba2a881f3e8f40da90e3ecef6eb6698b3a3bd162eb65712d",
+      "size": 257,
+      "mtime": "2026-11-05T22:02:22"
+    },
+    {
+      "path": "tools/_finalize_rigor.py",
+      "sha256": "6b305fe479b3675f42cfb64eebdf7234c633717df1258e31d8e29c02539f5745",
+      "size": 2808,
+      "mtime": "2026-11-07T13:40:58"
     },
     {
       "path": "tools/_ps_check.ps1",
@@ -1511,6 +1553,12 @@
       "mtime": "2026-10-23T18:47:28"
     },
     {
+      "path": "tools/check_pred_scale.py",
+      "sha256": "eda4eac06d76bdcb9ec61b4ca67454f23dea8c57d1397f6f6b7e706b0ca28072",
+      "size": 1848,
+      "mtime": "2026-11-05T22:12:23"
+    },
+    {
       "path": "tools/confirm_fixes.py",
       "sha256": "e936a7126139e7a18fb6368f3d61bc59da5c7d719f5151bdfc240f95ce1a1ef8",
       "size": 5140,
@@ -1530,9 +1578,9 @@
     },
     {
       "path": "tools/el2n_scores.py",
-      "sha256": "d594f09a42e58c7a549511e8e1ac96b32867d9d68ddce942f597363c58183716",
-      "size": 8284,
-      "mtime": "2026-10-25T21:43:12"
+      "sha256": "15b2b07b9ecc6b89a67f1c0a942aba70c68b86fa3ad792678b0a62f57aa8c1a0",
+      "size": 8899,
+      "mtime": "2026-11-04T08:50:48"
     },
     {
       "path": "tools/export_sample_stats.py",
@@ -1551,6 +1599,24 @@
       "sha256": "7cd30b523d178acf2410ef0018965201ca25d80d2cee0de994d053edcc5d14ad",
       "size": 897,
       "mtime": "2026-10-22T19:47:58"
+    },
+    {
+      "path": "tools/fix_medqa_claims.py",
+      "sha256": "8b6d26f9596cc5f6e93a35fe33e4241e5931ba0a8fa1e3607a78670adfe9bf04",
+      "size": 1505,
+      "mtime": "2026-11-04T08:36:41"
+    },
+    {
+      "path": "tools/fix_v6_prose.py",
+      "sha256": "be24b1657700c7f9bc21fea8ce598ef0c6235e9568d43d9d1d6575250eb49d17",
+      "size": 2194,
+      "mtime": "2026-11-04T08:47:32"
+    },
+    {
+      "path": "tools/fix_v7_holm.py",
+      "sha256": "8071cc89974871a72981b233151aad163f6f0ffa6867a525151d646b733ef51b",
+      "size": 1326,
+      "mtime": "2026-11-04T09:57:22"
     },
     {
       "path": "tools/gen_report.py",
@@ -1599,6 +1665,18 @@
       "sha256": "1b0eb3b44923e5db7c376863ea99a5fe7da19d0ad6b15b47000242665712212e",
       "size": 8637,
       "mtime": "2026-10-25T13:31:13"
+    },
+    {
+      "path": "tools/make_manual.py",
+      "sha256": "95d8bf1a5711d30b521aebd773be31dea3f2b23908a6b259c452a414889c6b21",
+      "size": 10867,
+      "mtime": "2026-11-06T19:22:02"
+    },
+    {
+      "path": "tools/make_provenance.py",
+      "sha256": "6cb8e8e6cc412cec52481f0369774e05125cbb12998cf2f7a5229caa80fa7da0",
+      "size": 8659,
+      "mtime": "2026-11-06T19:52:20"
     },
     {
       "path": "tools/make_randlen.py",
@@ -1703,6 +1781,18 @@
       "mtime": "2026-10-23T19:18:44"
     },
     {
+      "path": "tools/photo_to_pdf.py",
+      "sha256": "a99ffefd3bed36966e36450c373842417feb4cad9c54f1cf4ed0d3d4814aa3b5",
+      "size": 4816,
+      "mtime": "2026-11-06T20:22:59"
+    },
+    {
+      "path": "tools/post_rigor.py",
+      "sha256": "f4667edb988ef9a9ed279b8cc7e1febb3452bfecfe52fcad3b4a72e917f73416",
+      "size": 10516,
+      "mtime": "2026-11-06T18:23:29"
+    },
+    {
       "path": "tools/print_eq.py",
       "sha256": "97b88022f6036b90260a99bed286156fe05c8aa0953d38b7992ff6898a74e7f1",
       "size": 2039,
@@ -1781,6 +1871,12 @@
       "mtime": "2026-10-24T14:27:31"
     },
     {
+      "path": "tools/resume_rigor.py",
+      "sha256": "2bc10ae53e68496138119ac3c34130abe962abc609e92c4496b3d051ea11241b",
+      "size": 7699,
+      "mtime": "2026-11-06T18:19:56"
+    },
+    {
       "path": "tools/review_docs.py",
       "sha256": "6b55b0edff564640a2cdba9a8f57bfce491e2628395eaa839b19c37a42b96c5e",
       "size": 5615,
@@ -1793,10 +1889,28 @@
       "mtime": "2026-11-03T18:01:09"
     },
     {
+      "path": "tools/run_resume_task.bat",
+      "sha256": "43bb957d36359194d1daa076d964cb73ee85cbb9cae8f82881c294487b2a19c3",
+      "size": 750,
+      "mtime": "2026-11-05T17:34:35"
+    },
+    {
+      "path": "tools/run_rigor.py",
+      "sha256": "ce4e8bc9d4cbb5728f611daec7887d35786179d04a4ca272630d44cb534f9a90",
+      "size": 4180,
+      "mtime": "2026-11-04T18:21:59"
+    },
+    {
       "path": "tools/run_scale.py",
       "sha256": "ffff4b83d3babcf72d2c084aa0c1e5b429840eb665ee1ed5fb428349a7ec4286",
       "size": 6436,
       "mtime": "2026-10-24T22:45:01"
+    },
+    {
+      "path": "tools/shutdown_after_rigor.py",
+      "sha256": "5d5bcbac664ad5400f68432a01d35657479e0eb972d944b42e38d791b7f51b2c",
+      "size": 4873,
+      "mtime": "2026-11-05T17:33:51"
     },
     {
       "path": "tools/shutdown_when_idle.py",
@@ -1811,6 +1925,12 @@
       "mtime": "2026-11-03T20:00:32"
     },
     {
+      "path": "tools/sync_numbers.py",
+      "sha256": "4bf9f13baa4db84b7b1edbcc960c4ce6b9ef25665c7578d9a0f9fd3a3f568020",
+      "size": 7201,
+      "mtime": "2026-11-06T18:24:08"
+    },
+    {
       "path": "tools/txt_to_pdf.ps1",
       "sha256": "138cc1e5dc6c3b6a53ea55f27d816cf90f2a7a4cd38f0a13330ba67ecd9ca590",
       "size": 2301,
@@ -1821,6 +1941,12 @@
       "sha256": "a9cce382aef613f549e013fe02c55a4e9f666e7f6776f5de1783b4da80b9c46e",
       "size": 5075,
       "mtime": "2026-10-28T20:18:04"
+    },
+    {
+      "path": "tools/update_docs_v6.py",
+      "sha256": "a66b1ca99c9b433a8ced82357f59d571623c4ed018e4dc7baa2c26f9ca79bba8",
+      "size": 3456,
+      "mtime": "2026-11-04T08:34:52"
     },
     {
       "path": "tools/verify.py",
@@ -1854,9 +1980,9 @@
     },
     {
       "path": "train.py",
-      "sha256": "c64089c53559b380db9ad1cc7173a0e6897d33b96dc3894831201e8cf5260f3e",
-      "size": 11062,
-      "mtime": "2026-10-24T15:35:09"
+      "sha256": "ae5ddc657360f14518573e22de9eac0e0cd44160dd49e4e117e8adbb24f8341c",
+      "size": 11618,
+      "mtime": "2026-11-06T18:11:51"
     },
     {
       "path": "watch_progress.bat",
@@ -1871,5 +1997,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "1b859820befc14d93b90133668f06777778fc6cfc2f6ae4e780798f141e03d49"
+  "manifest_sha256": "9f4d5ee61b5724b7903d06cb63eb62f02dfe0208694264aa92d7f216d4dfda07"
 }

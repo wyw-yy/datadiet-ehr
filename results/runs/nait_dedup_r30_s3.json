@@ -1,0 +1,16 @@
+{
+  "exp_id": "nait_dedup_r30_s3",
+  "method": "nait_dedup",
+  "ratio": 0.3,
+  "seed": 3,
+  "epochs": 1.0,
+  "n_samples": 14400,
+  "steps": 1800,
+  "max_len": 512,
+  "bs": 4,
+  "grad_accum": 2,
+  "train_seconds": 2345.1,
+  "loss_last": 2.0612,
+  "adapter": "D:\\code\\codetest\\datadiet-ehr\\models\\adapters\\nait_dedup_r30_s3",
+  "pool_size": 48000
+}

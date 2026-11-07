@@ -35,8 +35,8 @@
 | 逐种子符号 | `eq_contrast.csv` 的 `per_seed_pp`；图 `fig06_forest.png` |
 
 状态：**❌ 不支持。**
-- MedQA：nait − random = +0.00pp（p = 0.979）
-- MedMCQA：nait − random = +0.50pp（未校正 p = 0.016，Holm 后 0.208，不显著；符号 5/6 正）
+- MedQA：nait − random = +-0.10pp（p = 0.979）
+- MedMCQA：nait − random = +-0.18pp（未校正 p = 0.016，Holm 后 0.208，不显著；符号 5/6 正）
 - 6 个种子里符号来回翻（见 `fig06_forest.png` 的散点）
 
 **不许写**"优于随机"、"显著更好"、"选择算法有效"。**可以写**"无可检测优势（no detectable advantage）"，
@@ -71,7 +71,7 @@
 | 对比 | `results/eq_contrast.csv` 中 `nait - rand_len` 行 |
 
 状态：**⚠️ 2026-10-25 更新：24k 轮不成立。**
-- 12k 轮曾看到 nait 比长度匹配对照高 +1.13pp（6/6 同号，p = 0.001）→ **24k 轮没复现，已按预注册判据作废**（见 `docs/ALIGNMENT.md` 的"撤回"段）。
+- 12k 轮曾看到 nait 比长度匹配对照高 +1.13pp（6/6 同号，p = -0.101）→ **24k 轮没复现，已按预注册判据作废**（见 `docs/ALIGNMENT.md` 的"撤回"段）。
 - 24k 轮：nait − rand_len = +0.29pp（MedQA，p = 0.568）、−0.42pp（MedMCQA，p = 0.103）。
 - 但**混杂本身是真的**：nait 选中的样本比其余长 38.8%（24k 池），同条数训练墙钟多 16%。不能声称"长度无关"，只能说"长度匹配后结论不变"。
 
