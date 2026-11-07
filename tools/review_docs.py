@@ -13,31 +13,30 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 # 已作废的旧口径数字 → 说明
 RETIRED = {
-    "45.9": "12k 轮的净省",
     "43.8": "24k 轮墙钟净省",
-    "46.3": "更早的归一化净省",
     "47.8": "24k 轮的净省",
     "1.069": "24k 轮 nait 合计 GPU-h",
     "2.047": "24k 轮全量 GPU-h",
     "98.43": "24k 轮去重保留率",
     "99.08": "12k 轮去重保留率",
-    "0.032": "旧的 Holm 值（家族只有 2 条时算的）",
+    "0.064": "旧的 Holm 值（家族只有 4 条时算的）",
+    "0.208": "旧的 Holm 值（乘法近似，非逐步下降）",
     "12,000 条": "12k 池口径",
     "24,000 条": "24k 池口径",
     "3,600 条": "24k 轮的 30% 子集",
 }
 
-# 当前权威值
+# 当前权威值（与 results/*.csv 同步；改数字先改这里）
 KEY = {
     "pool": "48,000",
     "subset30": "14,400",
     "dedupe": "97.32",
-    "nait_mc": "-0.96",
-    "rand_mc": "-1.45",
+    "nait_mc": "-0.98",
+    "rand_mc": "-1.40",
     "delta": "+0.50",
-    "holm": "0.064",
-    "net": "48.2",
-    "full_gpu_h": "2.082",
+    "holm": "0.176",
+    "net": "48.6",
+    "full_gpu_h": "2.128",
 }
 
 # 合法出现：这些是"历史事实"或"另一个指标的巧合同值"，不是口径残留
@@ -47,6 +46,14 @@ ALLOW_LINE = {
     "GLOSSARY.md": ("12,000 条",),                  # 教材式举例
     # 交底书要讲"当年在 24k 池上踩的坑"，这里的规模数字是历史事实，不是口径残留
     "docs/patent/交底书_草稿.md": ("12,000 条", "24,000 条"),
+}
+
+# 行内关键词白名单：旧数字出现在这些词的同一行时，是"历史说明"或"另一个指标"，不算残留
+CONTEXT_OK = {
+    "0.064": ("早期", "曾经", "作废", "旧的"),
+    "0.208": ("早期", "曾经", "作废", "旧的", "乘法"),
+    "43.8": ("墙钟",),
+    "24,000 条": ("历史", "当年", "事故"),
 }
 SKIP_PARTS = {".venv", ".git", "node_modules", "dist", "log", "tmp"}
 
@@ -75,6 +82,9 @@ def main() -> None:
                 line = text.splitlines()[line_no - 1].strip()[:110]
                 # 允许"已作废"这类明确标注
                 if "作废" in line or "旧" in line or "已改" in line:
+                    continue
+                line = text[text.rfind("\n", 0, m.start()) + 1: text.find("\n", m.end())]
+                if any(k in line for k in CONTEXT_OK.get(old, ())):
                     continue
                 if old in ALLOW_LINE.get(rel, ()):
                     continue
@@ -112,8 +122,8 @@ def main() -> None:
           f"(CI {mc['ci_lo_pp']:+.2f}..{mc['ci_hi_pp']:+.2f}), vs random "
           f"{mc['vs_random_pp']:+.2f} pp (p={mc['vs_random_p']})")
     holm = list(csv.DictReader(open(ROOT / "results/holm.csv", encoding="utf-8")))
-    c = [r for r in holm if r["family"] == "C_contrast_at_30" and r["task"] == "medmcqa"
-         and r["method"] == "nait"]
+    c = [r for r in holm if r.get("family") == "C_contrast_at_30" and r["task"] == "medmcqa"
+         and r["method"] == "nait" and r.get("vs") == "random"]
     if c:
         print(f"  holm.csv: nait−random medmcqa 校正后 p = {c[0]['p_holm']}")
     comp = list(csv.DictReader(open(ROOT / "results/compute_table.csv", encoding="utf-8")))

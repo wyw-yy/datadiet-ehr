@@ -9,8 +9,8 @@
     "stouffer_p": 0.0,
     "seed_min_pp": -1.58,
     "seed_max_pp": -0.57,
-    "vs_random_pp": -0.17,
-    "vs_random_p": 0.4925,
+    "vs_random_pp": 0.5,
+    "vs_random_p": 0.016,
     "vs_random_same_sign": "FALSE"
   },
   "medmcqa|random|0.3": {
@@ -34,8 +34,8 @@
     "stouffer_p": 0.002,
     "seed_min_pp": -1.39,
     "seed_max_pp": -0.41,
-    "vs_random_pp": 0.07,
-    "vs_random_p": 0.7336,
+    "vs_random_pp": 0.5,
+    "vs_random_p": 0.0497,
     "vs_random_same_sign": "FALSE"
   },
   "medqa|nait|0.3": {
@@ -48,9 +48,9 @@
     "stouffer_p": 0.9443,
     "seed_min_pp": -0.63,
     "seed_max_pp": 0.79,
-    "vs_random_pp": -0.73,
-    "vs_random_p": 0.1316,
-    "vs_random_same_sign": "TRUE"
+    "vs_random_pp": 0.27,
+    "vs_random_p": 0.4313,
+    "vs_random_same_sign": "FALSE"
   },
   "medqa|random|0.3": {
     "delta_pp": -0.08,
@@ -73,8 +73,8 @@
     "stouffer_p": 0.6399,
     "seed_min_pp": -0.31,
     "seed_max_pp": 0.79,
-    "vs_random_pp": 0.27,
-    "vs_random_p": 0.5214,
+    "vs_random_pp": 0.71,
+    "vs_random_p": 0.1302,
     "vs_random_same_sign": "FALSE"
   },
   "compute_full_gpu_h": 2.128,

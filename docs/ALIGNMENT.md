@@ -26,7 +26,7 @@
 | ③ | 做法：跨任务稳健性 | MedMCQA（同域，4,183）＋ MedQA（跨任务，1,273） | `data/processed/medmcqa.jsonl`、`medqa.jsonl` | ✅ |
 | ④ | 产出：开源协议 | 同"可复现协议" | `docs/PROTOCOL.md` | ✅ |
 | ④ | 产出：数据冗余度报告 | 去重保留 **97.32%**（46,714/48,000）；随机对余弦 p50 −0.0125 / p99 0.4474 | `results/select_stats.json` | ✅ 结论：**这批数据几乎没有语义级近重复**，冗余不在"重复样本"上 |
-| ④ | 产出：算力节省结论 | nait 净省 48.6%（训练 0.639 + 选择 0.455 / 全量 2.131 GPU-h）；el2n 只省 10.8% | `results/compute_table.csv` | ✅ |
+| ④ | 产出：算力节省结论 | nait 净省 48.6%（训练 0.639 + 选择 0.455 / 全量 2.128 GPU-h）；el2n 只省 10.8% | `results/compute_table.csv` | ✅ |
 
 ---
 

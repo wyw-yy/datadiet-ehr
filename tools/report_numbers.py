@@ -39,8 +39,10 @@ def collect() -> dict:
 
     eq = {f"{r['task']}|{r['method']}|{r['ratio']}": r
           for r in read_csv(C.RESULTS / "eq_table.csv")}
-    ct = {f"{r['task']}|{r['method']}|{r['ratio']}": r
-          for r in read_csv(C.RESULTS / "eq_contrast.csv")}
+    # 注意：同一个 (task, method, ratio) 可能有多条对比（vs random / vs rand_len / vs nait），
+    # 只有 vs == "random" 才是头条里说的"相对随机"；不过滤会取到最后一条（通常是 vs rand_len）。
+    ct = {f"{r['task']}|{r['method']}|{r['ratio']}|random": r
+          for r in read_csv(C.RESULTS / "eq_contrast.csv") if r.get("vs") == "random"}
     comp = read_csv(C.RESULTS / "compute_table.csv")
 
     for tk in ("medmcqa", "medqa"):
@@ -60,10 +62,11 @@ def collect() -> dict:
                 "seed_min_pp": float(r["seed_min_pp"]),
                 "seed_max_pp": float(r["seed_max_pp"]),
             }
-            if k in ct:
-                out["headline"][k]["vs_random_pp"] = float(ct[k]["delta_pp"])
-                out["headline"][k]["vs_random_p"] = float(ct[k]["stouffer_p"])
-                out["headline"][k]["vs_random_same_sign"] = ct[k]["same_sign"]
+            ck = f"{k}|random"
+            if ck in ct:
+                out["headline"][k]["vs_random_pp"] = float(ct[ck]["delta_pp"])
+                out["headline"][k]["vs_random_p"] = float(ct[ck]["stouffer_p"])
+                out["headline"][k]["vs_random_same_sign"] = ct[ck]["same_sign"]
 
     full = [c for c in comp if abs(float(c["ratio"]) - 1.0) < 1e-9]
     if full:

@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-07T13:43:33+0800",
+  "generated_at": "2026-11-07T17:07:41+0800",
   "project": "D:\\code\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 332,
+  "n_files": 339,
   "files": [
     {
       "path": "adapters_round2_24k/el2n_r30_s1/adapter_config.json",
@@ -612,15 +612,9 @@
     },
     {
       "path": "docs/.numbers_snapshot.json",
-      "sha256": "889e6552d44ae7240f4fb6beb90fa451634046418e549ba8915663136aa8464e",
-      "size": 1702,
-      "mtime": "2026-11-06T18:24:16"
-    },
-    {
-      "path": "docs/challenge_b/blocks.json",
-      "sha256": "833dc905773987151d1f4ca18da294cdd064b12fb5b4269821e9c5ec030ba6ab",
-      "size": 25144,
-      "mtime": "2026-10-28T14:02:55"
+      "sha256": "04bf0ce447cb09018d42a7d84a43ff8625845715f6d0376bfd3756e35b4dcbc1",
+      "size": 1835,
+      "mtime": "2026-11-07T13:43:37"
     },
     {
       "path": "docs/challenge_b/notice/关于组织开展皖江工学院第五届“挑战杯”大学生课外学术科技作品竞赛的通知.txt",
@@ -744,9 +738,9 @@
     },
     {
       "path": "R/08_nullband.R",
-      "sha256": "4d0c1a7c1316e5562c06d381f0b65183f71c1308ef977c82445db28be20f761f",
-      "size": 6851,
-      "mtime": "2026-11-05T22:08:46"
+      "sha256": "79339b4a1264b3fac466b06e5fa98cbfbf425dc23b2c42819b6dc4dc0495cef6",
+      "size": 7402,
+      "mtime": "2026-11-07T13:56:52"
     },
     {
       "path": "R/99_make_demo_data.R",
@@ -1415,10 +1409,40 @@
       "mtime": "2026-10-24T23:30:39"
     },
     {
+      "path": "tmp/authoritative.txt",
+      "sha256": "3af6d458149ab4258039ae1399272a7bc50f6ab333ea41bf143e77bd31d278e0",
+      "size": 2863,
+      "mtime": "2026-11-07T16:23:44"
+    },
+    {
       "path": "tmp/check_overhead.py",
       "sha256": "b3c4e30a7dce26a2b61945e80cb93c1c4fb8a1f3dded2fdc7e78f426bca82284",
       "size": 873,
       "mtime": "2026-10-28T13:29:09"
+    },
+    {
+      "path": "tmp/corrupt.txt",
+      "sha256": "2894dc6cf0f154974944b1a638c31e86df27efe89a87d6fd9895af8bc2a454cd",
+      "size": 5027,
+      "mtime": "2026-11-07T16:24:33"
+    },
+    {
+      "path": "tmp/docx/研制报告.json",
+      "sha256": "04266083300c89cc65e45436ad76dbea35c6f9cdc2091d72d1fc91ace6a66dfe",
+      "size": 25158,
+      "mtime": "2026-11-07T17:06:09"
+    },
+    {
+      "path": "tmp/docx/研究报告.json",
+      "sha256": "e828f05b37aefc0485dc7a8ff31de78d89300d9e8d478863843eab1d5d72e7ba",
+      "size": 14960,
+      "mtime": "2026-11-07T17:06:25"
+    },
+    {
+      "path": "tmp/docx/项目书.json",
+      "sha256": "38830da0f5c2a44e2eac09d53f632e87171d54f1ac5b413ce47f02f67a619048",
+      "size": 9352,
+      "mtime": "2026-11-07T17:06:34"
     },
     {
       "path": "tmp/el2n_probe.json",
@@ -1455,6 +1479,24 @@
       "sha256": "5c55a256544ef910ba2a881f3e8f40da90e3ecef6eb6698b3a3bd162eb65712d",
       "size": 257,
       "mtime": "2026-11-05T22:02:22"
+    },
+    {
+      "path": "tmp/研制报告.blocks.json",
+      "sha256": "db2faa208ad0cbc18f0e868b50d028fe03d8c90acf3f261252e7fc00a445867a",
+      "size": 25158,
+      "mtime": "2026-11-07T16:36:57"
+    },
+    {
+      "path": "tmp/研究报告.blocks.json",
+      "sha256": "620f60fd2483060acfb9fd36e298fcb64183a73e696f07a30e5f5563aa364d9f",
+      "size": 14960,
+      "mtime": "2026-11-07T16:37:12"
+    },
+    {
+      "path": "tmp/项目书.blocks.json",
+      "sha256": "ffbdfa89a9475fe6b5da32b3de8bce0cb9af09b4262275df532c2fa9dbb4164d",
+      "size": 9352,
+      "mtime": "2026-11-07T16:37:21"
     },
     {
       "path": "tools/_finalize_rigor.py",
@@ -1698,9 +1740,9 @@
     },
     {
       "path": "tools/make_table1.py",
-      "sha256": "cc11a04779153b7b65d7e2321eb37ae6db2635910c4a58d0a56b1dd3327051b6",
-      "size": 8156,
-      "mtime": "2026-10-28T20:20:35"
+      "sha256": "f80327b969ad1967c53161c7e53a8a8c084d81606a503c61e8f4d4523bce0a79",
+      "size": 8218,
+      "mtime": "2026-11-07T16:32:21"
     },
     {
       "path": "tools/manifest_data.json",
@@ -1866,9 +1908,9 @@
     },
     {
       "path": "tools/report_numbers.py",
-      "sha256": "51953ca8f55de7dba10e497cf5431590dcdc3d346e91e0e44469fddff308924e",
-      "size": 6731,
-      "mtime": "2026-10-24T14:27:31"
+      "sha256": "4ba8435c3710570f9aec5f23c750abbfde3dfd29543088568afd606163ac44ed",
+      "size": 7218,
+      "mtime": "2026-11-07T17:04:53"
     },
     {
       "path": "tools/resume_rigor.py",
@@ -1878,9 +1920,9 @@
     },
     {
       "path": "tools/review_docs.py",
-      "sha256": "6b55b0edff564640a2cdba9a8f57bfce491e2628395eaa839b19c37a42b96c5e",
-      "size": 5615,
-      "mtime": "2026-11-03T01:57:44"
+      "sha256": "b071f221c2305bcc36af2dc8a198db7433aa33fa300b02afb3482c51a8c72ba7",
+      "size": 6234,
+      "mtime": "2026-11-07T17:05:31"
     },
     {
       "path": "tools/run_remaining.py",
@@ -1997,5 +2039,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "9f4d5ee61b5724b7903d06cb63eb62f02dfe0208694264aa92d7f216d4dfda07"
+  "manifest_sha256": "a097363d3dfebc8aa6efeff0583636ee9aab92100c49687af59f7579d8a7f756"
 }

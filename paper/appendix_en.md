@@ -48,7 +48,7 @@ i.e. **not significant**. TOST at ±1 pp does not pass either (CI upper bound 1.
 | nait | 70% | 1.458 | 0.455 | 1.913 | 8.2% |
 | EL2N (24k pool) | 30% | 0.307 | 0.607 | 0.914 | 10.8% |
 
-Full-data training: **2.131 GPU-h** (48,000 samples × 0.153 s/sample, median over runs).
+Full-data training: **2.128 GPU-h** (48,000 samples × 0.153 s/sample, median over runs).
 The selection forward pass is measured, not modelled: activation collection 25.7 min + probe 1.2 min +
 scoring 0.4 min = 0.455 GPU-h. Reporting "70% compute saving" would silently charge selection cost to zero.
 
