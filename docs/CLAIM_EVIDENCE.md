@@ -35,8 +35,8 @@
 | 逐种子符号 | `eq_contrast.csv` 的 `per_seed_pp`；图 `fig06_forest.png` |
 
 状态：**❌ 不支持。**
-- MedQA：nait − random = +-0.10pp（p = 0.979）
-- MedMCQA：nait − random = +-0.18pp（未校正 p = 0.016，Holm 后 0.208，不显著；符号 5/6 正）
+- MedQA：nait − random = +0.10pp（p = 0.979）
+- MedMCQA：nait − random = +0.50pp（未校正 p = 0.016，Holm 后 0.176，不显著；符号 5/6 正）
 - 6 个种子里符号来回翻（见 `fig06_forest.png` 的散点）
 
 **不许写**"优于随机"、"显著更好"、"选择算法有效"。**可以写**"无可检测优势（no detectable advantage）"，

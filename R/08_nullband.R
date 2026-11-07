@@ -4,8 +4,10 @@
 
 source("R/00_setup.R")
 
-TASK_MAIN  <- "medmcqa"
-TASK_OTHER <- "medqa"
+TASK_MAIN  <- Sys.getenv("DATADIET_NULLBAND_TASK", "medmcqa")
+TASK_OTHER <- setdiff(c("medmcqa", "medqa"), TASK_MAIN)[1]
+# 主任务之外的任务只换输入/产物名，判定规则不动（见 PREREG_NULLBAND 修正案 3）
+TAG        <- if (identical(TASK_MAIN, "medmcqa")) "" else paste0("_", TASK_MAIN)
 N_RANDOM   <- 20L
 MAIN_RATIO <- 0.30
 
@@ -56,7 +58,7 @@ for (m in c("nait", "rand_len", "nait_dedup", "el2n")) {
 }
 if (!length(res)) stop("没有任何可分析的预测文件")
 tab <- do.call(rbind, res)
-write.csv(tab, file.path(RESULTS, "nullband.csv"), row.names = FALSE)
+write.csv(tab, file.path(RESULTS, paste0("nullband", TAG, ".csv")), row.names = FALSE)
 
 # ---------- 零分布统计 ----------
 rd <- tab[tab$arm == "random", ]
@@ -105,7 +107,7 @@ if (!is.null(nait_m)) {
 }
 
 # ---------- 图：分布带 ----------
-png(file.path(FIG, "fig07_nullband.png"), width = 1900, height = 950, res = 150)
+png(file.path(FIG, paste0("fig07", TAG, "_nullband.png")), width = 1900, height = 950, res = 150)
 par(mar = c(4.2, 4.6, 3.6, 1.2), mgp = c(2.7, 0.8, 0), las = 1)
 
 ylim <- range(c(rd$delta_pp, tab$delta_pp, -DELTA * 100), na.rm = TRUE)
@@ -152,4 +154,4 @@ legend("bottomleft", bty = "n", cex = 0.72,
        pch = 19, col = c("grey35", "grey72"))
 invisible(dev.off())
 
-cat("\n产物：\n  results/nullband.csv\n  paper/figures/fig07_nullband.png\n")
+cat(sprintf("\n产物：\n  results/nullband%s.csv\n  paper/figures/fig07%s_nullband.png\n", TAG, TAG))
