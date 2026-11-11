@@ -21,12 +21,12 @@
 | ③ | 做法：给出可复现协议 | 10 节协议文档：输入契约、采集、去均值、打分、去重、分层、审计、参数总表、自检、放弃的选项 | `docs/PROTOCOL.md` | ✅ |
 | ③ | 做法：开源实现 | 代码齐全 + 一键脚本 + 环境锁定 + 新机器部署说明；**缺 README / LICENSE** | `check_env.bat`、`run_pilots.bat`、`requirements-lock.txt`、`docs/SETUP_MACHINES.md` | 🟡 缺 `README.md` + `LICENSE` |
 | ③ | 做法：测量数据削减比例 | 五档 10 / 20 / 30 / 50 / 70% 全部跑完（30% 有 6 种子，其余 1 种子） | `results/eq_table.csv`、`paper/figures/fig02_data_efficiency.png` | ✅ |
-| ③ | 做法：算力节省 | 每次 run 的真实 `train_seconds`；选择前向开销按方法实测（nait **0.455**（el2n 的 0.607 来自 24k 轮） GPU-h）；每样本耗时用中位数剔污染 | `results/compute_table.csv`、`paper/figures/fig05_compute.png` | ✅ 净省 nait **48.6%**、random 70.0%（el2n 10.8% 来自 24k 轮，且比随机更差） |
+| ③ | 做法：算力节省 | 每次 run 的真实 `train_seconds`；选择前向开销按方法实测（nait **0.455**（el2n 的 0.512 来自 24k 轮） GPU-h）；每样本耗时用中位数剔污染 | `results/compute_table.csv`、`paper/figures/fig05_compute.png` | ✅ 净省 nait **48.6%**、random 70.0%（el2n 45.9% 来自 24k 轮，且比随机更差） |
 | ③ | 做法：跨科室稳健性 | 6 个科室逐题结果可分；科室 n<30 跳过 | `results/robust.csv`、`paper/figures/fig04_dept.png` | 🟡 有图有表，但科室级样本量很小、CI 极宽（最差科室的 CI 跨 0，不能下结论；数字见 `results/robust.csv`） |
 | ③ | 做法：跨任务稳健性 | MedMCQA（同域，4,183）＋ MedQA（跨任务，1,273） | `data/processed/medmcqa.jsonl`、`medqa.jsonl` | ✅ |
 | ④ | 产出：开源协议 | 同"可复现协议" | `docs/PROTOCOL.md` | ✅ |
 | ④ | 产出：数据冗余度报告 | 去重保留 **97.32%**（46,714/48,000）；随机对余弦 p50 −0.0125 / p99 0.4474 | `results/select_stats.json` | ✅ 结论：**这批数据几乎没有语义级近重复**，冗余不在"重复样本"上 |
-| ④ | 产出：算力节省结论 | nait 净省 48.6%（训练 0.639 + 选择 0.455 / 全量 2.128 GPU-h）；el2n 只省 10.8% | `results/compute_table.csv` | ✅ |
+| ④ | 产出：算力节省结论 | nait 净省 48.6%（训练 0.639 + 选择 0.455 / 全量 2.128 GPU-h）；el2n 只省 45.9% | `results/compute_table.csv` | ✅ |
 
 ---
 
@@ -66,7 +66,7 @@
 |---|---|---|---|---|
 | ① | 场景：临床模型训练算力预算压缩 | 单卡 8GB 笔电上把 12k 条的训练压到 0.17 GPU-h | `results/compute_table.csv` | ✅ |
 | ② | 用户：模型训练团队 / 信息科 / 预算决策方 | 一句话能讲清："少看七成题，考分不掉，电费省一半" | `RESULTS.md` | 🟡 缺一页给非技术读者的摘要 |
-| ③ | 用途：效果不降前提下降低数据与算力成本 | 净省 48.6%，代价是一次性 0.455 GPU-h 的选择前向；24k 轮同比例下 EL2N 要 0.607 GPU-h、只省 10.8% | `fig05_compute.png` | ✅ |
+| ③ | 用途：效果不降前提下降低数据与算力成本 | 净省 48.6%，代价是一次性 0.455 GPU-h 的选择前向；24k 轮同比例下 EL2N 要 0.512 GPU-h、只省 45.9% | `fig05_compute.png` | ✅ |
 | ④ | 验收：同效果下训练数据削减 ≥30% | **30% 达成**（逐题口径），但"同效果"的强度取决于种子数 | `results/eq_table.csv` | 🟡 |
 | ⑤ | 落地：发布开源协议与实施指南 | 协议有、脚本有、新机器部署说明有；缺 README/LICENSE 与"如何换自己的数据"教程 | `docs/PROTOCOL.md`、`docs/SETUP_MACHINES.md` | 🟡 |
 

@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-07T17:07:41+0800",
+  "generated_at": "2026-11-11T17:23:50+0800",
   "project": "D:\\code\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 339,
+  "n_files": 341,
   "files": [
     {
       "path": "adapters_round2_24k/el2n_r30_s1/adapter_config.json",
@@ -1428,27 +1428,39 @@
     },
     {
       "path": "tmp/docx/研制报告.json",
-      "sha256": "04266083300c89cc65e45436ad76dbea35c6f9cdc2091d72d1fc91ace6a66dfe",
-      "size": 25158,
-      "mtime": "2026-11-07T17:06:09"
+      "sha256": "c6baf7489af05a8fcb4a73b0374f924e44ca2c658e738f4dbfc0a077fc4a9ea5",
+      "size": 25234,
+      "mtime": "2026-11-11T17:22:47"
     },
     {
       "path": "tmp/docx/研究报告.json",
-      "sha256": "e828f05b37aefc0485dc7a8ff31de78d89300d9e8d478863843eab1d5d72e7ba",
+      "sha256": "363b5cf42584bdf2b10f091e92e011769e6cc74af32b3490aac7324d05e25192",
       "size": 14960,
-      "mtime": "2026-11-07T17:06:25"
+      "mtime": "2026-11-11T17:23:08"
     },
     {
       "path": "tmp/docx/项目书.json",
-      "sha256": "38830da0f5c2a44e2eac09d53f632e87171d54f1ac5b413ce47f02f67a619048",
-      "size": 9352,
-      "mtime": "2026-11-07T17:06:34"
+      "sha256": "ae4c22ee7a4942f1649a4737b34fdee08edbae005e570f0e76dbda814bb94f8f",
+      "size": 9354,
+      "mtime": "2026-11-11T17:23:17"
     },
     {
       "path": "tmp/el2n_probe.json",
       "sha256": "c09fdf512864e17b2768edfc6a14a69a45f8f74c8cfb5b8c3701c9f14a16bf11",
       "size": 9015,
       "mtime": "2026-11-04T08:51:11"
+    },
+    {
+      "path": "tmp/gh_refresh.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "mtime": "2026-11-11T17:19:56"
+    },
+    {
+      "path": "tmp/gh_refresh_err.txt",
+      "sha256": "072f0b950baf5a4e39ed6f2020319f248d8404c8d0cddb861bd086b40b5e6e01",
+      "size": 423,
+      "mtime": "2026-11-11T17:20:22"
     },
     {
       "path": "tmp/patent/path.json",
@@ -2039,5 +2051,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "a097363d3dfebc8aa6efeff0583636ee9aab92100c49687af59f7579d8a7f756"
+  "manifest_sha256": "1d77684892f249739e5c10d1674da69a6f0a08059fdc59dbea79480135cb3828"
 }

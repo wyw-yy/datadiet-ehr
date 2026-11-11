@@ -42,11 +42,11 @@ i.e. **not significant**. TOST at ±1 pp does not pass either (CI upper bound 1.
 | Method | Retention | Training (GPU-h) | Selection forward (GPU-h) | Total (GPU-h) | Net saving |
 |---|---|---|---|---|---|
 | random | 30% | 0.639 | 0 | 0.639 | **70.0%** |
-| **nait** | 30% | 0.639 | **0.455** | 1.094 | **48.6%** |
-| nait_ns | 30% | 0.639 | 0.455 | 1.094 | 48.6% |
+| **nait** | 30% | 0.639 | **0.455** | 1.093 | **48.6%** |
+| nait_ns | 30% | 0.639 | 0.455 | 1.093 | 48.6% |
 | nait | 10% | 0.176 | 0.455 | 0.663 | 68.2% |
 | nait | 70% | 1.458 | 0.455 | 1.913 | 8.2% |
-| EL2N (24k pool) | 30% | 0.307 | 0.607 | 0.914 | 10.8% |
+| EL2N (24k pool) | 30% | 0.307 | 0.512 | 0.914 | 45.9% |
 
 Full-data training: **2.128 GPU-h** (48,000 samples × 0.153 s/sample, median over runs).
 The selection forward pass is measured, not modelled: activation collection 25.7 min + probe 1.2 min +

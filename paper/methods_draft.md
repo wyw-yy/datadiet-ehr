@@ -78,5 +78,5 @@ $\Delta=\mathrm{acc}(f_S)-\mathrm{acc}(f_{\text{full}})$。
 ## 7. 算力核算
 
 净节省 $=1-\dfrac{\text{训练}(rN)+T_{\text{select}}}{T_{\text{full}}}$，
-其中 $T_{\text{select}}$ 为采激活 + 打分的一过性开销（实测 0.255 GPU-h），**必须计入**，
+其中 $T_{\text{select}}$ 为采激活 + 打分的一过性开销（实测 0.455 GPU-h），**必须计入**，
 否则会把"省 70%"当成结论。两种口径同时报：归一化（每样本中位耗时）与墙钟（含评测与机器负载）。
