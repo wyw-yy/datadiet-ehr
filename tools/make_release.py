@@ -36,9 +36,11 @@ INCLUDE_DIRS = ["R", "tools", "docs", "paper", "audit", "results", "data/subsets
                 "data/processed", "results_round1_12k", "results_round2_24k"]
 
 # 即便落在白名单目录里也不要（体积或隐私）
-DENY_SUFFIX = {".npz", ".safetensors", ".bin", ".pt", ".pth", ".whl", ".pdf"}
+DENY_SUFFIX = {".npz", ".safetensors", ".bin", ".pt", ".pth", ".whl", ".pdf", ".zip"}
+# notice/ = 挑战杯官方通知附件（第三方材料，41 MB），只留本地，不进交付包
 DENY_PARTS = {"__pycache__", ".git", ".venv", "raw", "processed_mimic",
-              "processed_mimic_fake", "tmp", "models", "cache", "logs", "softcopyright"}
+              "processed_mimic_fake", "tmp", "models", "cache", "logs", "softcopyright",
+              "notice"}
 DENY_NAME_PREFIX = ("~$",)
 
 
