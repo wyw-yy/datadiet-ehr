@@ -117,6 +117,8 @@ ORCID [0009-0002-6307-3373](https://orcid.org/0009-0002-6307-3373)）。
 ChatDoctor-HealthCareMagic-100k（学术用途，见原仓库）。**本项目不含任何院内病历数据。**
 
 > ⚠️ 若要就本方法申请专利：**先提交专利申请，再把仓库转为 public**。
+>
+> 2026-11-12 记录：本项目**近期不申请专利**（见 `docs/patent/申请路径与费用.md` 第九节），因此转 public 不受此限；但公开即永久丧失该方案的专利新颖性。
 > 公开仓库 / 预印本 / 竞赛材料都可能破坏新颖性；软著登记不构成公开。
 
 方法参考：*Neuron-Aware Data Selection in Instruction Tuning for Large Language Models*
