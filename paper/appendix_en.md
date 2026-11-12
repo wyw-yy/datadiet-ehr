@@ -108,3 +108,7 @@ carry a citation (27.9% in the rest), median reference length 704 vs 491 charact
 | Per-sample stats | `results/sample_stats.csv` | 48,000 rows × 15 columns (activation score, rank, per-ratio membership) |
 | Code manifest | `audit/code_manifest.json` | sha256 of every source file |
 | Release bundle | `dist/datadiet-ehr-v1.0.0.zip` (24.6 MB) | code + results + audit chain; no model weights, no raw corpora |
+
+### A.9 Code and data availability
+
+Code, processed data manifests, per-item predictions and all result CSVs are archived at Zenodo (concept DOI `10.5281/zenodo.24161048`, this version `10.5281/zenodo.24161049`) and mirrored on GitHub at <https://github.com/wyw-yy/datadiet-ehr>. The repository contains a single-command reproduction path (`Rscript R/run_all.R` + `tools/verify.py`). No MIMIC-IV or institutional electronic health record data were used; all datasets are public (see `docs/DATA_CARD.md`).

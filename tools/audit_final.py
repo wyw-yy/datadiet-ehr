@@ -252,6 +252,12 @@ if hp.exists():
         if not p.exists():
             continue
         doc = p.read_text(encoding="utf-8")
+        # URL / DOI / Zenodo 徽章里的数字不是实验数字，先剔掉再扫孤立值。
+        # （2026-11-12：README 加 DOI 徽章后，10.5281 被判成"来源不明"）
+        doc = re.sub(r"https?://\S+", " ", doc)
+        doc = re.sub(r"10\.\d{4,9}/\S+", " ", doc)
+        doc = re.sub(r"zenodo\.org\S*", " ", doc)
+        doc = re.sub(r"img\.shields\.io\S*", " ", doc)
         nums = set(re.findall(r"-?\d+\.\d{2}", doc))
         miss = sorted(n for n in nums if n not in canon and n.lstrip("+") not in canon
                       and f"{abs(float(n)):.2f}" not in canon

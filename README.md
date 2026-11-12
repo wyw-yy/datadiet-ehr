@@ -1,5 +1,9 @@
 # DataDiet-EHR
 
+<!-- badges -->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24161048.svg)](https://doi.org/10.5281/zenodo.24161048)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > 口径：训练池 **48,000 条**，30% = **14,400 条**；近重复去重保留 **46,714 / 48,000 = 97.32%**。
 
 **一句话结果**：30% 保留下，nait 掉 **−0.98 pp**（逐题 CI [−1.43, +0.22]，双口径等效），random 掉 **−1.40 pp**（CI [−2.15, −0.86]，逐题口径越界）；两者差 **+0.50 pp**（未校正 p = 0.016，Holm 校正 **0.176**，不显著）。全量一次训练 **2.128 GPU-h**，nait 合计 **1.093 GPU-h（净省 48.6%）**。
