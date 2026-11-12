@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-11T17:23:50+0800",
+  "generated_at": "2026-11-12T19:51:02+0800",
   "project": "D:\\code\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 341,
+  "n_files": 342,
   "files": [
     {
       "path": "adapters_round2_24k/el2n_r30_s1/adapter_config.json",
@@ -609,6 +609,12 @@
       "sha256": "4fd0ad814b046b010f04a7b5c14736b36767ff3b4fc2400e5f47c8b4282f9d49",
       "size": 95082,
       "mtime": "2026-10-28T20:22:21"
+    },
+    {
+      "path": "dist/datadiet-ehr-v1.0.2.manifest.txt",
+      "sha256": "d18d4c3648caa49eae90faac0d4489c76af46224f68a95018e09a004bfe6d4c7",
+      "size": 117184,
+      "mtime": "2026-11-11T17:40:09"
     },
     {
       "path": "docs/.numbers_snapshot.json",
@@ -1428,21 +1434,21 @@
     },
     {
       "path": "tmp/docx/研制报告.json",
-      "sha256": "c6baf7489af05a8fcb4a73b0374f924e44ca2c658e738f4dbfc0a077fc4a9ea5",
-      "size": 25234,
-      "mtime": "2026-11-11T17:22:47"
+      "sha256": "625c216bc824b27ad058115878b2018b0c06c04cc5812c51e7356d855506faea",
+      "size": 26944,
+      "mtime": "2026-11-12T19:49:07"
     },
     {
       "path": "tmp/docx/研究报告.json",
-      "sha256": "363b5cf42584bdf2b10f091e92e011769e6cc74af32b3490aac7324d05e25192",
-      "size": 14960,
-      "mtime": "2026-11-11T17:23:08"
+      "sha256": "80b7c383fc6a81ce3c1a42caa1e70e7230d7e7745f8790fe72de7616c38ff357",
+      "size": 16466,
+      "mtime": "2026-11-12T19:49:27"
     },
     {
       "path": "tmp/docx/项目书.json",
-      "sha256": "ae4c22ee7a4942f1649a4737b34fdee08edbae005e570f0e76dbda814bb94f8f",
-      "size": 9354,
-      "mtime": "2026-11-11T17:23:17"
+      "sha256": "68c1de156cbf6de0dbaf4f084dd0b75d324f6979ff58a24b5e2998430af994f5",
+      "size": 9396,
+      "mtime": "2026-11-12T19:49:38"
     },
     {
       "path": "tmp/el2n_probe.json",
@@ -1740,9 +1746,9 @@
     },
     {
       "path": "tools/make_release.py",
-      "sha256": "99dab1d3bd4c9b67957e8986d0852076fc2873f24841a1bbabf9d6d070783406",
-      "size": 4782,
-      "mtime": "2026-10-28T13:34:02"
+      "sha256": "9eb920e090b1cd0d8e518f003804136f147489422ff12b4987969209458b418e",
+      "size": 4916,
+      "mtime": "2026-11-11T17:39:47"
     },
     {
       "path": "tools/make_softcopyright.py",
@@ -2051,5 +2057,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "1d77684892f249739e5c10d1674da69a6f0a08059fdc59dbea79480135cb3828"
+  "manifest_sha256": "753b9d850fd4f963529133ee0a4189c87cec4bfb7fe1a66e3006ac6489dbe0b3"
 }
