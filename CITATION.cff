@@ -14,8 +14,8 @@ authors:
     given-names: "Yu"
     orcid: "https://orcid.org/0009-0002-6307-3373"
     affiliation: "Wanjiang University of Technology"
-doi: "10.5281/zenodo.24161049"
-version: 1.0.3
+doi: "10.5281/zenodo.24161048"
+version: 1.0.4
 date-released: 2026-11-12
 license: MIT
 repository-code: "https://github.com/wyw-yy/datadiet-ehr"
