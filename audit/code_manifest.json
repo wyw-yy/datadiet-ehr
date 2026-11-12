@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-12T19:51:02+0800",
+  "generated_at": "2026-11-12T20:15:13+0800",
   "project": "D:\\code\\codetest\\datadiet-ehr",
   "python": "3.12.8",
-  "n_files": 342,
+  "n_files": 344,
   "files": [
     {
       "path": "adapters_round2_24k/el2n_r30_s1/adapter_config.json",
@@ -615,6 +615,18 @@
       "sha256": "d18d4c3648caa49eae90faac0d4489c76af46224f68a95018e09a004bfe6d4c7",
       "size": 117184,
       "mtime": "2026-11-11T17:40:09"
+    },
+    {
+      "path": "dist/datadiet-ehr-v1.0.3.manifest.txt",
+      "sha256": "96fac12d3b50185b75bf3ca77b74cb0fc156328f982b8f97ed6079807af025af",
+      "size": 117425,
+      "mtime": "2026-11-12T20:03:00"
+    },
+    {
+      "path": "dist/datadiet-ehr-v1.0.4.manifest.txt",
+      "sha256": "cfa36880d45013abaee8695f9c4e31203fc09b853d5c6bd9c205b7bd3ea233d8",
+      "size": 117425,
+      "mtime": "2026-11-12T20:06:48"
     },
     {
       "path": "docs/.numbers_snapshot.json",
@@ -1434,21 +1446,21 @@
     },
     {
       "path": "tmp/docx/研制报告.json",
-      "sha256": "625c216bc824b27ad058115878b2018b0c06c04cc5812c51e7356d855506faea",
-      "size": 26944,
-      "mtime": "2026-11-12T19:49:07"
+      "sha256": "063867001bec215c0e1854f169851257e8f2037ad3eb2e0ac9923225c56666d4",
+      "size": 27195,
+      "mtime": "2026-11-12T20:13:54"
     },
     {
       "path": "tmp/docx/研究报告.json",
-      "sha256": "80b7c383fc6a81ce3c1a42caa1e70e7230d7e7745f8790fe72de7616c38ff357",
-      "size": 16466,
-      "mtime": "2026-11-12T19:49:27"
+      "sha256": "eaf881a2134b710d9de4b277c6ec58944831a82305c841cf14d1dd4d48288de0",
+      "size": 16717,
+      "mtime": "2026-11-12T20:14:39"
     },
     {
       "path": "tmp/docx/项目书.json",
-      "sha256": "68c1de156cbf6de0dbaf4f084dd0b75d324f6979ff58a24b5e2998430af994f5",
-      "size": 9396,
-      "mtime": "2026-11-12T19:49:38"
+      "sha256": "2905844c05e6efbcbf51fb608a28c793ed75f7c67a2a28e2756d548cf41ebcdb",
+      "size": 9727,
+      "mtime": "2026-11-12T20:14:53"
     },
     {
       "path": "tmp/el2n_probe.json",
@@ -1566,9 +1578,9 @@
     },
     {
       "path": "tools/audit_final.py",
-      "sha256": "39795991b965cf1b23869326477b45a503b84c52299633b4a8bf4b20098cdc86",
-      "size": 14286,
-      "mtime": "2026-10-28T02:38:20"
+      "sha256": "4446246046685ca46819901d360d32fcd74cb73935b7d5b356fe934d597ca3a5",
+      "size": 14680,
+      "mtime": "2026-11-12T20:06:22"
     },
     {
       "path": "tools/audit_run.py",
@@ -2057,5 +2069,5 @@
       "mtime": "2026-10-22T18:49:14"
     }
   ],
-  "manifest_sha256": "753b9d850fd4f963529133ee0a4189c87cec4bfb7fe1a66e3006ac6489dbe0b3"
+  "manifest_sha256": "9078d37af73dbbd210c9a4de8590df62d830ef9596358304508e40024fafe11c"
 }
