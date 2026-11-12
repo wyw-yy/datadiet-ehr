@@ -73,3 +73,13 @@
 ## 变更记录
 
 - 2026-10-25：新增本文件；补 `mimic_split.json` 与逐样本 `row_subject` 映射（用于证明病人级切分）。
+
+## 再分发说明（2026-11-12）
+
+公开仓库里包含由上述公开数据派生的三个文件：
+
+- `data/processed/train.jsonl`（48,000 条训练池）
+- `data/processed/probe.jsonl`（2,000 条域内 probe）
+- `data/processed/medqa.jsonl` / `medmcqa.jsonl`（评测题，字段已归一）
+
+它们**只是格式转换与去重**，没有任何新增标注，也不含真实院内病历、未使用 MIMIC。收录目的是让复现不必重新下载与清洗。如果上游数据集的许可不允许再分发，删除这四个文件后运行 `prepare_data.py` 即可用 `data/raw/` 重新生成，全部结果不受影响。
