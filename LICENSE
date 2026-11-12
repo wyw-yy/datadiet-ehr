@@ -1,4 +1,4 @@
-MIT License
+﻿MIT License
 
 Copyright (c) 2026 Yu Yang (杨宇) <https://orcid.org/0009-0002-6307-3373>
 
@@ -19,13 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-DATA NOTICE
-
-This repository contains no protected health information and no hospital
-records. The datasets referenced by the scripts (MedMCQA, MedQA,
-ChatDoctor-HealthCareMagic-100k) are public and each carries its own license;
-they are downloaded, not redistributed here. Any use with real clinical data
-(e.g. MIMIC-IV) is subject to that dataset's own credentialed access terms.
