@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 
-def parse(md: str) -> list[dict]:
+def parse(md: str, src_dir: Path | None = None) -> list[dict]:
     lines = md.splitlines()
     blocks: list[dict] = []
     i, title_seen = 0, False
@@ -42,6 +42,18 @@ def parse(md: str) -> list[dict]:
                 blocks.append({"type": f"h{min(level, 3)}", "text": text})
             i += 1
             continue
+        mc = re.match(r"^::\s*(.*)$", line.strip())
+        if mc:
+            blocks.append({"type": "p", "text": mc.group(1).replace("**", ""), "center": True})
+            i += 1
+            continue
+        mi = re.match(r"^!\[(.*?)\]\((.+?)\)\s*$", line.strip())
+        if mi:
+            cap, rel = mi.group(1), mi.group(2)
+            abs_path = (src_dir / rel).resolve() if src_dir else Path(rel).resolve()
+            blocks.append({"type": "img", "path": str(abs_path), "caption": cap})
+            i += 1
+            continue
         if line.lstrip().startswith(("- ", "* ")):
             blocks.append({"type": "li", "text": line.lstrip()[2:].replace("**", "")})
             i += 1
@@ -59,7 +71,7 @@ def parse(md: str) -> list[dict]:
 
 if __name__ == "__main__":
     src, dst = Path(sys.argv[1]), Path(sys.argv[2])
-    blocks = parse(src.read_text(encoding="utf-8"))
+    blocks = parse(src.read_text(encoding="utf-8"), src_dir=src.parent)
     dst.write_text(json.dumps(blocks, ensure_ascii=False, indent=1), encoding="utf-8")
     kinds: dict[str, int] = {}
     for b in blocks:
