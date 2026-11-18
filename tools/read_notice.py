@@ -3,7 +3,7 @@ import re
 import sys
 from pathlib import Path
 
-BASE = Path(r"C:\Users\yang'yu\Desktop\codetest\_notice_txt")
+BASE = Path(r"D:\code\codetest\challenge-cup-docs")  # 挑战杯通知与附件的纯文本
 
 
 def show(path: Path, start: int = 0, end: int | None = None) -> None:

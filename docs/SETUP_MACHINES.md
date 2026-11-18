@@ -41,7 +41,7 @@ tools\build_wheelhouse.bat
 
 ```bat
 :: ② 把项目复制到 U 盘 / 局域网共享（排除 .venv 和各台机器不需要的大件）
-robocopy "C:\Users\yang'yu\Desktop\codetest\datadiet-ehr" "E:\datadiet-ehr" /E ^
+robocopy "D:\code\codetest\ehr-activation-datadiet" "E:\datadiet-ehr" /E ^
   /XD ".venv" "__pycache__" "cache\acts" "data\raw" "results\preds" ^
   /XF "*.log" "*.zip"
 ```

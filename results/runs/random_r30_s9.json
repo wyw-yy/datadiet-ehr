@@ -11,6 +11,6 @@
   "grad_accum": 2,
   "train_seconds": 2688.8,
   "loss_last": 1.939,
-  "adapter": "D:\\code\\codetest\\datadiet-ehr\\models\\adapters\\random_r30_s9",
+  "adapter": "D:\\code\\codetest\\ehr-activation-datadiet\\models\\adapters\\random_r30_s9",
   "pool_size": 48000
 }

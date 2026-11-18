@@ -48,7 +48,7 @@
 你的卡是 Blackwell（sm_120），**必须装 cu128 的 torch**，否则会报 `no kernel image is available for execution on the device`。
 
 ```powershell
-cd C:\Users\yang'yu\Desktop\codetest\datadiet-ehr
+cd D:\code\codetest\ehr-activation-datadiet
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -U pip
@@ -237,7 +237,7 @@ python -c "import torch;print(torch.__version__, torch.cuda.get_device_capabilit
 ## 2.6 R 分析层已经写好了，现在就能跑
 
 ```powershell
-cd C:\Users\yang'yu\Desktop\codetest\datadiet-ehr
+cd D:\code\codetest\ehr-activation-datadiet
 & "C:\Program Files\R\R-4.6.1\bin\x64\Rscript.exe" "R/run_all.R"
 ```
 

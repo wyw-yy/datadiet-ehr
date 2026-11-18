@@ -32,7 +32,7 @@
 ### 第 0 步：确认环境还在
 
 ```bat
-cd C:\Users\yang'yu\Desktop\codetest\datadiet-ehr
+cd D:\code\codetest\ehr-activation-datadiet
 .venv\Scripts\activate
 python -c "import torch;print(torch.cuda.get_device_capability())"
 ```

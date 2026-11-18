@@ -14,7 +14,7 @@
 
 ```powershell
 Invoke-CimMethod -ClassName Win32_Process -MethodName Create `
-  -Arguments @{CommandLine='cmd /c cd /d D:\code\codetest\datadiet-ehr && .venv\Scripts\python.exe tools\resume_rigor.py >> logs\resume_stdout.log 2>&1'}
+  -Arguments @{CommandLine='cmd /c cd /d D:\code\codetest\ehr-activation-datadiet && .venv\Scripts\python.exe tools\resume_rigor.py >> logs\resume_stdout.log 2>&1'}
 ```
 
 **坑**：`schtasks` 在这台机器上建得成功、`/run` 也返回成功，但 `Last Result: 1`、日志从不生成，别再用。

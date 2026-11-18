@@ -10,7 +10,7 @@
 ## 一条命令
 
 ```powershell
-cd C:\Users\yang'yu\Desktop\codetest\datadiet-ehr
+cd D:\code\codetest\ehr-activation-datadiet
 & "C:\Program Files\R\R-4.6.1\bin\x64\Rscript.exe" "R/run_all.R"
 ```
 

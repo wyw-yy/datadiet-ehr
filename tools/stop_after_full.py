@@ -119,7 +119,7 @@ def main() -> int:
         *[f"  {d}" for d in done],
         "",
         "恢复命令（下次开机、确认没别的训练在跑之后执行）：",
-        r"  cd C:\Users\yang'yu\Desktop\codetest\datadiet-ehr",
+        r"  cd D:\code\codetest\ehr-activation-datadiet",
         r"  .\.venv\Scripts\python.exe tools\run_remaining.py",
         "",
         "队列是幂等的：已经跑完的会自动跳过（--reuse），从第二步 50%/70% 接着往下跑。",
