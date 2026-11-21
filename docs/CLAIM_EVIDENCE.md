@@ -14,7 +14,7 @@
 
 | 证据 | 位置 |
 |---|---|
-| 8 行等效性表 | `results/eq_table.csv`（列 `delta_pp` / `ci_lo_pp` / `ci_hi_pp` / `equiv_item` / `equiv_seed`） |
+| 逐题 + 逐种子双口径，30% 档 12 行 | `results/eq_table.csv`（`equiv_item` / `equiv_seed`） |
 | 逐种子 32 行 | `results/eq_per_seed.csv` |
 | 论文表 | `paper/table1.md` Table 1 |
 | 图 | `paper/figures/fig02_data_efficiency.png`、`fig06_forest.png` |
@@ -71,8 +71,8 @@
 | 对比 | `results/eq_contrast.csv` 中 `nait - rand_len` 行 |
 
 状态：**⚠️ 2026-10-25 更新：24k 轮不成立。**
-- 12k 轮曾看到 nait 比长度匹配对照高 +1.13pp（6/6 同号，p = -0.101）→ **24k 轮没复现，已按预注册判据作废**（见 `docs/ALIGNMENT.md` 的"撤回"段）。
-- 24k 轮：nait − rand_len = −0.73pp（MedQA，p = 0.132）、−0.17pp（MedMCQA，p = 0.493）；48k 轮同量级。
+- 12k 轮曾看到 nait 比长度匹配对照高 +1.13pp（6/6 同号，p = 0.101）→ **24k 轮没复现，已按预注册判据作废**（见 `docs/ALIGNMENT.md` 的“撤回”段）。
+- 48k 轮：nait − rand_len = −0.73pp（MedQA，p = 0.132）、−0.17pp（MedMCQA，p = 0.493）；24k 归档轮为 +0.29 / −0.42。
 - 但**混杂本身是真的**：nait 选中的样本比其余长 38.8%（24k 池），同条数训练墙钟多 16%。不能声称"长度无关"，只能说"长度匹配后结论不变"。
 
 ---

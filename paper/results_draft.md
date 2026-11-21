@@ -2,7 +2,7 @@
 
 > 口径：训练池 **48,000 条**，30% = **14,400 条**；近重复去重保留 **46,714 / 48,000 = 97.32%**。
 
-> 数据来源：`results/`（48k 池，69 个 run：full s1 + nait/random s1–s6 + nait_ns s1–s2）；
+> 数据来源：`results/`（48k 池，69 个 run：full s1–s3 + nait s1–s6 + random s1–s19 + nait_ns s1–s6 + rand_len s1–s4 + nait_dedup s1–s4 + EL2N s1–s3）；
 > 24k 池的 EL2N / rand_len 在 `results_round2_24k/`；12k 池的剂量-反应在 `results_round1_12k/`。
 > 所有数字都能在 `results/eq_table.csv`、`eq_contrast.csv`、`compute_table.csv`、`holm.csv` 里查到；
 > `tools/audit_final.py` 会检查文档里的数字是否都有出处。图号对应 `paper/figures/`。
@@ -80,8 +80,8 @@
 | EL2N（最难样本） | −2.01 pp [−2.75, −1.29]（48k） | −0.52 pp（p = 0.056，Holm 0.506，不显著） | 0.512 h | **45.9%** |
 | rand_len（长度匹配） | −0.74 pp [−1.43, −0.10]（48k） | +0.60 pp（p = 0.013，Holm 0.156） | 0 | 70.0% |
 
-两条结论：①经典基线在本设定下**又贵又差**——EL2N 的"难"多半是标注噪声；②长度匹配对照与随机
-无差别，说明激活选择**不是**在按长度筛。
+两条结论：①经典基线在本设定下**贵且差**——EL2N 的“难”多半是标注噪声；②长度匹配对照（rand_len）比纯随机高 **+0.60pp**（p=0.013）、
+与 nait 不可区分（−0.17，TOST ±1pp 通过）——说明收益不来自“题目难度/价值”，一个简单的长度信号就能吃到大部分。
 
 ## 4.7 探索性结果（不进主结论）
 
