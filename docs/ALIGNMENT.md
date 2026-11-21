@@ -20,8 +20,8 @@
 | ③ | 做法：基于神经元激活做子集选择 | 采 5 层隐状态 → **减池内均值** → L2 归一 → 与 probe 质心算余弦 → 按科室分层配额取满 | `collect_acts.py`、`select_subset.py`、`cache/acts/*.npz` | ✅ |
 | ③ | 做法：给出可复现协议 | 10 节协议文档：输入契约、采集、去均值、打分、去重、分层、审计、参数总表、自检、放弃的选项 | `docs/PROTOCOL.md` | ✅ |
 | ③ | 做法：开源实现 | 代码齐全 + 一键脚本 + 环境锁定 + 新机器部署说明；**缺 README / LICENSE** | `check_env.bat`、`run_pilots.bat`、`requirements-lock.txt`、`docs/SETUP_MACHINES.md` | 🟡 缺 `README.md` + `LICENSE` |
-| ③ | 做法：测量数据削减比例 | 五档 10 / 20 / 30 / 50 / 70% 全部跑完（30% 有 6 种子，其余 1 种子） | `results/eq_table.csv`、`paper/figures/fig02_data_efficiency.png` | ✅ |
-| ③ | 做法：算力节省 | 每次 run 的真实 `train_seconds`；选择前向开销按方法实测（nait **0.455**（el2n 的 0.512 来自 24k 轮） GPU-h）；每样本耗时用中位数剔污染 | `results/compute_table.csv`、`paper/figures/fig05_compute.png` | ✅ 净省 nait **48.6%**、random 70.0%（el2n 45.9% 来自 24k 轮，且比随机更差） |
+| ③ | 做法：测量数据削减比例 | 五档 10 / 20 / 30 / 50 / 70% 全部跑完（30% 档 nait 6 / random 19 个种子，其余五档各 2 个种子） | `results/eq_table.csv`、`paper/figures/fig02_data_efficiency.png` | ✅ |
+| ③ | 做法：算力节省 | 每次 run 的真实 `train_seconds`；选择前向开销按方法实测（nait **0.455**、EL2N **0.512**，均为 48k 池实测）GPU-h）；每样本耗时用中位数剔污染 | `results/compute_table.csv`、`paper/figures/fig05_compute.png` | ✅ |
 | ③ | 做法：跨科室稳健性 | 6 个科室逐题结果可分；科室 n<30 跳过 | `results/robust.csv`、`paper/figures/fig04_dept.png` | 🟡 有图有表，但科室级样本量很小、CI 极宽（最差科室的 CI 跨 0，不能下结论；数字见 `results/robust.csv`） |
 | ③ | 做法：跨任务稳健性 | MedMCQA（同域，4,183）＋ MedQA（跨任务，1,273） | `data/processed/medmcqa.jsonl`、`medqa.jsonl` | ✅ |
 | ④ | 产出：开源协议 | 同"可复现协议" | `docs/PROTOCOL.md` | ✅ |
@@ -40,7 +40,7 @@
 | ③ | 关键字段：样本激活统计 | **每样本一行**：激活得分、全池名次、百分位、是否被 10 档子集选中 | `results/sample_stats.csv`（48,000 行 × 15 列） | ✅ |
 | ③ | 关键字段：被选子集 | 两个变体 × 五档比例，附 id 列表 | `data/subsets/subsets.json` | ✅ |
 | ③ | 关键字段：训练数据量 | 每个 run 的 method / ratio / 实际样本数 | `results/metrics_long.csv` | ✅ |
-| ③ | 关键字段：下游任务表现 | 每道题的对错 + 四个选项概率 | `results/preds/<run>_<task>.csv.gz`（19 run × 2 任务） | ✅ |
+| ③ | 关键字段：下游任务表现 | 每道题的对错 + 四个选项概率 | `results/preds/<run>_<task>.csv.gz`（69 run × 2 任务 = 138 份） | ✅ |
 | ③ | 关键字段：训练算力 | 每次 run 秒数、GPU-hours、选择开销 | `results/compute_table.csv` | ✅ |
 | ④ | 获取与合规：伦理审批与去标识化 | 公开数据不涉及院内伦理审批；但**真数据还没到手**，这条现在是"没做"而不是"不需要" | `PLAN.md` §4 | ⚠️ 需在文中声明，且别写成"已完成合规" |
 | ④ | 子集选择过程须可审计 | 阈值/分位/保留率/每档规模/科室分布全落盘；另有代码哈希、产物哈希、每次选择的输入输出哈希 | `audit/{code_manifest.json,ARTIFACTS.sha256,selection_log.jsonl}`、`tools/verify.py` | ✅ |
@@ -52,11 +52,11 @@
 | # | 提案要求 | 我们的实现 | 证据 | 状态 |
 |---|---|---|---|---|
 | ① | 主模型：临床模型（指令微调场景） | Qwen2.5-1.5B-Instruct + LoRA SFT（1.18% 参数可训） | `train.py`、`results/runs/*.json` | ✅ |
-| ② | 方法：激活基选择协议 + **等效果对照实验** | TOST 口径：80% CI 落在 ±2pp 内判等效；逐题配对 McNemar + bootstrap | `R/01_equivalence.R`、`results/eq_table.csv` | ✅ 口径已固化，但见下方"统计偏离" |
+| ② | 方法：激活基选择协议 + **等效果对照实验** | 等效判定：95% 配对 bootstrap（B=2000）CI 落在 ±2pp 内判逐题等效；逐题配对 McNemar + 种子层面口径 | `R/01_equivalence.R`、`results/eq_table.csv` | ✅ 口径已固化，但见下方“统计偏” |
 | ② | 对照 **Nait / ICLR 2026** | **偏离口径**：复现它的核心机制（域内 probe 质心 + 余弦相似度选样本），**不是**与官方实现逐步对齐（官方无可运行代码） | `select_subset.py`、`RESULTS.md` §2 | ⚠️ 论文只能写"复现其选择机制" |
 | ③ | 基线：全量数据训练 | `full_s1/2/3` 三个种子 | `results/metrics_long.csv` | ✅ |
-| ④ | 验证：等效果条件下的数据削减比例 | 30% 保留：逐题口径 4/4 等效（掉点 0.22–0.66pp）；种子口径 2/4 | `results/eq_table.csv` | 🟡 需 6 个种子才能下种子级结论 |
-| ④ | 验证：跨任务稳健性 | MedQA（训练池是 MedMCQA）掉点 −0.31pp | `results/eq_table.csv` | ✅ |
+| ④ | 验证：等效果条件下的数据削减比例 | 30% 保留：12 行里 9 行双口径等效（逐题口径 9/12） | `results/eq_table.csv` | ✅ nait 6 / random 19 个种子 |
+| ④ | 验证：跨任务稳健性 | MedQA（训练池是 MedMCQA）nait 掉点 −0.04pp、random −0.08pp | `results/eq_table.csv` | ✅ |
 
 ---
 
@@ -64,7 +64,7 @@
 
 | # | 提案要求 | 我们的实现 | 证据 | 状态 |
 |---|---|---|---|---|
-| ① | 场景：临床模型训练算力预算压缩 | 单卡 8GB 笔电上把 12k 条的训练压到 0.17 GPU-h | `results/compute_table.csv` | ✅ |
+| ① | 场景：临床模型训练算力预算压缩 | 单卡 8GB 笔电上，48k 池 30% 子集（14,400 条）训练 0.638 GPU-h、全量 2.128 GPU-h | `results/compute_table.csv` | ✅ |
 | ② | 用户：模型训练团队 / 信息科 / 预算决策方 | 一句话能讲清："少看七成题，考分不掉，电费省一半" | `RESULTS.md` | 🟡 缺一页给非技术读者的摘要 |
 | ③ | 用途：效果不降前提下降低数据与算力成本 | 净省 48.6%，代价是一次性 0.455 GPU-h 的选择前向；24k 轮同比例下 EL2N 要 0.512 GPU-h、只省 45.9% | `fig05_compute.png` | ✅ |
 | ④ | 验收：同效果下训练数据削减 ≥30% | **30% 达成**（逐题口径），但"同效果"的强度取决于种子数 | `results/eq_table.csv` | 🟡 |
@@ -75,7 +75,7 @@
 ## 五条必须写进 limitation 的偏离
 
 1. **数据不是院内 EMR。** 用的是公开医学题库；没有结构化检验值、没有真实病历书写风格。这是最硬的一条。
-2. **只做选择题，没做生成。** 评测是"读 A/B/C/D 的 logprob 取最大"，不是自由文本生成——它便宜、确定，但比真实临床问答窄得多。
+2. **主实验只做选择题。** 评测是“读 A/B/C/D 的 logprob 取最大”，不是自由文本生成——它便宜、确定，但比真实临序问答窄得多；另在 24k 池上做了 500 题生成式评测（RESULTS §4），规模有限。
 3. **"优于随机"没成立。** 12k 轮 6 个种子方向翻转（+1.10 / −0.47 / +0.39 / +1.10 / +1.34 / −0.71），均值 +0.46pp、Stouffer p=0.166；48k 主轮 6 个种子 MedQA +0.27 [−0.71, +1.27]、p = 0.431、Holm 1.000。论文只能写"无可检测优势"。
 4. **长度混杂（仍存在，已量化）。** 24k 池上 nait 选中的样本比其余样本文本长 38.8%（12k 轮是 12.3%），所以同样 14,400 条，nait 的训练墙钟多 16%。长度匹配对照臂 `rand_len` 已跑完：48k 上它的掉点 −0.74 与 nait 的 −0.98 不可区分（nait−rand_len −0.17，TOST 通过），**但 rand_len 本身比纯随机高 0.60 pp（p = 0.013）——长度/篇幅这类简单信号就能复现大部分增益，nait 的增益并不独特**。不能写“长度不是机制”。
    **需要撤回的一条**：12k 轮曾报告"长度对齐后 nait 在 MedQA 上仍领先 1.13pp（6/6 同号，p=0.101）"，24k 归档轮回落到 +0.43（p=0.243，MedQA）/ −0.38（p=0.037，MedMCQA），未复现。按预注册判据作废，正文不得引用。

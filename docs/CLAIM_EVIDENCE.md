@@ -19,7 +19,7 @@
 | 论文表 | `paper/table1.md` Table 1 |
 | 图 | `paper/figures/fig02_data_efficiency.png`、`fig06_forest.png` |
 
-状态：**✅ 30% 档 12 行里 10 行双口径等效（nait / nait_ns / rand_len / nait_dedup 全部双口径通过；random 在 MedMCQA 上逐题口径越界，EL2N 两项都不通过）。**
+状态：**✅ 30% 档 12 行里 9 行双口径等效（逐题口径 9/12）——nait / nait_ns / rand_len / nait_dedup 全部双口径通过；random 在 MedMCQA 上逐题口径越界，EL2N 两项都不通过。**
 写法要求：必须两个口径都报（`docs/PREREG.md` §3.3）。只报逐题口径等于藏起一半事实。
 
 ---
@@ -51,7 +51,7 @@
 | 证据 | 位置 |
 |---|---|
 | 算力表（含选择前向） | `results/compute_table.csv`（列 `train_h` / `select_h` / `gpu_hours` / `net_saving_pct`） |
-| 选择开销实测值 | `results/select_overhead.json`（collect_acts 两遍 + 打分 480 s） |
+| 选择开销实测值 | `results/select_overhead.json`（collect_acts 两遍 + 打分 1,638 s = 0.455 GPU-h；12k 轮为 480 s） |
 | 论文表 | `paper/table1.md` Table 3（归一化列 + 墙钟列） |
 | 图 | `paper/figures/fig05_compute.png` |
 

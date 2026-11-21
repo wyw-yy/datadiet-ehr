@@ -125,7 +125,7 @@ def main() -> None:
         lines.append(f"| `{rel}` | {note} | `{h}` | {size} |")
 
     lines.append("\n## 三、实验能不能追到底\n")
-    lines.append(f"- 训练/评测 run：**{n_runs} 条**（`results/metrics_long.csv`）")
+    lines.append(f"- 训练/评测记录：**{n_runs} 行**（`results/metrics_long.csv`）= {n_runs//2} 个 run × 2 个任务")
     lines.append(f"- 逐题预测文件：**{n_preds} 份**（`results/preds/*.csv.gz`，每份含 item_id / pred / correct）")
     lines.append("- 一条结论的追溯链：`RESULTS.md` 的数字 → `results/*.csv` → `results/preds/*.csv.gz` → 某一道题的预测 → 对应 adapter 与训练日志")
     lines.append("- 三层自动审计：`tools/audit_final.py`（文档数字是否都有 CSV 出处）、"
