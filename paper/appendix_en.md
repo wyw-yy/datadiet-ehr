@@ -56,7 +56,7 @@ scoring 0.4 min = 0.455 GPU-h. Reporting "70% compute saving" would silently cha
 
 | Pool | nait Δ (pp) | random Δ (pp) | nait − random | Reading |
 |---|---|---|---|---|
-| 12k | −0.31 (1 seed) | −0.65 (1) | +0.34 | no difference |
+| 12k | −0.26 (6 seeds) | −0.08 (6) | −0.19 (p = 0.406) | no difference |
 | 24k | −0.53 (6) | −0.47 (6) | −0.06 (p = 0.72) | no difference |
 | **48k** | **−0.98 (6)** | **−1.40 (19)** | **+0.50 (p = 0.016)** | random crosses the margin first |
 

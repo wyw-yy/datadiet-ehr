@@ -108,7 +108,7 @@ def main() -> None:
     lines.append(f"| 提交次数 | {g['commits']} |")
     lines.append(f"| 首次提交 | {' '.join(g['first']) if g['first'] else '—'} |")
     lines.append(f"| 最近提交（生成本文件时的 HEAD） | {g['last']} |")
-    lines.append(f"| 提交者 | 全部 `wyw-yy`（{g['authors'].splitlines()[0] if g['authors'] else ''}） |")
+    lines.append("| 提交者 | 全部 `wyw-yy`（单一作者仓库） |")
     lines.append(f"| 标签 | {', '.join(g['tags']) if g['tags'] else '—'} |")
     lines.append(f"| 远程仓库 | {g['remote'] or '—'}（公开） |")
     lines.append(f"| 纳入版本控制的文件 | {g['tracked']} 个 |")
