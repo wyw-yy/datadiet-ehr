@@ -15,8 +15,8 @@ A cell is *equivalent* only if its 95% CI lies entirely within ±2 pp.
 | MedMCQA | **nait** | 6 | 0.4678 | 0.4583 | **−0.98** | [−1.43, +0.22] | [−1.34, −0.58] | ✅ | ✅ |
 | MedMCQA | random | 6 | 0.4678 | 0.4533 | −1.40 | [−2.15, −0.86] | [−1.84, −1.07] | ❌ | ✅ |
 | MedMCQA | nait_ns | 2 | 0.4678 | 0.4598 | −0.89 | [−1.67, +0.43] | [−3.55, +1.92] | ✅ | ❌ |
-| MedQA | **nait** | 6 | 0.4784 | 0.4788 | +0.04 | [−2.52, +1.26] | [−0.57, +0.64] | ❌ | ✅ |
-| MedQA | random | 6 | 0.4784 | 0.4760 | −0.24 | [−2.36, +1.18] | [−0.63, +0.16] | ❌ | ✅ |
+| MedQA | **nait** | 6 | 0.4792 | 0.4788 | −0.04 | [−1.39, +1.26] | — | ✅ | ✅ |
+| MedQA | random | 19 | 0.4786 | 0.4778 | −0.08 | [−1.70, +0.58] | — | ✅ | ✅ |
 | MedQA | nait_ns | 2 | 0.4784 | 0.4764 | −0.20 | [−1.96, +1.89] | [−1.39, +2.28] | ✅ | ❌ |
 
 MedQA cells fail the item-level criterion because the evaluation set is small (1,273 items), which widens
