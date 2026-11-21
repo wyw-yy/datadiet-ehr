@@ -1,6 +1,6 @@
 # 可追溯性说明（这套东西是谁做的、是哪个版本）
 
-生成时间：2026-11-21 17:45　·　生成脚本：`tools/make_provenance.py`（只读，不改任何文件）
+生成时间：2026-11-21 17:51　·　生成脚本：`tools/make_provenance.py`（只读，不改任何文件）
 
 这份文件回答三个问题：代码有没有版本管理、交出去的文件能不能核对、论文里的数字能不能一路查到逐题预测。
 
@@ -9,15 +9,15 @@
 
 | 项 | 值 |
 |---|---|
-| 提交次数 | 95 |
+| 提交次数 | 97 |
 | 首次提交 | 38136ad 2026-10-24 |
-| 最近提交 | a57829d 2026-11-21 |
-| 提交者 | 全部 `wyw-yy`（92	wyw-yy <wyw-yy@users.noreply.github.com>） |
+| 最近提交 | 85cd1ce 2026-11-21 |
+| 提交者 | 全部 `wyw-yy`（94	wyw-yy <wyw-yy@users.noreply.github.com>） |
 | 标签 | v1.0.0, v1.0.1, v1.0.2, v1.0.3, v1.0.4 |
 | 远程仓库 | git@github.com:wyw-yy/datadiet-ehr.git（私有） |
 | 纳入版本控制的文件 | 977 个 |
 | 源文件数量 | 93 个（根目录 `.py` + `tools/` + `R/`） |
-| 当前工作区 | 有未提交改动 |
+| 当前工作区 | 干净 |
 
 说明：2026-10-23 做过一次 `git filter-branch`，把误入库的 2.6 GB LoRA 权重与 331 MB 激活从历史里摘掉，因此**提交哈希被重写过一次**（内容不变、哈希变了）。这件事记录在 `docs/INCIDENTS.md`，不藏着。
 
@@ -33,9 +33,9 @@
 | `softcopyright/说明书.txt` | 软著：说明书正文 | `F84D800397CB2CA060FBCA4DE600C1C602FB0C906F3DBC84CDEA3AE2B2438F86` | 9.7 KB |
 | `softcopyright/源程序.pdf` | 软著：源程序 PDF（登记用） | `CF0CF267F149556E7D3D70025144FFB580B557A67DC65DF1A74C8F5F63D4CA28` | 4723.8 KB |
 | `softcopyright/说明书.pdf` | 软著：说明书 PDF（登记用） | `46B5E7FD1345DF64A38427C771F174B37DE34007F93864A2AE7FAE018C324AD6` | 181.0 KB |
-| `RESULTS.md` | 结论总表（所有数字的唯一出口） | `1DD37742876A2B38D2FE2E57D2719D3EF14E2A9FD745B2C90F3DAD7C6618B3EC` | 13.9 KB |
+| `RESULTS.md` | 结论总表（所有数字的唯一出口） | `B3CAF788EAA2F31A826A8EB3443C14DA43CADEFE681C82712FC91F03E84BC05A` | 13.9 KB |
 | `paper/table1.md` | 论文主表 | `CA9769566B772502E388793D484383CE92CDE5704B3F0D1112B8BCE6B63375BC` | 5.9 KB |
-| `paper/appendix_en.md` | 论文英文附录 | `8DD82FB413B1E78A72AA7212FC8CDDBE4DFED7CE83BFCA10D1E042A0974B1DEF` | 7.3 KB |
+| `paper/appendix_en.md` | 论文英文附录 | `2EE0151A575ED0264BF306D9F8D6080EBB8BA1F059BCE442DAB98C3063127038` | 7.4 KB |
 | `docs/PREREG_NULLBAND.md` | 零分布实验的预注册（跑之前写死的判定规则） | `3E0C292C4273E1A6015AC75FBCCA52D8E32644502CFCA5CEDC1F9A91442CB8AC` | 6.2 KB |
 | `docs/INCIDENTS.md` | 事故记录（三次翻车与修法） | `AFA84F5800E76E750C6B58D506E8139F54B8D97DC5562C68129F53B0C8E757B3` | 4.5 KB |
 | `docs/CLAIM_EVIDENCE.md` | 主张-证据矩阵 | `F0A9971942EC8E0D34C27B785B512012273AFA49B5F762BB6F38C7A93ADBE1D6` | 6.6 KB |

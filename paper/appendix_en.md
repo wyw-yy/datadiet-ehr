@@ -79,7 +79,7 @@ carry a citation (27.9% in the rest), median reference length 704 vs 491 charact
 |---|---|---|---|---|
 | stratification (`nait_ns`) | 48k | is the per-department quota needed? | −0.89 vs −0.98 (MedMCQA) / −0.13 vs −0.04 (MedQA); all McNemar p > 0.4 | quota is optional; protocol can be simplified |
 | EL2N | 24k | do classical difficulty scores help? | −1.04 pp; **worse** than random (Holm p = 0.025) | "hardest 30%" mostly selects label noise |
-| length-matched random (`rand_len`) | 24k | is activation selection just a length proxy? | −0.15 pp; rand_len − random −0.67 pp (p = 0.035) | length is *not* the mechanism |
+| length-matched random (`rand_len`) | 48k | is activation selection just a length proxy? | −0.74 pp; vs nait −0.17 pp (TOST ±1 pp passes); vs random +0.60 pp (p = 0.013) | length matching already reproduces most of the gain — it is *not* evidence that length is irrelevant |
 | 3 epochs | 24k | does 1 epoch under-train the full baseline? | MedQA nait−random +2.00 pp (seeds +1.26 / +2.75), MedMCQA −0.38 pp | directional only; fails pre-registered criteria |
 
 ## A.7 Protocol parameters
