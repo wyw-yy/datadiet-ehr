@@ -1,6 +1,6 @@
 # 可追溯性说明（这套东西是谁做的、是哪个版本）
 
-生成时间：2026-11-21 17:51　·　生成脚本：`tools/make_provenance.py`（只读，不改任何文件）
+生成时间：2026-11-21 17:56　·　生成脚本：`tools/make_provenance.py`（只读，不改任何文件）
 
 这份文件回答三个问题：代码有没有版本管理、交出去的文件能不能核对、论文里的数字能不能一路查到逐题预测。
 
@@ -9,12 +9,12 @@
 
 | 项 | 值 |
 |---|---|
-| 提交次数 | 97 |
+| 提交次数 | 98 |
 | 首次提交 | 38136ad 2026-10-24 |
-| 最近提交 | 85cd1ce 2026-11-21 |
-| 提交者 | 全部 `wyw-yy`（94	wyw-yy <wyw-yy@users.noreply.github.com>） |
+| 最近提交（生成本文件时的 HEAD） | ab19ef7 2026-11-21 |
+| 提交者 | 全部 `wyw-yy`（95	wyw-yy <wyw-yy@users.noreply.github.com>） |
 | 标签 | v1.0.0, v1.0.1, v1.0.2, v1.0.3, v1.0.4 |
-| 远程仓库 | git@github.com:wyw-yy/datadiet-ehr.git（私有） |
+| 远程仓库 | git@github.com:wyw-yy/datadiet-ehr.git（公开） |
 | 纳入版本控制的文件 | 977 个 |
 | 源文件数量 | 93 个（根目录 `.py` + `tools/` + `R/`） |
 | 当前工作区 | 干净 |
@@ -38,7 +38,7 @@
 | `paper/appendix_en.md` | 论文英文附录 | `2EE0151A575ED0264BF306D9F8D6080EBB8BA1F059BCE442DAB98C3063127038` | 7.4 KB |
 | `docs/PREREG_NULLBAND.md` | 零分布实验的预注册（跑之前写死的判定规则） | `3E0C292C4273E1A6015AC75FBCCA52D8E32644502CFCA5CEDC1F9A91442CB8AC` | 6.2 KB |
 | `docs/INCIDENTS.md` | 事故记录（三次翻车与修法） | `AFA84F5800E76E750C6B58D506E8139F54B8D97DC5562C68129F53B0C8E757B3` | 4.5 KB |
-| `docs/CLAIM_EVIDENCE.md` | 主张-证据矩阵 | `F0A9971942EC8E0D34C27B785B512012273AFA49B5F762BB6F38C7A93ADBE1D6` | 6.6 KB |
+| `docs/CLAIM_EVIDENCE.md` | 主张-证据矩阵 | `BE4B46E4BA5F683ECC593C83F8A98344E2A20914116388B66D50E8DB98B1B111` | 6.7 KB |
 | `results/metrics_long.csv` | 全部 run 的准确率长表 | `6F7D0523923C0703D64BA592D05F9521E3AE2D96982C97EFDF0B99FD2D744D25` | 7.3 KB |
 | `results/eq_table.csv` | 等效性检验结果 | `4D010420034BC4F3DAFABD5920ED57F99F48CEF249244AB5D129FD37149AEBB9` | 4.1 KB |
 | `results/eq_contrast.csv` | 方法间对比 + Holm | `05AA1539A415A8FEEF9A4427991877ADEF76E4A1A4A32AC682C3903A8FC42EEF` | 3.7 KB |
