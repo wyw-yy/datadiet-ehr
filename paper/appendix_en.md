@@ -12,16 +12,16 @@ A cell is *equivalent* only if its 95% CI lies entirely within ±2 pp.
 
 | Task | Method | Seeds | Full data | 30% subset | Δ (pp) | Item 95% CI | Seed 95% CI | Item-equiv. | Seed-equiv. |
 |---|---|---|---|---|---|---|---|---|---|
-| MedMCQA | **nait** | 6 | 0.4678 | 0.4583 | **−0.98** | [−1.43, +0.22] | [−1.34, −0.58] | ✅ | ✅ |
-| MedMCQA | random | 6 | 0.4678 | 0.4533 | −1.40 | [−2.15, −0.86] | [−1.84, −1.07] | ❌ | ✅ |
-| MedMCQA | nait_ns | 2 | 0.4678 | 0.4598 | −0.89 | [−1.67, +0.43] | [−3.55, +1.92] | ✅ | ❌ |
+| MedMCQA | **nait** | 6 | 0.4680 | 0.4583 | **−0.98** | [−1.57, −0.07] | [−1.38, −0.57] | ✅ | ✅ |
+| MedMCQA | random | 19 | 0.4679 | 0.4539 | −1.40 | [−2.15, −0.86] | [−1.59, −1.21] | ❌ | ✅ |
+| MedMCQA | nait_ns | 6 | 0.4680 | 0.4591 | −0.89 | [−1.67, −0.12] | [−1.22, −0.57] | ✅ | ✅ |
 | MedQA | **nait** | 6 | 0.4792 | 0.4788 | −0.04 | [−1.39, +1.26] | [−0.54, +0.46] | ✅ | ✅ |
 | MedQA | random | 19 | 0.4786 | 0.4778 | −0.08 | [−1.70, +0.58] | [−0.37, +0.20] | ✅ | ✅ |
-| MedQA | nait_ns | 2 | 0.4784 | 0.4764 | −0.20 | [−1.96, +1.89] | [−1.39, +2.28] | ✅ | ❌ |
+| MedQA | nait_ns | 6 | 0.4792 | 0.4779 | −0.13 | [−1.76, +1.07] | [−0.50, +0.23] | ✅ | ✅ |
 
-MedQA cells fail the item-level criterion because the evaluation set is small (1,273 items), which widens
-the paired CI beyond the margin — this is *underpower*, not evidence of a difference. `rand_len` and
-`EL2N` were run on the 24,000-sample pool only (see A.6).
+Both MedQA cells pass the item-level criterion (−0.04 and −0.08 pp), but the evaluation set is small (1,273 items), so
+the paired CI is wide (±1.3 pp) and these rows are used only as a non-rebuttal, not as independent evidence.
+`rand_len` (4 seeds) and `EL2N` (3 seeds) were also run on the 48,000-sample pool, not only on the 24k pool (see A.6).
 
 ## A.2 Method contrasts at 30%
 
@@ -48,7 +48,7 @@ i.e. **not significant**. TOST at ±1 pp does not pass either (CI upper bound 1.
 | nait | 70% | 1.458 | 0.455 | 1.913 | 8.2% |
 | EL2N (24k pool) | 30% | 0.307 | 0.512 | 0.914 | 45.9% |
 
-Full-data training: **2.128 GPU-h** (48,000 samples × 0.153 s/sample, median over runs).
+Full-data training: **2.128 GPU-h** (normalised: 48,000 samples × 0.160 s/sample; three measured runs 2.57 / 2.22 / 2.30, mean 2.36).
 The selection forward pass is measured, not modelled: activation collection 25.7 min + probe 1.2 min +
 scoring 0.4 min = 0.455 GPU-h. Reporting "70% compute saving" would silently charge selection cost to zero.
 
@@ -96,7 +96,7 @@ carry a citation (27.9% in the rest), median reference length 704 vs 491 charact
 | Subset sizes | 10/20/30/50/70% = 4,800/9,600/14,400/24,000/33,600 |
 | Equivalence margin | δ = 2 pp (pre-registered) |
 | Contrast margin (TOST) | ±1 pp (post hoc, labelled exploratory) |
-| Seeds | 6 (nait/random), 2 (nait_ns); EL2N and rand_len on the 24k pool |
+| Seeds | 6 (nait / random / nait_ns), 19 (random, null band), 4 (rand_len), 4 (nait_dedup), 3 (EL2N) |
 | Evaluation | MedMCQA 4,183 items; MedQA 1,273 items; first-token A–D log-probability |
 
 ## A.8 Artifact inventory

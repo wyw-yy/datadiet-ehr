@@ -19,7 +19,7 @@
 | 论文表 | `paper/table1.md` Table 1 |
 | 图 | `paper/figures/fig02_data_efficiency.png`、`fig06_forest.png` |
 
-状态：**✅ 8 行里 7 行双口径等效（nait / random / rand_len 三个臂在 6 个种子下全部通过；el2n 两项不通过）。**
+状态：**✅ 30% 档 12 行里 10 行双口径等效（nait / nait_ns / rand_len / nait_dedup 全部双口径通过；random 在 MedMCQA 上逐题口径越界，EL2N 两项都不通过）。**
 写法要求：必须两个口径都报（`docs/PREREG.md` §3.3）。只报逐题口径等于藏起一半事实。
 
 ---
@@ -35,7 +35,7 @@
 | 逐种子符号 | `eq_contrast.csv` 的 `per_seed_pp`；图 `fig06_forest.png` |
 
 状态：**❌ 不支持。**
-- MedQA：nait − random = +0.10pp（p = 0.979）
+- MedQA：nait − random = +0.27pp（p = 0.431）
 - MedMCQA：nait − random = +0.50pp（未校正 p = 0.016，Holm 后 0.176，不显著；符号 5/6 正）
 - 6 个种子里符号来回翻（见 `fig06_forest.png` 的散点）
 
@@ -55,7 +55,7 @@
 | 论文表 | `paper/table1.md` Table 3（归一化列 + 墙钟列） |
 | 图 | `paper/figures/fig05_compute.png` |
 
-状态：**✅ 归一化口径 45.2%；墙钟口径 40.8%。**
+状态：**✅ 归一化口径 48.6%（nait 1.093 / 全量 2.128 GPU-h）；随机基线 70.0%。**
 **不许写**"省 70%"——70% 是 random/rand_len 的数字，它们不付选择开销。
 也不许写"省 45%" 而不说明这是**净**节省（已扣掉选择前向）。
 
@@ -72,7 +72,7 @@
 
 状态：**⚠️ 2026-10-25 更新：24k 轮不成立。**
 - 12k 轮曾看到 nait 比长度匹配对照高 +1.13pp（6/6 同号，p = -0.101）→ **24k 轮没复现，已按预注册判据作废**（见 `docs/ALIGNMENT.md` 的"撤回"段）。
-- 24k 轮：nait − rand_len = +0.29pp（MedQA，p = 0.568）、−0.42pp（MedMCQA，p = 0.103）。
+- 24k 轮：nait − rand_len = −0.73pp（MedQA，p = 0.132）、−0.17pp（MedMCQA，p = 0.493）；48k 轮同量级。
 - 但**混杂本身是真的**：nait 选中的样本比其余长 38.8%（24k 池），同条数训练墙钟多 16%。不能声称"长度无关"，只能说"长度匹配后结论不变"。
 
 ---
@@ -86,7 +86,7 @@
 | 科室表 | `results/robust.csv`（列 `delta_pp` / `ci_lo_pp` / `ci_hi_pp`，科室 n < 30 已跳过） |
 | 图 | `paper/figures/fig04_dept.png` |
 
-状态：**⚠️ 部分支持。** 最差科室 onco −3.55pp（CI [−8.51, +0.71]），CI 宽到无法判断；
+状态：**⚠️ 部分支持。** 最差科室 onco −4.96pp（48k MedQA nait，CI [−12.06, +2.13]），CI 宽到无法判断；
 科室级样本量太小，只能当作方向性参考，不能当作"每个科室都等效"的证据。
 
 ---
